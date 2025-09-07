@@ -29,7 +29,7 @@ export default function ProductList({
           placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="px-2 py-1 border border-bw-200 rounded-md w-40 text-sm focus:outline-none focus:ring-2 focus:ring-bw-700 text-bw-900"
+          className="px-2 py-1 border border-bw-400 rounded-md w-40 text-sm focus:outline-none focus:ring-2 focus:ring-bw-700 text-bw-900"
         />
       </div>
 

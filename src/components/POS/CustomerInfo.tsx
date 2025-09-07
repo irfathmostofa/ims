@@ -20,7 +20,8 @@ export default function CustomerInfo({
 }) {
   return (
     <div className="bg-bw-50 p-4 rounded-md shadow-md ">
-      <h2 className="text-bw-900 font-bold mb-2">Customer Info</h2>
+      <h2 className="text-bw-900 font-bold mb-2">Customer</h2>
+
       <div className="flex w-full gap-2">
         <div className="flex-1 space-7-1">
           <Label htmlFor="customer-name">Name</Label>

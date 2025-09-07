@@ -10,8 +10,8 @@ export default function ProductCategory({
   setCategory: (cat: string) => void;
 }) {
   return (
-    <div className="bg-bw-50 p-4 rounded-md shadow-md">
-      <h2 className="text-bw-900 font-bold mb-2">Categories</h2>
+    <div className="bg-bw-50 p-2 rounded-md shadow-md ">
+      <h2 className="text-bw-900 font-bold mb-2 text-center">Categories</h2>
       <div className="flex flex-col gap-2">
         {categories.map((cat) => (
           <button

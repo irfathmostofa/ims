@@ -25,7 +25,7 @@ export default function Cart({
   handleClear: () => void;
 }) {
   return (
-    <div className="w-full md:w-96 bg-bw-50 p-4 rounded-md shadow-md flex flex-col">
+    <div className="w-full md:w-96 bg-bw-50 p-4 rounded-md shadow-md flex flex-col border ">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-bw-900 font-bold mb-4 text-xl flex-3">Cart</h2>{" "}
         <button
