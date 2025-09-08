@@ -38,7 +38,7 @@ export default function ProductList({
         {filteredProducts.map((product) => (
           <div
             key={product.id}
-            className="p-2 bg-bw-100 rounded-md flex flex-col justify-between items-start hover:shadow-md transition h-36"
+            className="p-2 bg-bw-100 border border-bw-primary rounded-md flex flex-col justify-between items-start hover:shadow-md transition h-36"
           >
             <h3 className="text-bw-800 font-medium text-sm">{product.name}</h3>
             <p className="text-bw-700 text-xs">Brand: {product.brand}</p>

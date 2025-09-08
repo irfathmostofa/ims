@@ -19,7 +19,7 @@ export default function POSPage() {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
-
+  const [paymentMethod, setPaymentMethod] = useState("cash");
   const [invoiceOpen, setInvoiceOpen] = useState(false);
 
   // Cart operations
@@ -56,25 +56,44 @@ export default function POSPage() {
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   // Actions
-  const handleSave = () => {
-    if (!customerName) {
-      alert("Please enter customer name");
-      return;
-    }
-    // Open invoice modal instead of alert
-    setInvoiceOpen(true);
-  };
-
+  // Confirmed clear (used by "Clear / New" buttons)
   const handleClear = () => {
     if (confirm("Are you sure you want to clear the cart?")) {
       setCart([]);
       setCustomerName("");
+      setCustomerPhone("");
+      setCustomerAddress("");
+      setSearch("");
+      setCategory("All");
     }
+  };
+
+  // Clear without confirmation (used by Cart after a successful save)
+  const clearNoConfirm = () => {
+    setCart([]);
+    setCustomerName("");
+    setCustomerPhone("");
+    setCustomerAddress("");
+    setSearch("");
+    setCategory("All");
+  };
+  const cartClear = () => {
+    setCart([]);
+    setSearch("");
+    setCategory("All");
+  };
+
+  const handlePay = () => {
+    if (cart.length === 0) {
+      alert("Cart is empty");
+      return;
+    }
+    setInvoiceOpen(true);
   };
 
   return (
     <div className="flex flex-col md:flex-row gap-4 h-full w-full">
-      {/* Left: Customer + Category + Products */}
+      {/* Left: Category column */}
       <div className="w-full md:w-30 flex flex-col gap-1">
         <ProductCategory
           categories={categories}
@@ -82,6 +101,8 @@ export default function POSPage() {
           setCategory={setCategory}
         />
       </div>
+
+      {/* Center: Customer + Products */}
       <div className="flex-1 flex flex-col gap-4">
         <CustomerInfo
           customerName={customerName}
@@ -100,14 +121,26 @@ export default function POSPage() {
         />
       </div>
 
-      {/* Right: Cart */}
+      {/* Right: Cart (now manages saved carts locally) */}
       <Cart
         cart={cart}
+        setCart={setCart}
         adjustQuantity={adjustQuantity}
         removeFromCart={removeFromCart}
         total={total}
-        handleSave={handleSave}
-        handleClear={handleClear}
+        handleClear={handleClear} // confirmed clear
+        clearAfterSave={clearNoConfirm} // clear without confirm after save
+        handlePay={handlePay}
+        cartClear={cartClear}
+        // pass customer info/setters so restore can fill them
+        customerName={customerName}
+        customerPhone={customerPhone}
+        customerAddress={customerAddress}
+        setCustomerName={setCustomerName}
+        setCustomerPhone={setCustomerPhone}
+        setCustomerAddress={setCustomerAddress}
+        setPaymentMethod={setPaymentMethod}
+        paymentMethod={paymentMethod}
       />
 
       {/* Invoice Modal */}
@@ -117,7 +150,7 @@ export default function POSPage() {
         customerName={customerName}
         cart={cart}
         total={total}
-        paymentMethod="Cash"
+        paymentMethod={paymentMethod}
       />
     </div>
   );
