@@ -4,13 +4,6 @@ import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -55,11 +48,9 @@ export default function InvoiceSelector({
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-md border space-y-4">
-      <h2 className="text-lg font-semibold text-gray-900">Select Invoice</h2>
-
-      {/* Search by customer */}
+      {/* Search + Date Filters */}
       <div className="space-y-2 flex gap-2">
-        <div className="flex-2  space-y-2">
+        <div className="flex-2 space-y-2">
           <Label htmlFor="search">Search Customer</Label>
           <Input
             id="search"
@@ -68,6 +59,7 @@ export default function InvoiceSelector({
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+
         <div className="flex-1 space-y-2">
           <Label>Date From</Label>
           <Popover>
@@ -91,7 +83,7 @@ export default function InvoiceSelector({
           </Popover>
         </div>
 
-        <div className="flex-1  space-y-2">
+        <div className="flex-1 space-y-2">
           <Label>Date To</Label>
           <Popover>
             <PopoverTrigger asChild>
@@ -115,26 +107,40 @@ export default function InvoiceSelector({
         </div>
       </div>
 
-      {/* Invoice dropdown */}
+      {/* Invoice List */}
       <div className="space-y-2">
         <Label>Select Invoice</Label>
-        <Select
-          value={selectedInvoice?.id || ""}
-          onValueChange={(val) =>
-            setSelectedInvoice(invoices.find((inv) => inv.id === val) || null)
-          }
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="-- Choose Invoice --" />
-          </SelectTrigger>
-          <SelectContent className="max-h-60 overflow-y-auto bg-white" >
-            {filteredInvoices.map((inv) => (
-              <SelectItem key={inv.id} value={inv.id}>
-                {inv.id} – {inv.customer.name} {inv.date ? `(${inv.date})` : ""}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-2 max-h-60 overflow-y-auto rounded-md">
+          {filteredInvoices.map((inv) => {
+            const isSelected = selectedInvoice?.id === inv.id;
+            const isDisabled = selectedInvoice && selectedInvoice.id !== inv.id;
+
+            return (
+              <div
+                key={inv.id}
+                className={`p-3 border rounded transition cursor-pointer
+                  ${isSelected ? "bg-blue-100 border-blue-400" : ""}
+                  ${
+                    isDisabled
+                      ? "opacity-50 cursor-not-allowed pointer-events-none"
+                      : "hover:bg-gray-50"
+                  }
+                `}
+                onClick={() => !isDisabled && setSelectedInvoice(inv)}
+              >
+                <div className="font-medium">
+                  {inv.id} – {inv.customer.name}
+                </div>
+                {inv.date && (
+                  <div className="text-xs text-gray-500">{inv.date}</div>
+                )}
+                <div className="text-xs text-gray-500">
+                  {inv.customer.phone}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {filteredInvoices.length === 0 && (
