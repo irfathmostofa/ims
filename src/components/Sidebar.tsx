@@ -1,13 +1,114 @@
 "use client";
 
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingCart, Users, X } from "lucide-react";
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Users,
+  // Building,
+  // UserCog,
+  Settings,
+  // Receipt,
+  BarChart,
+  Truck,
+  // Layers,
+  // RefreshCw,
+  // ClipboardCheck,
+  // CreditCard,
+  DollarSign,
+  // FileText,
+  ChevronDown,
+  ChevronRight,
+  X,
+} from "lucide-react";
+import { useState } from "react";
 
-const navItems = [
+type NavItem = {
+  name: string;
+  path?: string;
+  icon?: any;
+  children?: NavItem[];
+};
+
+const navItems: NavItem[] = [
   { name: "Dashboard", path: "/", icon: LayoutDashboard },
-  { name: "Products", path: "/products", icon: Package },
-  { name: "POS", path: "/pos", icon: ShoppingCart },
-  { name: "Customers", path: "/customers", icon: Users },
+
+  {
+    name: "Inventory",
+    icon: Package,
+    children: [
+      { name: "All Products", path: "/inventory/products" },
+      { name: "Categories", path: "/inventory/categories" },
+      { name: "Units", path: "/inventory/units" },
+      { name: "Purchase Orders", path: "/inventory/purchase-orders" },
+      { name: "GRN", path: "/inventory/grn" },
+      { name: "Stock Ledger", path: "/inventory/stock-ledger" },
+      { name: "Stock Transfer", path: "/inventory/stock-transfer" },
+      { name: "Adjustments", path: "/inventory/adjustments" },
+    ],
+  },
+
+  {
+    name: "POS",
+    icon: ShoppingCart,
+    children: [
+      { name: "New Sale", path: "/pos/sale" },
+      { name: "Returns / Refunds", path: "/pos/returns" },
+      { name: "Hold & Resume", path: "/pos/hold" },
+      { name: "Discounts & Promotions", path: "/pos/discounts" },
+    ],
+  },
+
+  {
+    name: "Customers",
+    icon: Users,
+    children: [
+      { name: "Customer List", path: "/customers" },
+      { name: "Receivables", path: "/customers/receivables" },
+    ],
+  },
+
+  {
+    name: "Suppliers",
+    icon: Truck,
+    children: [
+      { name: "Supplier List", path: "/suppliers" },
+      { name: "Payables", path: "/suppliers/payables" },
+    ],
+  },
+
+  {
+    name: "Accounts",
+    icon: DollarSign,
+    children: [
+      { name: "Chart of Accounts", path: "/accounts/coa" },
+      { name: "Journal Entries", path: "/accounts/journals" },
+      { name: "Transactions", path: "/accounts/transactions" },
+    ],
+  },
+
+  {
+    name: "Reports",
+    icon: BarChart,
+    children: [
+      { name: "Sales Reports", path: "/reports/sales" },
+      { name: "Stock Reports", path: "/reports/stock" },
+      { name: "Purchase Reports", path: "/reports/purchase" },
+      { name: "Profitability Reports", path: "/reports/profitability" },
+    ],
+  },
+
+  {
+    name: "Setup",
+    icon: Settings,
+    children: [
+      { name: "Company Info", path: "/setup/company" },
+      { name: "Branches", path: "/setup/branches" },
+      { name: "Roles", path: "/setup/roles" },
+      { name: "Users", path: "/setup/users" },
+    ],
+  },
 ];
 
 export default function Sidebar({
@@ -17,6 +118,14 @@ export default function Sidebar({
   sidebarOpen: boolean;
   setSidebarOpen: (v: boolean) => void;
 }) {
+  const [openMenus, setOpenMenus] = useState<string[]>([]);
+
+  const toggleMenu = (name: string) => {
+    setOpenMenus((prev) =>
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
+    );
+  };
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -48,22 +157,67 @@ export default function Sidebar({
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
+            const hasChildren = item.children && item.children.length > 0;
+            const isOpen = openMenus.includes(item.name);
+
             return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                    isActive
+              <div key={item.name}>
+                {/* Parent Link */}
+                <button
+                  onClick={() =>
+                    hasChildren ? toggleMenu(item.name) : setSidebarOpen(false)
+                  }
+                  className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg transition ${
+                    isOpen
                       ? "bg-bw-700 text-bw-50 font-medium"
                       : "text-bw-100 hover:bg-bw-700 hover:text-bw-50"
-                  }`
-                }
-                onClick={() => setSidebarOpen(false)} // closes after navigation
-              >
-                <Icon size={20} />
-                {item.name}
-              </NavLink>
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {Icon && <Icon size={20} />}
+                    {item.path ? (
+                      <NavLink
+                        to={item.path}
+                        className="flex-1 text-left"
+                        onClick={() => setSidebarOpen(false)}
+                      >
+                        {item.name}
+                      </NavLink>
+                    ) : (
+                      <span>{item.name}</span>
+                    )}
+                  </div>
+                  {hasChildren &&
+                    (isOpen ? (
+                      <ChevronDown size={16} />
+                    ) : (
+                      <ChevronRight size={16} />
+                    ))}
+                </button>
+
+                {/* Child Links */}
+                {hasChildren && isOpen && (
+                  <div className="ml-3 mt-1 space-y-1">
+                    {item.children!.map((child) => (
+                      <NavLink
+                        key={child.path}
+                        to={child.path!}
+                        className={({ isActive }) =>
+                          `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
+                            isActive
+                              ? "bg-bw-700 text-bw-50 font-medium"
+                              : "text-bw-100 hover:bg-bw-700 hover:text-bw-50"
+                          }`
+                        }
+                        onClick={() => setSidebarOpen(false)}
+                      >
+                        <ChevronRight size={14} className="opacity-60" />
+                        {child.name}
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
             );
           })}
         </nav>
