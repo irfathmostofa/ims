@@ -68,7 +68,10 @@ export default function Cart({
 }) {
   const [savedCarts, setSavedCarts] = useState<SavedCart[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
+  // const [paymentType, setPaymentType] = useState<"paid" | "partial" | "due">(
+  //   "paid"
+  // );
+  // const [partialAmount, setPartialAmount] = useState("");
   // load saved carts from localStorage on mount
   useEffect(() => {
     try {
