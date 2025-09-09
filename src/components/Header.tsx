@@ -2,9 +2,9 @@
 
 import {
   Bell,
-  CarTaxiFront,
+  // CarTaxiFront,
   Menu,
-  Search,
+  // Search,
   ShoppingCart,
   User,
 } from "lucide-react";

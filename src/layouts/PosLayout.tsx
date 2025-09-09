@@ -68,7 +68,7 @@ export default function PosLayout() {
       </div>
 
       {/* Main POS Content */}
-      <div className="flex-1 overflow-auto p-4 flex flex-col md:flex-row gap-4">
+      <div className="flex-1 overflow-auto p-4 flex flex-col md:flex-row gap-4 ">
         <Outlet />
       </div>
     </div>
