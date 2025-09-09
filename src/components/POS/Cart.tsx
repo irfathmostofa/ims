@@ -132,7 +132,7 @@ export default function Cart({
     if (!confirm("Delete all saved carts?")) return;
     setSavedCarts([]);
   };
-  const [open, setOpen] = useState(false);
+
   return (
     <div className="w-full md:w-96 bg-bw-50 p-4 rounded-md shadow-md flex flex-col border ">
       <div className="flex justify-between items-center mb-4 gap-2">
