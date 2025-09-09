@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 export default function PosLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [time, setTime] = useState(new Date());
 
   // Update running time every second
@@ -28,6 +29,9 @@ export default function PosLayout() {
     day: "numeric",
   });
 
+  // Check if current path is for returns
+  const isReturnPage = location.pathname.includes("return");
+
   return (
     <div className="h-screen w-screen bg-bw-50 flex flex-col">
       {/* Top Bar */}
@@ -42,12 +46,23 @@ export default function PosLayout() {
         </button>
 
         {/* POS Title */}
-        <h1 className="text-xl font-bold">Point of Sale</h1>
+        <h1 className="text-xl font-bold">
+          {isReturnPage ? "Return Management" : "Point of Sale"}
+        </h1>
 
-        {/* Running Time */}
-        <div className="text-bw-100 text-right">
-          <div>
-            {formattedDate} {formattedTime}
+        {/* Running Time and Navigation Toggle */}
+        <div className="flex items-center gap-4">
+          <button
+            className="px-3 py-1 bg-bw-800 rounded-md hover:bg-bw-700 transition border border-amber-50 cursor-pointer"
+            onClick={() => navigate(isReturnPage ? "/pos" : "/return")}
+          >
+            {isReturnPage ? "Switch to POS" : "Switch to Returns"}
+          </button>
+
+          <div className="text-bw-100 text-right">
+            <div>
+              {formattedDate} {formattedTime}
+            </div>
           </div>
         </div>
       </div>

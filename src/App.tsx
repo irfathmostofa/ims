@@ -7,6 +7,7 @@ import SpecialLayout from "./layouts/SpecialLayout";
 import UnderConstructionPage from "./pages/UnderConstructionPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import POSPage from "./pages/PosPage";
+import ReturnPage from "./pages/ReturnPage";
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
         {/* ✅ POS Layout Route */}
         <Route element={<PosLayout />}>
           <Route path="/pos" element={<POSPage />} />
+          <Route path="/return" element={<ReturnPage />} />
         </Route>
 
         {/* ✅ Special Layout Routes */}
