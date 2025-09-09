@@ -8,34 +8,35 @@ import ReturnInvoiceModal from "@/components/Return/ReturnInvoiceModal";
 import { useState } from "react";
 
 // Dummy invoices
-const invoices = [
-  {
-    id: "INV-1001",
-    customer: {
-      name: "Alice Johnson",
-      phone: "1234567890",
-      address: "New York, USA",
-    },
-    products: [
-      { id: 1, name: "Laptop", price: 1200, qty: 1 },
-      { id: 2, name: "Mouse", price: 50, qty: 2 },
-    ],
-    date: "2025-10-01",
+const invoices = Array.from({ length: 100 }, (_, i) => ({
+  id: `INV-10${i + 1}`,
+  customer: {
+    name: `Md Irfath Chowdhury Joy ${i + 1}`,
+    phone: `555000${i + 1}`,
+    address: `City ${i + 1}, Country`,
   },
-  {
-    id: "INV-1002",
-    customer: {
-      name: "Bob Smith",
-      phone: "9876543210",
-      address: "California, USA",
+  products: [
+    {
+      id: 100 + i * 2,
+      name: `Product ${i * 2 + 1}`,
+      price: 100 + i,
+      qty: (i % 3) + 1,
     },
-    products: [
-      { id: 3, name: "Keyboard", price: 70, qty: 1 },
-      { id: 4, name: "Headphones", price: 150, qty: 1 },
-    ],
-    date: "2025-09-01",
-  },
-];
+    {
+      id: 101 + i * 2,
+      name: `Product ${i * 2 + 2}`,
+      price: 150 + i,
+      qty: (i % 2) + 1,
+    },
+    {
+      id: 102 + i * 2,
+      name: `Product ${i * 2 + 3}`,
+      price: 190 + i,
+      qty: (i % 2) + 1,
+    },
+  ],
+  date: `2025-08-${((i % 30) + 1).toString().padStart(2, "0")}`,
+}));
 
 export default function ReturnPage() {
   const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
@@ -105,11 +106,13 @@ export default function ReturnPage() {
         />
         {selectedInvoice && (
           <>
-            <ReturnCustomerInfo customer={selectedInvoice.customer} />
-            <InvoiceProductList
-              products={selectedInvoice.products}
-              addToReturnCart={addToReturnCart}
-            />
+            <div className="flex gap-2">
+              <ReturnCustomerInfo customer={selectedInvoice.customer} />
+              <InvoiceProductList
+                products={selectedInvoice.products}
+                addToReturnCart={addToReturnCart}
+              />
+            </div>
           </>
         )}
       </div>

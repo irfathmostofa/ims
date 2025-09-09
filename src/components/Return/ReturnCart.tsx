@@ -27,7 +27,7 @@ export default function ReturnCart({
         {cart.map((item) => (
           <div
             key={item.id}
-            className="flex justify-between items-center p-2 bg-bw-100 rounded-md"
+            className="flex justify-between items-center p-2 bg-bw-100 rounded-md border"
           >
             <div>
               <p className="font-medium">{item.name}</p>
@@ -36,7 +36,7 @@ export default function ReturnCart({
               </p>
             </div>
             <div className="flex items-center gap-1">
-              <button
+              {/* <button
                 className="p-1 rounded-md hover:bg-bw-200"
                 onClick={() => adjustQuantity(item.id, -1)}
               >
@@ -48,7 +48,7 @@ export default function ReturnCart({
                 onClick={() => adjustQuantity(item.id, 1)}
               >
                 <Plus size={16} />
-              </button>
+              </button> */}
               <button
                 className="ml-2 text-red-500 px-2 py-1 hover:bg-bw-200 rounded-md"
                 onClick={() => removeFromCart(item.id)}

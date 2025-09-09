@@ -21,21 +21,22 @@ export default function InvoiceSelector({
   invoices: {
     id: string;
     customer: { name: string; phone: string };
-    date?: string; // e.g., "2025-09-08"
+    date?: string;
   }[];
   selectedInvoice: any | null;
   setSelectedInvoice: (inv: any) => void;
 }) {
   const [search, setSearch] = useState("");
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
-  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
 
   // Filter invoices
   const filteredInvoices = useMemo(() => {
     return invoices.filter((inv) => {
       const matchesSearch =
         inv.customer.name.toLowerCase().includes(search.toLowerCase()) ||
-        inv.customer.phone.includes(search);
+        inv.customer.phone.includes(search) ||
+        inv.id.includes(search);
 
       const invDate = inv.date ? new Date(inv.date) : null;
       const matchesDate =
@@ -49,18 +50,18 @@ export default function InvoiceSelector({
   return (
     <div className="bg-white p-4 rounded-xl shadow-md border space-y-4">
       {/* Search + Date Filters */}
-      <div className="space-y-2 flex gap-2">
-        <div className="flex-2 space-y-2">
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="space-y-2">
           <Label htmlFor="search">Search Customer</Label>
           <Input
             id="search"
-            placeholder="Search by name or phone..."
+            placeholder="Search by name, phone or invoice no..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        <div className="flex-1 space-y-2">
+        <div className="space-y-2">
           <Label>Date From</Label>
           <Popover>
             <PopoverTrigger asChild>
@@ -83,7 +84,7 @@ export default function InvoiceSelector({
           </Popover>
         </div>
 
-        <div className="flex-1 space-y-2">
+        <div className="space-y-2">
           <Label>Date To</Label>
           <Popover>
             <PopoverTrigger asChild>
@@ -108,9 +109,9 @@ export default function InvoiceSelector({
       </div>
 
       {/* Invoice List */}
-      <div className="space-y-2">
+      <div className="space-y-2 ">
         <Label>Select Invoice</Label>
-        <div className="flex flex-col gap-2 max-h-60 overflow-y-auto rounded-md">
+        <div className="border rounded p-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 max-h-60 overflow-y-auto">
           {filteredInvoices.map((inv) => {
             const isSelected = selectedInvoice?.id === inv.id;
             const isDisabled = selectedInvoice && selectedInvoice.id !== inv.id;
@@ -118,17 +119,17 @@ export default function InvoiceSelector({
             return (
               <div
                 key={inv.id}
-                className={`p-3 border rounded transition cursor-pointer
-                  ${isSelected ? "bg-blue-100 border-blue-400" : ""}
+                className={`p-3 border rounded-lg transition w-full
+                  ${isSelected ? "bg-blue-100 border-blue-400" : "bg-white"}
                   ${
                     isDisabled
                       ? "opacity-50 cursor-not-allowed pointer-events-none"
-                      : "hover:bg-gray-50"
+                      : "hover:bg-gray-50 cursor-pointer"
                   }
                 `}
                 onClick={() => !isDisabled && setSelectedInvoice(inv)}
               >
-                <div className="font-medium">
+                <div className="font-medium truncate">
                   {inv.id} – {inv.customer.name}
                 </div>
                 {inv.date && (
