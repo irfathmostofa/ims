@@ -50,7 +50,7 @@ const navItems: NavItem[] = [
   },
 
   {
-    name: "POS",
+    name: "Sales",
     icon: ShoppingCart,
     children: [
       { name: "New Sale", path: "/pos/sale" },

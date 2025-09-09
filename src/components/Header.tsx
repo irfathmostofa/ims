@@ -1,6 +1,14 @@
 "use client";
 
-import { Bell, Menu, Search, User } from "lucide-react";
+import {
+  Bell,
+  CarTaxiFront,
+  Menu,
+  Search,
+  ShoppingCart,
+  User,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Header({
   setSidebarOpen,
@@ -20,7 +28,7 @@ export default function Header({
         </button>
 
         {/* Search bar */}
-        <div className="relative hidden sm:block">
+        {/* <div className="relative hidden sm:block">
           <input
             type="text"
             placeholder="Search..."
@@ -30,12 +38,19 @@ export default function Header({
             size={16}
             className="absolute left-2.5 top-1/2 -translate-y-1/2 text-bw-500"
           />
-        </div>
+        </div> */}
       </div>
 
       {/* Right - User Actions */}
       <div className="flex items-center gap-4">
         {/* Notifications */}
+        <Link
+          to={"/pos"}
+          className=" p-2 rounded-md hover:bg-bw-700 flex gap-1 items-center text-amber-50 border border-amber-50"
+        >
+          <ShoppingCart size={20} className="text-bw-50" />
+          POS
+        </Link>
         <button className="relative p-2 rounded-md hover:bg-bw-700">
           <Bell size={20} className="text-bw-50" />
           <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
