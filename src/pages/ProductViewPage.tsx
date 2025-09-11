@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import JsBarcode from "jsbarcode";
-import { Button } from "@/components/ui/button";
 import { useParams } from "react-router-dom";
 import { products as demoProducts } from "@/data/dummyProducts";
 
@@ -49,21 +48,21 @@ export default function ProductViewPage() {
     }
   }, [product, copies]);
 
-  const downloadBarcode = (index: number) => {
-    const svg = barcodeRefs.current[index];
-    if (!svg || !product) return;
+  //   const downloadBarcode = (index: number) => {
+  //     const svg = barcodeRefs.current[index];
+  //     if (!svg || !product) return;
 
-    const serializer = new XMLSerializer();
-    const source = serializer.serializeToString(svg);
-    const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
+  //     const serializer = new XMLSerializer();
+  //     const source = serializer.serializeToString(svg);
+  //     const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+  //     const url = URL.createObjectURL(blob);
 
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${product.barcode}-${index + 1}.svg`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
+  //     const link = document.createElement("a");
+  //     link.href = url;
+  //     link.download = `${product.barcode}-${index + 1}.svg`;
+  //     link.click();
+  //     URL.revokeObjectURL(url);
+  //   };
 
   if (!product)
     return (
@@ -73,7 +72,7 @@ export default function ProductViewPage() {
     );
 
   // Calculate rows needed (10 per row)
-  const rows = Math.ceil(copies / 10);
+  //   const rows = Math.ceil(copies / 10);
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
