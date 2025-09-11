@@ -11,6 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "../ui/input";
 
 type CartItem = {
   id: number;
@@ -68,10 +69,10 @@ export default function Cart({
 }) {
   const [savedCarts, setSavedCarts] = useState<SavedCart[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  // const [paymentType, setPaymentType] = useState<"paid" | "partial" | "due">(
-  //   "paid"
-  // );
-  // const [partialAmount, setPartialAmount] = useState("");
+  const [paymentType, setPaymentType] = useState<"paid" | "partial" | "due">(
+    "paid"
+  );
+  const [partialAmount, setPartialAmount] = useState("");
   // load saved carts from localStorage on mount
   useEffect(() => {
     try {
@@ -267,40 +268,65 @@ export default function Cart({
       </div>
 
       {/* Actions */}
-      <div className="mt-4 border-t border-bw-200 pt-4 flex flex-col gap-2">
+      <div className="mt-2 border-t border-bw-200 pt-4 flex flex-col gap-2">
         {/* Payment Method Selection */}
-        <div className="flex gap-4 items-center mb-2">
-          <span className="font-medium text-bw-700 mr-2">Payment:</span>
-          <label className="flex items-center gap-1">
-            <input
-              type="radio"
-              name="payment"
-              checked={paymentMethod === "cash"}
-              className="accent-bw-700"
-              onChange={() => setPaymentMethod("cash")}
-            />
-            <span>Cash</span>
-          </label>
-          <label className="flex items-center gap-1">
-            <input
-              type="radio"
-              name="payment"
-              checked={paymentMethod === "card"}
-              className="accent-bw-700"
-              onChange={() => setPaymentMethod("card")}
-            />
-            <span>Card</span>
-          </label>
-          <label className="flex items-center gap-1">
-            <input
-              type="radio"
-              name="payment"
-              checked={paymentMethod === "online"}
-              className="accent-bw-700"
-              onChange={() => setPaymentMethod("online")}
-            />
-            <span>Online</span>
-          </label>
+        <div className="">
+          {/* Payment Method */}
+
+          <span className="font-medium text-bw-700">Payment Method:</span>
+          <div className="flex gap-2 ">
+            {["cash", "card", "online"].map((method) => (
+              <>
+                <label key={method} className="flex items-center gap-1">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    checked={paymentMethod === method}
+                    className="accent-bw-700"
+                    onChange={() => setPaymentMethod(method)}
+                  />
+                  <span className="capitalize">{method}</span>
+                </label>
+              </>
+            ))}
+          </div>
+        </div>
+
+        {/* ✅ Payment Type */}
+        <div>
+          <span className="font-medium text-bw-700">Payment Type:</span>
+          <div className="flex gap-2">
+            {["paid", "partial", "due"].map((type) => (
+              <>
+                <label key={type} className="flex items-center gap-1">
+                  <input
+                    type="radio"
+                    name="paymentType"
+                    checked={paymentType === type}
+                    className="accent-bw-700"
+                    onChange={() => setPaymentType(type as any)}
+                  />
+                  <span className="capitalize">{type}</span>
+                </label>
+              </>
+            ))}
+          </div>
+
+          {/* ✅ Show input if partial */}
+          {paymentType === "partial" && (
+            <div className="mt-2">
+              <Input
+                type="number"
+                placeholder="Enter partial amount"
+                value={partialAmount}
+                onChange={(e) => setPartialAmount(e.target.value)}
+              />
+              <p className="text-xs text-bw-500 mt-1">
+                Total: ${total} • Remaining: $
+                {Math.max(total - Number(partialAmount || 0), 0)}
+              </p>
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           <button

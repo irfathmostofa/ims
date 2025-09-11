@@ -47,7 +47,11 @@
 .border-bw-300 {
   border-color: #d1d5db;
 }
-
+.bw-primary {
+  background-color: #111827;
+  color: white;
+  transition: background-color 0.2s ease-in-out;
+}
 /* Buttons */
 .btn-bw-primary {
   background-color: #111827;

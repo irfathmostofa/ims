@@ -8,6 +8,8 @@ export const products = [
     brand: "Dell",
     branch: "Main Branch",
     details: "15-inch, 16GB RAM, 512GB SSD, i7 Processor",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 2,
@@ -18,6 +20,8 @@ export const products = [
     brand: "Sony",
     branch: "Main Branch",
     details: "Over-ear, Noise Cancelling, Wireless",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 3,
@@ -28,6 +32,8 @@ export const products = [
     brand: "Logitech",
     branch: "East Branch",
     details: "Mechanical, RGB Backlit, Wired",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 4,
@@ -38,6 +44,8 @@ export const products = [
     brand: "Razer",
     branch: "East Branch",
     details: "Wireless Gaming Mouse, 16000 DPI",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 5,
@@ -48,6 +56,8 @@ export const products = [
     brand: "Samsung",
     branch: "Main Branch",
     details: "27-inch, 144Hz, Full HD",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 6,
@@ -58,6 +68,8 @@ export const products = [
     brand: "Ikea",
     branch: "West Branch",
     details: "Ergonomic, Adjustable, Black Leather",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 7,
@@ -68,6 +80,8 @@ export const products = [
     brand: "Apple",
     branch: "Main Branch",
     details: "iPhone 14, 128GB, Midnight Black",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 8,
@@ -78,6 +92,8 @@ export const products = [
     brand: "Samsung",
     branch: "East Branch",
     details: "Galaxy Tab S8, 11-inch, 256GB Storage",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 9,
@@ -88,6 +104,8 @@ export const products = [
     brand: "Philips",
     branch: "West Branch",
     details: "LED Desk Lamp, Adjustable Brightness",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 10,
@@ -98,6 +116,8 @@ export const products = [
     brand: "Seagate",
     branch: "Main Branch",
     details: "2TB, USB 3.0, Portable",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 11,
@@ -108,6 +128,8 @@ export const products = [
     brand: "Anker",
     branch: "East Branch",
     details: "Fast Charging, Qi-Certified",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 12,
@@ -118,6 +140,8 @@ export const products = [
     brand: "Sony",
     branch: "Main Branch",
     details: "PlayStation 5, 825GB SSD, Black Edition",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 13,
@@ -128,6 +152,8 @@ export const products = [
     brand: "Ikea",
     branch: "West Branch",
     details: "5-Tier, Oak Finish, 72-inch Height",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 14,
@@ -138,6 +164,8 @@ export const products = [
     brand: "JBL",
     branch: "Main Branch",
     details: "Portable, Waterproof, 12h Battery",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 15,
@@ -148,6 +176,8 @@ export const products = [
     brand: "Apple",
     branch: "East Branch",
     details: "Apple Watch Series 9, GPS + Cellular",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 16,
@@ -158,6 +188,8 @@ export const products = [
     brand: "HP",
     branch: "Main Branch",
     details: "Intel i9, 32GB RAM, 1TB SSD, RTX 3080",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 17,
@@ -168,6 +200,8 @@ export const products = [
     brand: "Logitech",
     branch: "East Branch",
     details: "1080p HD, Auto Light Correction, USB",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 18,
@@ -178,6 +212,8 @@ export const products = [
     brand: "Blue",
     branch: "Main Branch",
     details: "Yeti USB Microphone, Cardioid Pattern",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 19,
@@ -188,6 +224,8 @@ export const products = [
     brand: "Epson",
     branch: "West Branch",
     details: "Full HD, 3500 Lumens, HDMI",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 20,
@@ -198,6 +236,8 @@ export const products = [
     brand: "TP-Link",
     branch: "Main Branch",
     details: "WiFi 6, Dual Band, Gigabit Ethernet",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 21,
@@ -208,6 +248,8 @@ export const products = [
     brand: "Canon",
     branch: "East Branch",
     details: "Laser Printer, Wireless, Duplex Printing",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 22,
@@ -218,6 +260,8 @@ export const products = [
     brand: "Ikea",
     branch: "West Branch",
     details: "L-shaped, 60x120cm, Oak Finish",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 23,
@@ -228,6 +272,8 @@ export const products = [
     brand: "Nulaxy",
     branch: "Main Branch",
     details: "Aluminum, Adjustable Height, Ergonomic",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 24,
@@ -238,6 +284,8 @@ export const products = [
     brand: "Philips Hue",
     branch: "East Branch",
     details: "WiFi, Color Changing, App Control",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
   {
     id: 25,
@@ -248,5 +296,7 @@ export const products = [
     brand: "Wacom",
     branch: "Main Branch",
     details: "Intuos Pro, Pen Pressure 8192 Levels, Wireless",
+    barcode: "123456789012",
+    images: ["https://placehold.co/400", "https://placehold.co/400"],
   },
 ];

@@ -16,7 +16,8 @@ export default function MainLayout() {
       {/* Main Content */}
       <div className="flex flex-1 flex-col">
         <Header setSidebarOpen={setSidebarOpen} />
-        <main className="flex-1 overflow-y-auto p-4 bg-[#E9F1F7]">
+        {/* bg-[#E9F1F7] */}
+        <main className="flex-1 overflow-y-auto p-4 ">
           <Outlet />
         </main>
       </div>

@@ -53,8 +53,8 @@ const navItems: NavItem[] = [
     name: "Sales",
     icon: ShoppingCart,
     children: [
-      { name: "New Sale", path: "/pos/sale" },
-      { name: "Returns / Refunds", path: "/pos/returns" },
+      { name: "Sale List", path: "/sale-list" },
+      { name: "Returns / Refunds", path: "/returns-list" },
       { name: "Hold & Resume", path: "/pos/hold" },
       { name: "Discounts & Promotions", path: "/pos/discounts" },
     ],
