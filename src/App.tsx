@@ -11,7 +11,7 @@ import ProductAddPage from "./pages/Inventory/ProductAddPage";
 import AllProductsPage from "./pages/Inventory/ProductsPage";
 import DashboardPage from "./pages/Dashboard/DashboardPage";
 import ProductEditPage from "./pages/Inventory/ProductUpdatePage";
-import { CategoryPage } from "./pages/Inventory/CategoryPage";
+import CategoryPage from "./pages/Inventory/CategoryPage";
 
 export default function App() {
   return (

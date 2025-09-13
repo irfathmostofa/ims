@@ -7,6 +7,7 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import autoTable from "jspdf-autotable";
 import { FileText, Printer, Sheet } from "lucide-react";
+import { printView } from "../utils/print";
 
 type Action<T> = {
   label: React.ReactNode;
@@ -21,12 +22,11 @@ type SortConfig = {
 
 type DataTableProps<T> = {
   data: T[];
-  label?: string; // ✅ New table label
+  label?: string;
   hiddenColumns?: (keyof T)[];
   actions?: Action<T>[];
   selectable?: boolean;
   rowsPerPage?: number;
-  printRef?: React.RefObject<HTMLDivElement | null>;
 };
 
 export function DataTable<T extends Record<string, any>>({
@@ -36,7 +36,6 @@ export function DataTable<T extends Record<string, any>>({
   actions = [],
   selectable = false,
   rowsPerPage = 5,
-  printRef,
 }: DataTableProps<T>) {
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState("");
@@ -139,18 +138,7 @@ export function DataTable<T extends Record<string, any>>({
     });
     doc.save(`${label}.pdf`);
   };
-  const handlePrint = () => {
-    if (!printRef?.current) return;
-    const win = window.open("", "", "width=900,height=650");
-    win?.document.write(`
-    <html>
-      <head><title>${label}</title></head>
-      <body>${printRef.current.innerHTML}</body>
-    </html>
-  `);
-    win?.document.close();
-    win?.print();
-  };
+
   return (
     <div className="space-y-4">
       {/* 🔹 Toolbar */}
@@ -173,7 +161,7 @@ export function DataTable<T extends Record<string, any>>({
           <button className="" onClick={exportPDF}>
             <FileText />
           </button>
-          <button className="" onClick={handlePrint}>
+          <button className="" onClick={() => printView(label)}>
             <Printer />
           </button>
         </div>

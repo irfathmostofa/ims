@@ -4,12 +4,10 @@ import { Eye, Pen, Plus, Trash } from "lucide-react";
 import { products } from "@/data/dummyProducts";
 import { DataTable } from "@/components/ui/dataTable";
 // import { Button } from "@/components/ui/button";
-import { useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export default function AllProductsPage() {
-  const printRef = useRef<HTMLDivElement>(null);
   const router = useNavigate();
   return (
     <div className="">
@@ -36,7 +34,6 @@ export default function AllProductsPage() {
         label="Products List"
         selectable
         rowsPerPage={10}
-        printRef={printRef}
         hiddenColumns={["details", "barcode", "images"]}
         actions={[
           {
@@ -56,7 +53,7 @@ export default function AllProductsPage() {
           },
         ]}
       />
-      <div ref={printRef} className="hidden">
+      <div id="Products List" className="hidden">
         <h1 className="text-xl font-bold mb-2">Product Report</h1>
         <table className="w-full border">
           <thead>
