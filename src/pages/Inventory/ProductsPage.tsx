@@ -6,6 +6,7 @@ import { DataTable } from "@/components/ui/dataTable";
 // import { Button } from "@/components/ui/button";
 import { useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export default function AllProductsPage() {
   const printRef = useRef<HTMLDivElement>(null);
@@ -13,6 +14,12 @@ export default function AllProductsPage() {
   return (
     <div className="">
       {/* Header */}
+      <Breadcrumbs
+        labelOverrides={{
+          products: "Products",
+          all: "All Products",
+        }}
+      />
       <div className="flex flex-col md:flex-row justify-between items-center gap-3 mb-4">
         <h1 className="text-2xl font-bold text-bw-900">All Products</h1>
         <Link
@@ -40,7 +47,7 @@ export default function AllProductsPage() {
           {
             label: <Pen size={16} className="inline" />,
             className: "",
-            onClick: (row) => alert(`Edit ${row.name}`),
+            onClick: (row) => router(`/inventory/products/${row.id}/edit`),
           },
           {
             label: <Trash size={16} className="inline" />,

@@ -68,3 +68,29 @@
 .accent-bw {
   color: #f3f4f6;
 } /* for badges, small highlights */
+/* Hide all print-only stuff on screen */
+@media screen {
+  .print_section,
+  .print-only {
+    display: none;
+  }
+}
+
+/* Show only print_section when printing */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print_section,
+  .print_section * {
+    visibility: visible;
+  }
+  .print_section {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 10px;
+    background: white;
+  }
+}

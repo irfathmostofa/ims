@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import JsBarcode from "jsbarcode";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { products as demoProducts } from "@/data/dummyProducts";
-
+import Barcode from "react-barcode";
+import { printView } from "@/components/utils/print";
 type Product = {
   id: number;
   name: string;
@@ -23,8 +23,6 @@ export default function ProductViewPage() {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [copies, setCopies] = useState(20); // default number of barcode copies
-  const barcodeRefs = useRef<SVGSVGElement[]>([]);
-
   // Fetch product from dummy data
   useEffect(() => {
     if (!id) return;
@@ -32,47 +30,12 @@ export default function ProductViewPage() {
     setProduct(prod);
   }, [id]);
 
-  // Generate barcodes
-  useEffect(() => {
-    if (product) {
-      barcodeRefs.current.forEach((ref) => {
-        if (ref) {
-          JsBarcode(ref, product.barcode, {
-            format: "CODE128",
-            width: 2,
-            height: 50,
-            displayValue: true,
-          });
-        }
-      });
-    }
-  }, [product, copies]);
-
-  //   const downloadBarcode = (index: number) => {
-  //     const svg = barcodeRefs.current[index];
-  //     if (!svg || !product) return;
-
-  //     const serializer = new XMLSerializer();
-  //     const source = serializer.serializeToString(svg);
-  //     const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
-  //     const url = URL.createObjectURL(blob);
-
-  //     const link = document.createElement("a");
-  //     link.href = url;
-  //     link.download = `${product.barcode}-${index + 1}.svg`;
-  //     link.click();
-  //     URL.revokeObjectURL(url);
-  //   };
-
   if (!product)
     return (
       <p className="p-6 text-center text-bw-700">
         Product not found or loading...
       </p>
     );
-
-  // Calculate rows needed (10 per row)
-  //   const rows = Math.ceil(copies / 10);
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -121,48 +84,36 @@ export default function ProductViewPage() {
 
           {/* Barcode Controls */}
           <div className="mt-4 space-y-2">
-            <label className="block font-medium">
-              Number of Barcode Copies:
-            </label>
-            <input
-              type="number"
-              min={1}
-              value={copies}
-              onChange={(e) => setCopies(Number(e.target.value))}
-              className="border rounded px-3 py-1 w-24"
-            />
-          </div>
-
-          {/* Barcode Sheet: 10 per row */}
-          {/* <div className="mt-4 space-y-4">
-            {Array.from({ length: rows }).map((_, rowIdx) => (
-              <div
-                key={rowIdx}
-                className="flex flex-wrap gap-4"
-                style={{ pageBreakInside: "avoid" }}
-              >
-                {Array.from({ length: 10 }).map((_, colIdx) => {
-                  const index = rowIdx * 10 + colIdx;
-                  if (index >= copies) return null;
-                  return (
-                    <div
-                      key={colIdx}
-                      className="p-2 border rounded flex flex-col items-center w-[8%]"
-                    >
-                      <svg ref={(el) => (barcodeRefs.current[index] = el!)} />
-                      <span className="text-xs mt-1">{product.barcode}</span>
-                      <Button
-                        className="mt-1"
-                        onClick={() => downloadBarcode(index)}
-                      >
-                        Download
-                      </Button>
-                    </div>
-                  );
-                })}
+            <div className="flex gap-2 items-center justify-between">
+              <div>
+                <label className="block font-medium">
+                  Number of Barcode Copies:
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={copies}
+                  onChange={(e) => setCopies(Number(e.target.value))}
+                  className="border rounded px-3 py-1 w-24"
+                />
               </div>
-            ))}
-          </div> */}
+              <button
+                onClick={() => {
+                  setTimeout(() => {
+                    printView("barcodeArea");
+                  }, 1000);
+                }}
+                className="btn-bw-primary text-white rounded "
+              >
+                Print
+              </button>
+            </div>
+
+            {/* {copies.map((_id) => (
+              <Barcode key={_id} value={product.barcode} />
+            ))} */}
+            <Barcode value={product.barcode} />
+          </div>
         </div>
 
         {/* Right: Product Images */}
@@ -182,6 +133,14 @@ export default function ProductViewPage() {
           ) : (
             <p className="text-bw-600">No images available.</p>
           )}
+        </div>
+      </div>
+      <div id="barcodeArea" className="hidden">
+        <h1 className="text-xl font-bold mb-2">{product.name} barcode</h1>
+        <div className="grid grid-cols-4 gap-4 items-center">
+          {[...Array(copies)].map((_, idx) => (
+            <Barcode key={idx} value={product.barcode} className=" m-3 h-20" />
+          ))}
         </div>
       </div>
     </div>
