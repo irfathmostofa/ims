@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ChevronRight,
   X,
+  Globe2,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -35,12 +36,18 @@ const navItems: NavItem[] = [
   { name: "Dashboard", path: "/", icon: LayoutDashboard },
 
   {
+    name: "Website Setup",
+    icon: Globe2,
+    children: [
+      { name: "Config", path: "/web/config" },
+      { name: "Tamplate", path: "/web/Tamplate" },
+    ],
+  },
+  {
     name: "Inventory",
     icon: Package,
     children: [
       { name: "All Products", path: "/inventory/products" },
-      { name: "Categories", path: "/inventory/categories" },
-      { name: "Units", path: "/inventory/units" },
       { name: "Purchase Orders", path: "/inventory/purchase-orders" },
       { name: "GRN", path: "/inventory/grn" },
       { name: "Stock Ledger", path: "/inventory/stock-ledger" },
@@ -106,6 +113,8 @@ const navItems: NavItem[] = [
       { name: "Company Info", path: "/setup/company" },
       { name: "Branches", path: "/setup/branches" },
       { name: "Roles", path: "/setup/roles" },
+      { name: "Product Category", path: "/setup/categories" },
+      { name: "Unit of mesurment", path: "/setup/units" },
       { name: "Users", path: "/setup/users" },
     ],
   },

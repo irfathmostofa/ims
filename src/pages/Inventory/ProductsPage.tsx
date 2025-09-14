@@ -9,6 +9,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export default function AllProductsPage() {
   const router = useNavigate();
+
   return (
     <div className="">
       {/* Header */}
@@ -34,7 +35,12 @@ export default function AllProductsPage() {
         label="Products List"
         selectable
         rowsPerPage={10}
-        hiddenColumns={["details", "barcode", "images"]}
+        hiddenColumns={["details", "barcode", "id"]}
+        printHead={[
+          { label: "Product Name", value: "name" },
+          { label: "Price ($)", value: "price" },
+          { label: "Stock", value: "stock" },
+        ]}
         actions={[
           {
             label: <Eye size={16} className="inline" />,

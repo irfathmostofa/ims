@@ -13,7 +13,7 @@ export function Breadcrumbs({ labelOverrides = {} }: BreadcrumbsProps) {
 
   return (
     <nav className="flex items-center text-sm text-gray-600 space-x-1">
-      <Link to="/" className="hover:underline text-blue-600">
+      <Link to="/" className="hover:underline text-gray-900">
         Home
       </Link>
       {pathnames.map((segment, index) => {
@@ -24,13 +24,13 @@ export function Breadcrumbs({ labelOverrides = {} }: BreadcrumbsProps) {
           <span key={routeTo} className="flex items-center space-x-1">
             <ChevronRight size={14} className="text-gray-400" />
             {isLast ? (
-              <span className="font-semibold text-gray-900">
+              <span className="font-semibold text-gray-400">
                 {labelOverrides[segment] || segment}
               </span>
             ) : (
               <Link
                 to={routeTo}
-                className="hover:underline text-blue-600 capitalize"
+                className="hover:underline text-gray-900 capitalize"
               >
                 {labelOverrides[segment] || segment}
               </Link>

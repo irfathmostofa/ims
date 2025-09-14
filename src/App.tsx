@@ -11,7 +11,10 @@ import ProductAddPage from "./pages/Inventory/ProductAddPage";
 import AllProductsPage from "./pages/Inventory/ProductsPage";
 import DashboardPage from "./pages/Dashboard/DashboardPage";
 import ProductEditPage from "./pages/Inventory/ProductUpdatePage";
-import CategoryPage from "./pages/Inventory/CategoryPage";
+import CategoryPage from "./pages/Setup/CategoryPage";
+import UnitPage from "./pages/Setup/UnitPage";
+import SupplierPage from "./pages/Setup/SupplierPage";
+import PurchaseOrderPage from "./pages/Inventory/PurchaseOrderPage";
 
 export default function App() {
   return (
@@ -28,7 +31,15 @@ export default function App() {
             path="/inventory/products/:id/edit"
             element={<ProductEditPage />}
           />
-          <Route path="/inventory/categories" element={<CategoryPage />} />
+          <Route
+            path="/inventory/purchase-orders"
+            element={<PurchaseOrderPage />}
+          />
+
+          {/* setup */}
+          <Route path="/setup/categories" element={<CategoryPage />} />
+          <Route path="/setup/units" element={<UnitPage />} />
+          <Route path="/setup/suppliers" element={<SupplierPage />} />
         </Route>
 
         {/* POS Layout Route */}

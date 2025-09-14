@@ -94,3 +94,26 @@
     background: white;
   }
 }
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px; /* scrollbar width */
+}
+
+::-webkit-scrollbar-track {
+  background: #111827; /* track color */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4b5563; /* thumb color */
+  border-radius: 9999px; /* rounded scrollbar */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6b7280; /* hover effect */
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #111827;
+}

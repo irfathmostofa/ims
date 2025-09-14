@@ -1,7 +1,7 @@
 export const products = [
   {
     id: 1,
-    name: "Laptop",
+    name: "Laptop brown fox jumps over the lazy dog",
     price: 1200,
     category: "Electronics",
     stock: 10,
