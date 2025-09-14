@@ -15,6 +15,15 @@ import CategoryPage from "./pages/Setup/CategoryPage";
 import UnitPage from "./pages/Setup/UnitPage";
 import SupplierPage from "./pages/Setup/SupplierPage";
 import PurchaseOrderPage from "./pages/Inventory/PurchaseOrderPage";
+import GRNPage from "./pages/Inventory/GRNPage";
+import StockLedgerPage from "./pages/Inventory/StockLedgerPage";
+import BranchPage from "./pages/Setup/BranchPage";
+import StockTransferPage from "./pages/Inventory/StockTransferPage";
+import AdjustmentsPage from "./pages/Inventory/AdjustmentsPage";
+import SaleListPage from "./pages/POS/SaleListPage";
+import ReturnsListPage from "./pages/POS/ReturnsListPage";
+import HoldSalesPage from "./pages/POS/HoldSalesPage";
+import DiscountPage from "./pages/POS/DiscountPage";
 
 export default function App() {
   return (
@@ -35,11 +44,23 @@ export default function App() {
             path="/inventory/purchase-orders"
             element={<PurchaseOrderPage />}
           />
-
+          <Route path="/inventory/grn" element={<GRNPage />} />
+          <Route path="/inventory/stock-ledger" element={<StockLedgerPage />} />
+          <Route
+            path="/inventory/stock-transfer"
+            element={<StockTransferPage />}
+          />
+          <Route path="/inventory/adjustments" element={<AdjustmentsPage />} />
           {/* setup */}
           <Route path="/setup/categories" element={<CategoryPage />} />
           <Route path="/setup/units" element={<UnitPage />} />
           <Route path="/setup/suppliers" element={<SupplierPage />} />
+          <Route path="/setup/branches" element={<BranchPage />} />
+          {/* Sale */}
+          <Route path="/sales/sale-list" element={<SaleListPage />} />
+          <Route path="/sales/returns-list" element={<ReturnsListPage />} />
+          <Route path="/sales/hold" element={<HoldSalesPage />} />
+          <Route path="/sales/discounts" element={<DiscountPage />} />
         </Route>
 
         {/* POS Layout Route */}
