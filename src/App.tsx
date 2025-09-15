@@ -24,6 +24,12 @@ import SaleListPage from "./pages/POS/SaleListPage";
 import ReturnsListPage from "./pages/POS/ReturnsListPage";
 import HoldSalesPage from "./pages/POS/HoldSalesPage";
 import DiscountPage from "./pages/POS/DiscountPage";
+import CustomersPage from "./pages/Inventory/CustomersPage";
+import ReceivablesPage from "./pages/Inventory/ReceivablesPage";
+import SuppliersPayPage from "./pages/Inventory/SuppliersPayPage";
+import RolesPage from "./pages/Setup/RolesPage";
+import CompanyPage from "./pages/Setup/CompanyPage";
+import UsersPage from "./pages/Setup/UsersPage";
 
 export default function App() {
   return (
@@ -54,13 +60,22 @@ export default function App() {
           {/* setup */}
           <Route path="/setup/categories" element={<CategoryPage />} />
           <Route path="/setup/units" element={<UnitPage />} />
-          <Route path="/setup/suppliers" element={<SupplierPage />} />
           <Route path="/setup/branches" element={<BranchPage />} />
+          <Route path="/setup/roles" element={<RolesPage />} />
+          <Route path="/setup/company" element={<CompanyPage />} />
+          <Route path="/setup/users" element={<UsersPage />} />
           {/* Sale */}
           <Route path="/sales/sale-list" element={<SaleListPage />} />
           <Route path="/sales/returns-list" element={<ReturnsListPage />} />
           <Route path="/sales/hold" element={<HoldSalesPage />} />
           <Route path="/sales/discounts" element={<DiscountPage />} />
+          {/* Customers */}
+          <Route path="/customers/customer-list" element={<CustomersPage />} />
+          <Route path="/customers/receivables" element={<ReceivablesPage />} />
+
+          {/* suppliers */}
+          <Route path="/suppliers/list" element={<SupplierPage />} />
+          <Route path="/suppliers/payables" element={<SuppliersPayPage />} />
         </Route>
 
         {/* POS Layout Route */}

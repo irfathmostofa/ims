@@ -203,14 +203,14 @@ export function DataTable<T extends Record<string, any>>({
       {/* Table */}
       <div id={label} className="hidden">
         <h1 className="text-xl font-bold mb-2">{label}</h1>
-        <table className="w-full border">
-          <thead>
+        <table className="w-full border border-b-black">
+          <thead >
             <tr>
               {(printHead && printHead.length > 0
                 ? printHead
                 : headers.map((h) => ({ label: h, value: h as keyof T }))
               ).map((col) => (
-                <th key={col.label} className="">
+                <th key={col.label} className="border border-b-black">
                   {col.label}
                 </th>
               ))}

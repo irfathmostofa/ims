@@ -71,7 +71,7 @@ const navItems: NavItem[] = [
     name: "Customers",
     icon: Users,
     children: [
-      { name: "Customer List", path: "/customers" },
+      { name: "Customer List", path: "/customers/customer-list" },
       { name: "Receivables", path: "/customers/receivables" },
     ],
   },
@@ -80,7 +80,7 @@ const navItems: NavItem[] = [
     name: "Suppliers",
     icon: Truck,
     children: [
-      { name: "Supplier List", path: "/suppliers" },
+      { name: "Supplier List", path: "/suppliers/list" },
       { name: "Payables", path: "/suppliers/payables" },
     ],
   },
