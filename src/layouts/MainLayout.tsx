@@ -17,7 +17,7 @@ export default function MainLayout() {
       <div className="flex flex-1 flex-col">
         <Header setSidebarOpen={setSidebarOpen} />
         {/* bg-[#E9F1F7] */}
-        <main className="flex-1 overflow-y-auto p-4 ">
+        <main className="flex-1 overflow-y-auto  p-2">
           <Outlet />
         </main>
       </div>

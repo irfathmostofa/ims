@@ -30,6 +30,13 @@ import SuppliersPayPage from "./pages/Inventory/SuppliersPayPage";
 import RolesPage from "./pages/Setup/RolesPage";
 import CompanyPage from "./pages/Setup/CompanyPage";
 import UsersPage from "./pages/Setup/UsersPage";
+import CoaPage from "./pages/Accounts/CoaPage";
+import JournalsPage from "./pages/Accounts/JournalsPage";
+import TransactionsPage from "./pages/Accounts/TransactionsPage";
+import SalesReportPage from "./pages/Reports/SalesReportPage";
+import StockReportPage from "./pages/Reports/StockReportPage";
+import ProfitabilityReportPage from "./pages/Reports/ProfitabilityReportPage";
+import PurchaseReportPage from "./pages/Reports/PurchaseReportPage";
 
 export default function App() {
   return (
@@ -76,6 +83,20 @@ export default function App() {
           {/* suppliers */}
           <Route path="/suppliers/list" element={<SupplierPage />} />
           <Route path="/suppliers/payables" element={<SuppliersPayPage />} />
+
+          {/* Accounts */}
+          <Route path="/accounts/coa" element={<CoaPage />} />
+          <Route path="/accounts/journals" element={<JournalsPage />} />
+          <Route path="/accounts/transactions" element={<TransactionsPage />} />
+
+          {/* Reports */}
+          <Route path="/reports/sales" element={<SalesReportPage />} />
+          <Route path="/reports/stock" element={<StockReportPage />} />
+          <Route
+            path="/reports/profitability"
+            element={<ProfitabilityReportPage />}
+          />
+          <Route path="/reports/purchase" element={<PurchaseReportPage />} />
         </Route>
 
         {/* POS Layout Route */}

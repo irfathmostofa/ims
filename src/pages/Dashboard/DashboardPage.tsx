@@ -1,214 +1,343 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Package, ShoppingCart, Users, DollarSign } from "lucide-react";
 import {
-  BarChart,
-  Bar,
+  Users,
+  Package,
+  Store,
+  DollarSign,
+  TrendingUp,
+  CreditCard,
+} from "lucide-react";
+import {
+  LineChart,
+  Line,
   XAxis,
   YAxis,
+  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  BarChart,
+  Bar,
 } from "recharts";
 
+// Dummy Data
+const products = [
+  {
+    id: 1,
+    name: "Laptop",
+    category: "Electronics",
+    stock: 15,
+    price: 1200,
+    branch: "A",
+  },
+  {
+    id: 2,
+    name: "Headphones",
+    category: "Accessories",
+    stock: 3,
+    price: 150,
+    branch: "B",
+  },
+  {
+    id: 3,
+    name: "Smartphone",
+    category: "Electronics",
+    stock: 30,
+    price: 800,
+    branch: "A",
+  },
+  {
+    id: 4,
+    name: "Mouse",
+    category: "Accessories",
+    stock: 5,
+    price: 25,
+    branch: "C",
+  },
+  {
+    id: 5,
+    name: "Keyboard",
+    category: "Accessories",
+    stock: 75,
+    price: 45,
+    branch: "B",
+  },
+];
+
+const branches = ["A", "B", "C"];
+
+const orders = [
+  {
+    id: 1,
+    product: "Laptop",
+    customer: "John Doe",
+    total: 2400,
+    date: "2025-09-01",
+  },
+  {
+    id: 2,
+    product: "Headphones",
+    customer: "Jane Smith",
+    total: 300,
+    date: "2025-09-02",
+  },
+  {
+    id: 3,
+    product: "Mouse",
+    customer: "Alice Brown",
+    total: 75,
+    date: "2025-09-03",
+  },
+];
+
+// Monthly Recap Chart Data
+const monthlyData = [
+  { month: "Jan", sales: 4000 },
+  { month: "Feb", sales: 3000 },
+  { month: "Mar", sales: 5000 },
+  { month: "Apr", sales: 4000 },
+  { month: "May", sales: 6000 },
+  { month: "Jun", sales: 7000 },
+];
+
 export default function DashboardPage() {
-  // Demo data for chart
-  const salesData = [
-    { month: "Jan", sales: 4000 },
-    { month: "Feb", sales: 3000 },
-    { month: "Mar", sales: 5000 },
-    { month: "Apr", sales: 7000 },
-    { month: "May", sales: 6000 },
-    { month: "Jun", sales: 8000 },
-    { month: "Jul", sales: 7500 },
-    { month: "Aug", sales: 8200 },
-    { month: "Sep", sales: 6700 },
-    // { month: "Oct", sales: 9100 },
-    // { month: "Nov", sales: 9800 },
-    // { month: "Dec", sales: 10200 },
-  ];
+  const totalStock = products.reduce((acc, p) => acc + p.stock, 0);
+  const totalBranches = branches.length;
+  const totalCustomers = 45;
+  const totalStaff = 12;
+  const totalSales = orders.reduce((acc, o) => acc + o.total, 0);
+
+  const totalRevenue = totalSales;
+  const totalCost = totalSales * 0.6;
+  const totalProfit = totalRevenue - totalCost;
+  const latestOrders = orders.slice(-5).reverse();
+  const recentProducts = products.slice(-5).reverse();
+  const branchStockData = branches.map((branch) => ({
+    branch,
+    stock: products
+      .filter((p) => p.branch === branch)
+      .reduce((acc, p) => acc + p.stock, 0),
+  }));
+
+  const lowStockProducts = products.filter((p) => p.stock <= 10);
 
   return (
-    <div className="space-y-6">
-      {/* Top Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$45,231</div>
-            <p className="text-xs text-muted-foreground">
-              +20% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Today Sales</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$45</div>
-            <p className="text-xs text-muted-foreground">+20% from last day</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Orders</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1,230</div>
-            <p className="text-xs text-muted-foreground">+5% from last week</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Customers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">350</div>
-            <p className="text-xs text-muted-foreground">+12 new this week</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Inventory</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1,542</div>
-            <p className="text-xs text-muted-foreground">In stock</p>
-          </CardContent>
-        </Card>
+    <div className="p-6 space-y-6 bg-[#111827] min-h-screen text-gray-100">
+      {/* SECTION 1: Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <Card
+          icon={<Package />}
+          title="Total Stock"
+          value={totalStock}
+          bg="bg-gradient-to-r from-[#FFD7BA] to-[#FFBFAA]"
+        />
+        <Card
+          icon={<Store />}
+          title="Branches"
+          value={totalBranches}
+          bg="bg-gradient-to-r from-[#FFBFAA] to-[#FF9E8F]"
+        />
+        <Card
+          icon={<Users />}
+          title="Customers"
+          value={totalCustomers}
+          bg="bg-gradient-to-r from-[#FFC6A8] to-[#FF8F7A]"
+        />
+        <Card
+          icon={<Users />}
+          title="Staff"
+          value={totalStaff}
+          bg="bg-gradient-to-r from-[#FFD3B4] to-[#FF9C8F]"
+        />
+        <Card
+          icon={<DollarSign />}
+          title="Total Sales"
+          value={`$${totalSales}`}
+          bg="bg-gradient-to-r from-[#FFBFAA] to-[#FF8F94]"
+        />
       </div>
 
-      {/* Tabs Section */}
-      <Tabs defaultValue="overview" className="space-y-4 w-[50%]">
-        <TabsList className="flex space-x-2  rounded-md">
-          <TabsTrigger
-            value="overview"
-            className="data-[state=active]:bg-[#111827] data-[state=active]:text-white"
-          >
-            Overview
-          </TabsTrigger>
-          <TabsTrigger
-            value="sales"
-            className="data-[state=active]:bg-[#111827] data-[state=active]:text-white"
-          >
-            Sales
-          </TabsTrigger>
-          <TabsTrigger
-            value="inventory"
-            className="data-[state=active]:bg-[#111827] data-[state=active]:text-white"
-          >
-            Inventory
-          </TabsTrigger>
-          <TabsTrigger
-            value="BestSellingProducts"
-            className="data-[state=active]:bg-[#111827] data-[state=active]:text-white"
-          >
-            Best Selling Products
-          </TabsTrigger>
-        </TabsList>
+      {/* SECTION 2: Monthly Recap + Branch Stock */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Monthly Recap */}
+        <div className="bg-[#1F2937] p-4 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-2 text-[#FFD7BA]">
+            Monthly Recap Report
+          </h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={monthlyData}>
+              <CartesianGrid stroke="#374151" strokeDasharray="3 3" />
+              <XAxis dataKey="month" stroke="#FFD7BA" />
+              <YAxis stroke="#FFD7BA" />
+              <Tooltip
+                contentStyle={{ backgroundColor: "#1F2937", color: "#fff" }}
+              />
+              <Line
+                type="monotone"
+                dataKey="sales"
+                stroke="#FFBFAA"
+                strokeWidth={3}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Sales Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={salesData}>
-                  <XAxis dataKey="month" stroke="#888" />
-                  <YAxis stroke="#000" />
-                  <Tooltip />
-                  <Bar dataKey="sales" fill="#2563eb" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {/* Branch Stock + Low Stock */}
+        <div className="bg-[#1F2937] p-4 rounded-lg shadow space-y-4">
+          <h3 className="text-lg font-semibold text-[#FFD7BA]">
+            Branch-wise Stock
+          </h3>
+          <ResponsiveContainer width="100%" height={150}>
+            <BarChart data={branchStockData}>
+              <CartesianGrid stroke="#374151" strokeDasharray="3 3" />
+              <XAxis dataKey="branch" stroke="#FFD7BA" />
+              <YAxis stroke="#FFD7BA" />
+              <Tooltip
+                contentStyle={{ backgroundColor: "#1F2937", color: "#fff" }}
+              />
+              <Bar dataKey="stock" fill="#FFBFAA" />
+            </BarChart>
+          </ResponsiveContainer>
 
-        {/* Sales Tab */}
-        <TabsContent value="sales">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Orders</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>#INV-1001</span>
-                <span className="font-medium">$120</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>#INV-1002</span>
-                <span className="font-medium">$250</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>#INV-1003</span>
-                <span className="font-medium">$90</span>
-              </div>
-              <Button className="w-full mt-2">View All Orders</Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
+          {/* Low Stock Products */}
+          <div>
+            <h4 className="text-md font-semibold mb-2 text-red-400">
+              Low Stock Products
+            </h4>
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr>
+                  <th className="px-2 py-1 text-left text-[#FFBFAA]">
+                    Product
+                  </th>
+                  <th className="px-2 py-1 text-left text-[#FFBFAA]">Branch</th>
+                  <th className="px-2 py-1 text-left text-[#FFBFAA]">Stock</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lowStockProducts.map((p) => (
+                  <tr key={p.id} className="border-t border-gray-700">
+                    <td className="px-2 py-1">{p.name}</td>
+                    <td className="px-2 py-1">{p.branch}</td>
+                    <td className="px-2 py-1 text-red-400 font-bold">
+                      {p.stock}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
-        {/* Inventory Tab */}
-        <TabsContent value="inventory">
-          <Card>
-            <CardHeader>
-              <CardTitle>Low Stock Products</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Product A</span>
-                <span className="text-red-500">5 left</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Product B</span>
-                <span className="text-red-500">2 left</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Product C</span>
-                <span className="text-red-500">8 left</span>
-              </div>
-              <Button className="w-full mt-2">Manage Inventory</Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="BestSellingProducts">
-          <Card>
-            <CardHeader>
-              <CardTitle>Best Selling Products</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Product A</span>
-                <span className="text-red-500">5 left</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Product B</span>
-                <span className="text-red-500">2 left</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Product C</span>
-                <span className="text-red-500">8 left</span>
-              </div>
-              <Button className="w-full mt-2">Manage Inventory</Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* SECTION 3: Finance Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card
+          icon={<CreditCard />}
+          title="Total Revenue"
+          value={`$${totalRevenue}`}
+          bg="bg-gradient-to-r from-[#FFD7BA] to-[#FFBFAA]"
+        />
+        <Card
+          icon={<CreditCard />}
+          title="Total Cost"
+          value={`$${totalCost}`}
+          bg="bg-gradient-to-r from-[#FFBFAA] to-[#FF9E8F]"
+        />
+        <Card
+          icon={<TrendingUp />}
+          title="Total Profit"
+          value={`$${totalProfit}`}
+          bg="bg-gradient-to-r from-[#FFC6A8] to-[#FF8F7A]"
+        />
+      </div>
+      {/* SECTION 4: Latest Orders & Recently Added Products */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-[#1F2937] p-4 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-2 text-[#FFD7BA]">
+            Latest Orders
+          </h3>
+          <CustomTable
+            data={latestOrders}
+            columns={["product", "customer", "total", "date"]}
+            headerColor="#FFBFAA"
+          />
+        </div>
+
+        <div className="bg-[#1F2937] p-4 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-2 text-[#FFD7BA]">
+            Recently Added Products
+          </h3>
+          <CustomTable
+            data={recentProducts}
+            columns={["name", "category", "stock", "price"]}
+            headerColor="#FFBFAA"
+          />
+        </div>
+      </div>
     </div>
+  );
+}
+
+// ---------------------- Card Component ----------------------
+function Card({
+  icon,
+  title,
+  value,
+  bg,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  value: any;
+  bg: string;
+}) {
+  return (
+    <div
+      className={`p-4 flex items-center gap-4 rounded-lg text-gray-900 font-semibold ${bg}`}
+    >
+      <div className="p-2 bg-white/30 rounded-full">{icon}</div>
+      <div>
+        <h3 className="text-sm">{title}</h3>
+        <p className="text-2xl font-bold">{value}</p>
+      </div>
+    </div>
+  );
+}
+function CustomTable({
+  data,
+  columns,
+  headerColor,
+}: {
+  data: any[];
+  columns: string[];
+  headerColor: string;
+}) {
+  return (
+    <table className="w-full border-collapse">
+      <thead>
+        <tr>
+          {columns.map((col) => (
+            <th
+              key={col}
+              className={`px-4 py-2 text-left`}
+              style={{ color: headerColor }}
+            >
+              {col.toUpperCase()}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((row, i) => (
+          <tr key={i} className="border-t border-gray-700">
+            {columns.map((col) => (
+              <td key={col} className="px-4 py-2">
+                {row[col]}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
