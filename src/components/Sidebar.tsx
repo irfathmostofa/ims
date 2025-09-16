@@ -36,14 +36,6 @@ const navItems: NavItem[] = [
   { name: "Dashboard", path: "/", icon: LayoutDashboard },
 
   {
-    name: "Website Setup",
-    icon: Globe2,
-    children: [
-      { name: "Config", path: "/web/config" },
-      { name: "Tamplate", path: "/web/Tamplate" },
-    ],
-  },
-  {
     name: "Inventory",
     icon: Package,
     children: [
@@ -116,6 +108,14 @@ const navItems: NavItem[] = [
       { name: "Product Category", path: "/setup/categories" },
       { name: "Unit of mesurment", path: "/setup/units" },
       { name: "Users", path: "/setup/users" },
+    ],
+  },
+  {
+    name: "Website Setup",
+    icon: Globe2,
+    children: [
+      { name: "Config", path: "/under-construction" },
+      { name: "Tamplate", path: "/under-construction" },
     ],
   },
 ];

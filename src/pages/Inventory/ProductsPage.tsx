@@ -11,7 +11,7 @@ export default function AllProductsPage() {
   const router = useNavigate();
 
   return (
-    <div className="">
+    <div className="p-6">
       {/* Header */}
       <Breadcrumbs
         labelOverrides={{
