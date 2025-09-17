@@ -37,6 +37,7 @@ import SalesReportPage from "./pages/Reports/SalesReportPage";
 import StockReportPage from "./pages/Reports/StockReportPage";
 import ProfitabilityReportPage from "./pages/Reports/ProfitabilityReportPage";
 import PurchaseReportPage from "./pages/Reports/PurchaseReportPage";
+import LoginPage from "./pages/Auth/LoginPage";
 
 export default function App() {
   return (
@@ -45,7 +46,7 @@ export default function App() {
       <Routes>
         {/*  Main Layout Routes */}
         <Route element={<MainLayout />}>
-          <Route path="/" element={<DashboardPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/inventory/products" element={<AllProductsPage />} />
           <Route path="/inventory/products/add" element={<ProductAddPage />} />
           <Route path="/inventory/products/:id" element={<ProductViewPage />} />
@@ -112,6 +113,7 @@ export default function App() {
             element={<UnderConstructionPage />}
           />
           <Route path="*" element={<NotFoundPage />} />
+          <Route path="/" element={<LoginPage />} />
         </Route>
       </Routes>
     </Router>

@@ -33,7 +33,7 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { name: "Dashboard", path: "/", icon: LayoutDashboard },
+  { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
 
   {
     name: "Inventory",
