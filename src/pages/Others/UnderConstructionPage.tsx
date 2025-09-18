@@ -8,7 +8,7 @@ export default function UnderConstructionPage() {
       <p className="mt-2 text-gray-200">This page will be live soon.</p>
       <button
         className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md"
-        onClick={() => router("/")}
+        onClick={() => router("/dashboard")}
       >
         Go Back Home
       </button>

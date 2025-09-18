@@ -39,86 +39,138 @@ import ProfitabilityReportPage from "./pages/Reports/ProfitabilityReportPage";
 import PurchaseReportPage from "./pages/Reports/PurchaseReportPage";
 import LoginPage from "./pages/Auth/LoginPage";
 import AuthLayout from "./layouts/AuthLayout";
+import SetupWizard from "./pages/Setup/SetupWizard";
+import { Toaster } from "sonner";
+import { useEffect, useState } from "react";
+import Loader from "./components/utils/loader";
 
 export default function App() {
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate system initialization, API check, or setup delay
+    const timer = setTimeout(() => setInitialLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+  // useEffect(() => {
+  //   async function initSystem() {
+  //     try {
+  //       await fetch("/api/setup"); // example API call
+  //     } catch (err) {
+  //       console.error(err);
+  //     } finally {
+  //       setInitialLoading(false);
+  //     }
+  //   }
+  //   initSystem();
+  // }, []);
+
+  if (initialLoading) {
+    return <Loader variant="fullscreen" message="Initializing system..." />;
+  }
   return (
-    <Router>
-      <div className="print_section"></div>
-      <Routes>
-        {/*  Main Layout Routes */}
-        <Route element={<MainLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/inventory/products" element={<AllProductsPage />} />
-          <Route path="/inventory/products/add" element={<ProductAddPage />} />
-          <Route path="/inventory/products/:id" element={<ProductViewPage />} />
-          <Route
-            path="/inventory/products/:id/edit"
-            element={<ProductEditPage />}
-          />
-          <Route
-            path="/inventory/purchase-orders"
-            element={<PurchaseOrderPage />}
-          />
-          <Route path="/inventory/grn" element={<GRNPage />} />
-          <Route path="/inventory/stock-ledger" element={<StockLedgerPage />} />
-          <Route
-            path="/inventory/stock-transfer"
-            element={<StockTransferPage />}
-          />
-          <Route path="/inventory/adjustments" element={<AdjustmentsPage />} />
-          {/* setup */}
-          <Route path="/setup/categories" element={<CategoryPage />} />
-          <Route path="/setup/units" element={<UnitPage />} />
-          <Route path="/setup/branches" element={<BranchPage />} />
-          <Route path="/setup/roles" element={<RolesPage />} />
-          <Route path="/setup/company" element={<CompanyPage />} />
-          <Route path="/setup/users" element={<UsersPage />} />
-          {/* Sale */}
-          <Route path="/sales/sale-list" element={<SaleListPage />} />
-          <Route path="/sales/returns-list" element={<ReturnsListPage />} />
-          <Route path="/sales/hold" element={<HoldSalesPage />} />
-          <Route path="/sales/discounts" element={<DiscountPage />} />
-          {/* Customers */}
-          <Route path="/customers/customer-list" element={<CustomersPage />} />
-          <Route path="/customers/receivables" element={<ReceivablesPage />} />
+    <>
+      <Toaster richColors position="top-center" expand={true} />
+      <Router>
+        <div className="print_section"></div>
+        <Routes>
+          {/*  Main Layout Routes */}
+          <Route element={<MainLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/inventory/products" element={<AllProductsPage />} />
+            <Route
+              path="/inventory/products/add"
+              element={<ProductAddPage />}
+            />
+            <Route
+              path="/inventory/products/:id"
+              element={<ProductViewPage />}
+            />
+            <Route
+              path="/inventory/products/:id/edit"
+              element={<ProductEditPage />}
+            />
+            <Route
+              path="/inventory/purchase-orders"
+              element={<PurchaseOrderPage />}
+            />
+            <Route path="/inventory/grn" element={<GRNPage />} />
+            <Route
+              path="/inventory/stock-ledger"
+              element={<StockLedgerPage />}
+            />
+            <Route
+              path="/inventory/stock-transfer"
+              element={<StockTransferPage />}
+            />
+            <Route
+              path="/inventory/adjustments"
+              element={<AdjustmentsPage />}
+            />
+            {/* setup */}
+            <Route path="/setup/categories" element={<CategoryPage />} />
+            <Route path="/setup/units" element={<UnitPage />} />
+            <Route path="/setup/branches" element={<BranchPage />} />
+            <Route path="/setup/roles" element={<RolesPage />} />
+            <Route path="/setup/company" element={<CompanyPage />} />
+            <Route path="/setup/users" element={<UsersPage />} />
+            {/* Sale */}
+            <Route path="/sales/sale-list" element={<SaleListPage />} />
+            <Route path="/sales/returns-list" element={<ReturnsListPage />} />
+            <Route path="/sales/hold" element={<HoldSalesPage />} />
+            <Route path="/sales/discounts" element={<DiscountPage />} />
+            {/* Customers */}
+            <Route
+              path="/customers/customer-list"
+              element={<CustomersPage />}
+            />
+            <Route
+              path="/customers/receivables"
+              element={<ReceivablesPage />}
+            />
 
-          {/* suppliers */}
-          <Route path="/suppliers/list" element={<SupplierPage />} />
-          <Route path="/suppliers/payables" element={<SuppliersPayPage />} />
+            {/* suppliers */}
+            <Route path="/suppliers/list" element={<SupplierPage />} />
+            <Route path="/suppliers/payables" element={<SuppliersPayPage />} />
 
-          {/* Accounts */}
-          <Route path="/accounts/coa" element={<CoaPage />} />
-          <Route path="/accounts/journals" element={<JournalsPage />} />
-          <Route path="/accounts/transactions" element={<TransactionsPage />} />
+            {/* Accounts */}
+            <Route path="/accounts/coa" element={<CoaPage />} />
+            <Route path="/accounts/journals" element={<JournalsPage />} />
+            <Route
+              path="/accounts/transactions"
+              element={<TransactionsPage />}
+            />
 
-          {/* Reports */}
-          <Route path="/reports/sales" element={<SalesReportPage />} />
-          <Route path="/reports/stock" element={<StockReportPage />} />
-          <Route
-            path="/reports/profitability"
-            element={<ProfitabilityReportPage />}
-          />
-          <Route path="/reports/purchase" element={<PurchaseReportPage />} />
-        </Route>
+            {/* Reports */}
+            <Route path="/reports/sales" element={<SalesReportPage />} />
+            <Route path="/reports/stock" element={<StockReportPage />} />
+            <Route
+              path="/reports/profitability"
+              element={<ProfitabilityReportPage />}
+            />
+            <Route path="/reports/purchase" element={<PurchaseReportPage />} />
+          </Route>
 
-        {/* POS Layout Route */}
-        <Route element={<PosLayout />}>
-          <Route path="/pos" element={<POSPage />} />
-          <Route path="/return" element={<ReturnPage />} />
-        </Route>
+          {/* POS Layout Route */}
+          <Route element={<PosLayout />}>
+            <Route path="/pos" element={<POSPage />} />
+            <Route path="/return" element={<ReturnPage />} />
+          </Route>
 
-        {/* Special Layout Routes */}
-        <Route element={<SpecialLayout />}>
-          <Route
-            path="/under-construction"
-            element={<UnderConstructionPage />}
-          />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-        <Route element={<AuthLayout />}>
-          <Route path="/" element={<LoginPage />} />
-        </Route>
-      </Routes>
-    </Router>
+          {/* Special Layout Routes */}
+          <Route element={<SpecialLayout />}>
+            <Route
+              path="/under-construction"
+              element={<UnderConstructionPage />}
+            />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+          <Route element={<AuthLayout />}>
+            <Route path="/" element={<LoginPage />} />
+            <Route path="/setup-wizard" element={<SetupWizard />} />
+          </Route>
+        </Routes>
+      </Router>
+    </>
   );
 }

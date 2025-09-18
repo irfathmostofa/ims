@@ -204,7 +204,7 @@ export function DataTable<T extends Record<string, any>>({
       <div id={label} className="hidden">
         <h1 className="text-xl font-bold mb-2">{label}</h1>
         <table className="w-full border border-b-black">
-          <thead >
+          <thead>
             <tr>
               {(printHead && printHead.length > 0
                 ? printHead
@@ -232,8 +232,8 @@ export function DataTable<T extends Record<string, any>>({
           </tbody>
         </table>
       </div>
-      <div className="overflow-x-auto border rounded-xl shadow-sm max-h-96">
-        <table className="w-full border-collapse">
+      <div className="overflow-x-auto border rounded-xl shadow-sm max-h-[60vh]">
+        <table className="w-full border-collapse min-w-[600px]">
           <thead className="text-left sticky top-0 bg-bw-900 z-10">
             <tr>
               {selectable && (
@@ -245,7 +245,6 @@ export function DataTable<T extends Record<string, any>>({
                   />
                 </th>
               )}
-
               {headers.map((header) => (
                 <th
                   key={header}
@@ -255,7 +254,6 @@ export function DataTable<T extends Record<string, any>>({
                   {header} {getSortIndicator(header)}
                 </th>
               ))}
-
               {actions.length > 0 && (
                 <th className="px-4 py-2 border-b text-white font-medium">
                   Actions
@@ -304,14 +302,14 @@ export function DataTable<T extends Record<string, any>>({
                     if (isImageColumn) {
                       if (Array.isArray(value)) {
                         return (
-                          <td key={header} className="px-4 py-2 border-b">
-                            <div className="flex gap-2">
+                          <td key={header} className="px-2 py-1 border-b">
+                            <div className="flex gap-1 flex-wrap">
                               {value.map((img: string, i: number) => (
                                 <img
                                   key={i}
                                   src={img}
                                   alt={`${header}-${i}`}
-                                  className="w-12 h-12 object-cover rounded-md border cursor-pointer"
+                                  className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-md border cursor-pointer"
                                   onClick={() => setPreviewImage(img)}
                                 />
                               ))}
@@ -320,11 +318,11 @@ export function DataTable<T extends Record<string, any>>({
                         );
                       } else {
                         return (
-                          <td key={header} className="px-4 py-2 border-b">
+                          <td key={header} className="px-2 py-1 border-b">
                             <img
                               src={value}
                               alt={header}
-                              className="w-12 h-12 object-cover rounded-md border cursor-pointer"
+                              className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-md border cursor-pointer"
                               onClick={() => setPreviewImage(value)}
                             />
                           </td>
@@ -335,7 +333,8 @@ export function DataTable<T extends Record<string, any>>({
                     return (
                       <td
                         key={header}
-                        className="px-4 py-2 border-b text-bw-900"
+                        className="px-2 py-1 border-b text-bw-900 max-w-[150px] truncate"
+                        title={String(value)}
                       >
                         {typeof value === "string" && value.length > 30
                           ? value.slice(0, 20) + "..."
@@ -345,7 +344,7 @@ export function DataTable<T extends Record<string, any>>({
                   })}
 
                   {actions.length > 0 && (
-                    <td className="px-4 py-2 border-b space-x-2">
+                    <td className="px-2 py-1 border-b space-x-1">
                       {actions.map((action, i) => (
                         <button
                           key={i}
