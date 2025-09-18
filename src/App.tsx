@@ -38,6 +38,7 @@ import StockReportPage from "./pages/Reports/StockReportPage";
 import ProfitabilityReportPage from "./pages/Reports/ProfitabilityReportPage";
 import PurchaseReportPage from "./pages/Reports/PurchaseReportPage";
 import LoginPage from "./pages/Auth/LoginPage";
+import AuthLayout from "./layouts/AuthLayout";
 
 export default function App() {
   return (
@@ -113,6 +114,8 @@ export default function App() {
             element={<UnderConstructionPage />}
           />
           <Route path="*" element={<NotFoundPage />} />
+        </Route>
+        <Route element={<AuthLayout />}>
           <Route path="/" element={<LoginPage />} />
         </Route>
       </Routes>
