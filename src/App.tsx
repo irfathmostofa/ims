@@ -41,33 +41,8 @@ import LoginPage from "./pages/Auth/LoginPage";
 import AuthLayout from "./layouts/AuthLayout";
 import SetupWizard from "./pages/Setup/SetupWizard";
 import { Toaster } from "sonner";
-import { useEffect, useState } from "react";
-import Loader from "./components/utils/loader";
 
 export default function App() {
-  const [initialLoading, setInitialLoading] = useState(true);
-
-  useEffect(() => {
-    // Simulate system initialization, API check, or setup delay
-    const timer = setTimeout(() => setInitialLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
-  // useEffect(() => {
-  //   async function initSystem() {
-  //     try {
-  //       await fetch("/api/setup"); // example API call
-  //     } catch (err) {
-  //       console.error(err);
-  //     } finally {
-  //       setInitialLoading(false);
-  //     }
-  //   }
-  //   initSystem();
-  // }, []);
-
-  if (initialLoading) {
-    return <Loader variant="fullscreen" message="Initializing system..." />;
-  }
   return (
     <>
       <Toaster richColors position="top-center" expand={true} />

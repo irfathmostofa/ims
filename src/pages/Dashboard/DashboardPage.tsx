@@ -88,6 +88,20 @@ const orders = [
     total: 75,
     date: "2025-09-03",
   },
+  {
+    id: 4,
+    product: "Mouse",
+    customer: "Alice Brown",
+    total: 75,
+    date: "2025-09-03",
+  },
+  {
+    id: 5,
+    product: "Mouse",
+    customer: "Alice Brown",
+    total: 75,
+    date: "2025-09-03",
+  },
 ];
 
 // Monthly Recap Chart Data
@@ -122,38 +136,38 @@ export default function DashboardPage() {
   const lowStockProducts = products.filter((p) => p.stock <= 10);
 
   return (
-    <div className="p-6 space-y-6 bg-[#111827] min-h-screen text-gray-100">
+    <div className="p-6 space-y-6  min-h-screen text-gray-100">
       {/* SECTION 1: Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card
           icon={<Package />}
           title="Total Stock"
           value={totalStock}
-          bg="bg-gradient-to-r from-[#FFD7BA] to-[#FFBFAA]"
+          bg="bg-[#1F2937]"
         />
         <Card
           icon={<Store />}
           title="Branches"
           value={totalBranches}
-          bg="bg-gradient-to-r from-[#FFBFAA] to-[#FF9E8F]"
+          bg="bg-[#1F2937]"
         />
         <Card
           icon={<Users />}
           title="Customers"
           value={totalCustomers}
-          bg="bg-gradient-to-r from-[#FFC6A8] to-[#FF8F7A]"
+          bg="bg-[#1F2937]"
         />
         <Card
           icon={<Users />}
           title="Staff"
           value={totalStaff}
-          bg="bg-gradient-to-r from-[#FFD3B4] to-[#FF9C8F]"
+          bg="bg-[#1F2937]"
         />
         <Card
           icon={<DollarSign />}
           title="Total Sales"
           value={`$${totalSales}`}
-          bg="bg-gradient-to-r from-[#FFBFAA] to-[#FF8F94]"
+          bg="bg-[#1F2937]"
         />
       </div>
 
@@ -161,21 +175,21 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Monthly Recap */}
         <div className="bg-[#1F2937] p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-2 text-[#FFD7BA]">
+          <h3 className="text-lg font-semibold mb-2 text-[#fff]">
             Monthly Recap Report
           </h3>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={monthlyData}>
               <CartesianGrid stroke="#374151" strokeDasharray="3 3" />
-              <XAxis dataKey="month" stroke="#FFD7BA" />
-              <YAxis stroke="#FFD7BA" />
+              <XAxis dataKey="month" stroke="#fff" />
+              <YAxis stroke="#fff" />
               <Tooltip
-                contentStyle={{ backgroundColor: "#1F2937", color: "#fff" }}
+                contentStyle={{ backgroundColor: "#fff", color: "#fff" }}
               />
               <Line
                 type="monotone"
                 dataKey="sales"
-                stroke="#FFBFAA"
+                stroke="#fff"
                 strokeWidth={3}
               />
             </LineChart>
@@ -184,18 +198,18 @@ export default function DashboardPage() {
 
         {/* Branch Stock + Low Stock */}
         <div className="bg-[#1F2937] p-4 rounded-lg shadow space-y-4">
-          <h3 className="text-lg font-semibold text-[#FFD7BA]">
+          <h3 className="text-lg font-semibold text-[#fff]">
             Branch-wise Stock
           </h3>
           <ResponsiveContainer width="100%" height={150}>
             <BarChart data={branchStockData}>
               <CartesianGrid stroke="#374151" strokeDasharray="3 3" />
-              <XAxis dataKey="branch" stroke="#FFD7BA" />
-              <YAxis stroke="#FFD7BA" />
+              <XAxis dataKey="branch" stroke="#fff" />
+              <YAxis stroke="#fff" />
               <Tooltip
                 contentStyle={{ backgroundColor: "#1F2937", color: "#fff" }}
               />
-              <Bar dataKey="stock" fill="#FFBFAA" />
+              <Bar dataKey="stock" fill="#fff" />
             </BarChart>
           </ResponsiveContainer>
 
@@ -207,11 +221,9 @@ export default function DashboardPage() {
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr>
-                  <th className="px-2 py-1 text-left text-[#FFBFAA]">
-                    Product
-                  </th>
-                  <th className="px-2 py-1 text-left text-[#FFBFAA]">Branch</th>
-                  <th className="px-2 py-1 text-left text-[#FFBFAA]">Stock</th>
+                  <th className="px-2 py-1 text-left text-[#fff]">Product</th>
+                  <th className="px-2 py-1 text-left text-[#fff]">Branch</th>
+                  <th className="px-2 py-1 text-left text-[#fff]">Stock</th>
                 </tr>
               </thead>
               <tbody>
@@ -236,42 +248,42 @@ export default function DashboardPage() {
           icon={<CreditCard />}
           title="Total Revenue"
           value={`$${totalRevenue}`}
-          bg="bg-gradient-to-r from-[#FFD7BA] to-[#FFBFAA]"
+          bg="bg-[#1F2937]"
         />
         <Card
           icon={<CreditCard />}
           title="Total Cost"
           value={`$${totalCost}`}
-          bg="bg-gradient-to-r from-[#FFBFAA] to-[#FF9E8F]"
+          bg="bg-[#1F2937]"
         />
         <Card
           icon={<TrendingUp />}
           title="Total Profit"
           value={`$${totalProfit}`}
-          bg="bg-gradient-to-r from-[#FFC6A8] to-[#FF8F7A]"
+          bg="bg-[#1F2937]"
         />
       </div>
       {/* SECTION 4: Latest Orders & Recently Added Products */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-[#1F2937] p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-2 text-[#FFD7BA]">
+          <h3 className="text-lg font-semibold mb-2 text-[#FFF]">
             Latest Orders
           </h3>
           <CustomTable
             data={latestOrders}
             columns={["product", "customer", "total", "date"]}
-            headerColor="#FFBFAA"
+            headerColor="#FFF"
           />
         </div>
 
         <div className="bg-[#1F2937] p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-2 text-[#FFD7BA]">
+          <h3 className="text-lg font-semibold mb-2 text-[#FFF]">
             Recently Added Products
           </h3>
           <CustomTable
             data={recentProducts}
             columns={["name", "category", "stock", "price"]}
-            headerColor="#FFBFAA"
+            headerColor="#FFF"
           />
         </div>
       </div>
@@ -295,8 +307,8 @@ function Card({
     <div
       className={`p-4 flex items-center gap-4 rounded-lg text-gray-900 font-semibold ${bg}`}
     >
-      <div className="p-2 bg-white/30 rounded-full">{icon}</div>
-      <div>
+      <div className="p-2 bg-white/75 rounded-full">{icon}</div>
+      <div className="text-amber-50">
         <h3 className="text-sm">{title}</h3>
         <p className="text-2xl font-bold">{value}</p>
       </div>
