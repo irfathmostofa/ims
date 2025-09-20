@@ -301,7 +301,7 @@ export default function ProductAddPage() {
           <div className="space-y-3 border rounded p-3 bg-gray-50">
             {variations.map((v, idx) => (
               <div
-                key={v.id}
+                key={idx}
                 className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end"
               >
                 <Input
