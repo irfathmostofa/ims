@@ -9,7 +9,7 @@ import {
   Settings,
   Globe2,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 export default function Header({
@@ -19,7 +19,7 @@ export default function Header({
 }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
-
+  let location = useNavigate();
   return (
     <header className="h-16 bg-bw-900 border-b border-bw-200 flex items-center justify-between px-4 shadow-sm relative">
       {/* Left - Menu */}
@@ -116,7 +116,10 @@ export default function Header({
               </Link>
               <button
                 className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                onClick={() => alert("Logging out...")}
+                onClick={() => {
+                  localStorage.removeItem("token");
+                  location("/");
+                }}
               >
                 <LogOut size={16} /> Logout
               </button>
