@@ -2,47 +2,86 @@
 
 import { useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { currencies, Timezones } from "@/data/demoData";
 
-type Props = { onNext: (data: any) => void; defaultValues?: any };
+type Props = {
+  onNext: (data: any) => void;
+  defaultValues?: any;
+};
 
 export default function CompanyForm({ onNext, defaultValues }: Props) {
-  const { register, handleSubmit, reset, setValue } = useForm({
+  const { register, handleSubmit, reset, setValue, watch } = useForm({
     defaultValues: defaultValues || {},
   });
 
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (defaultValues) {
       reset(defaultValues);
-      if (defaultValues.logo && typeof defaultValues.logo === "string") {
-        setLogoPreview(defaultValues.logo); // If editing, show saved logo
-      }
+      if (defaultValues.logo) setLogoPreview(defaultValues.logo);
     }
   }, [defaultValues, reset]);
-
-  const onSubmit = (data: any) => {
-    if (data.logo && data.logo.length > 0) {
-      data.logo = data.logo[0];
-    } else {
-      data.logo = defaultValues?.logo || null;
-    }
-    onNext(data);
-  };
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setValue("logo", e.target.files); // set value in react-hook-form
-      setLogoPreview(URL.createObjectURL(file)); // create preview
+      setValue("logo", file); // ✅ store single File
+      setLogoPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setValue("logo", null);
+    setLogoPreview(null);
+  };
+
+  const onSubmit = async (formDataValues: any) => {
+    if (!formDataValues.logo && !defaultValues?.logo) {
+      return toast.error("Please upload a logo");
+    }
+
+    setLoading(true);
+
+    try {
+      const formData = new FormData();
+
+      // append logo if new file selected
+      if (formDataValues.logo instanceof File) {
+        formData.append("logo", formDataValues.logo);
+      }
+
+      // append other fields
+      ["name", "address", "phone", "email", "website"].forEach((field) => {
+        if (formDataValues[field])
+          formData.append(field, formDataValues[field]);
+      });
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SERVER}/setup/create-company`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to save company");
+
+      const data = await res.json();
+      toast.success("Company saved successfully!");
+      onNext(data);
+    } catch (err: any) {
+      toast.error(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Logo Upload */}
       <div className="flex flex-col items-center gap-2 py-4 bg-gray-50 rounded-lg border border-gray-200">
         <label className="cursor-pointer flex flex-col items-center">
@@ -75,69 +114,59 @@ export default function CompanyForm({ onNext, defaultValues }: Props) {
               type="file"
               accept="image/*"
               className="hidden"
+              {...register("logo")}
               onChange={handleLogoChange}
             />
           </div>
+          {logoPreview && (
+            <button
+              type="button"
+              className="text-xs text-red-500 mt-2 hover:underline"
+              onClick={handleRemoveLogo}
+            >
+              Remove Logo
+            </button>
+          )}
           <span className="text-xs text-gray-400 mt-1">
             PNG, JPG, JPEG up to 2MB
           </span>
         </label>
-        {logoPreview && (
-          <button
-            type="button"
-            className="text-xs text-red-500 mt-2 hover:underline"
-            onClick={() => setLogoPreview(null)}
-          >
-            Remove Logo
-          </button>
-        )}
       </div>
-      <div className="grid gap-2 grid-cols-2">
+
+      {/* Company Details */}
+      <div className="grid gap-4 grid-cols-2">
         <Input
           placeholder="Company Name"
           {...register("name", { required: true })}
         />
-
         <Input placeholder="Address" {...register("address")} />
         <Input placeholder="Phone" {...register("phone")} />
         <Input placeholder="Email" type="email" {...register("email")} />
-
-        {/* Timezone */}
-        <select
-          {...register("timezone", { required: true })}
-          className="w-full border rounded px-3 py-2"
-          defaultValue={defaultValues?.timezone || ""}
-        >
-          <option value="" disabled>
-            Select Timezone
-          </option>
-          {Timezones.map((tz) => (
-            <option key={tz} value={tz}>
-              {tz}
-            </option>
-          ))}
-        </select>
-
-        {/* Currency */}
-        <select
-          {...register("currency", { required: true })}
-          className="w-full border rounded px-3 py-2"
-          defaultValue={defaultValues?.currency || ""}
-        >
-          <option value="" disabled>
-            Select Currency
-          </option>
-          {currencies.map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.code} – {c.name} ({c.symbol})
-            </option>
-          ))}
-        </select>
+        <Input placeholder="Website" {...register("website")} />
       </div>
 
-      <Button type="submit" className="w-full btn-bw-primary">
-        Next
-      </Button>
+      {/* Buttons */}
+      <div className="flex gap-4">
+        <Button
+          type="submit"
+          className="flex-1 btn-bw-primary"
+          disabled={loading}
+        >
+          {loading ? "Saving..." : "Save"}
+        </Button>
+        <Button
+          type="button"
+          className="flex-1 btn-bw-secondary"
+          onClick={() => {
+            // ✅ pass current form values except File object
+            const currentValues = { ...watch() };
+            if (currentValues.logo instanceof File) currentValues.logo = null;
+            onNext(currentValues);
+          }}
+        >
+          Next
+        </Button>
+      </div>
     </form>
   );
 }
