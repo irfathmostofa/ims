@@ -8,6 +8,7 @@ import {
   LogOut,
   Settings,
   Globe2,
+  SquareArrowOutUpLeft,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -113,6 +114,12 @@ export default function Header({
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 <Settings size={16} /> Profile
+              </Link>
+              <Link
+                to="/setup-wizard"
+                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                <SquareArrowOutUpLeft size={16} /> Setup Wizard
               </Link>
               <button
                 className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
