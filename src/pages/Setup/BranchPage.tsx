@@ -26,9 +26,7 @@ type Branch = {
   created_at: string;
 };
 
-type Props = { companyId: number };
-
-export default function BranchesPage({ companyId }: Props) {
+export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [form, setForm] = useState<Partial<Branch>>({});
   const [open, setOpen] = useState(false);
@@ -77,7 +75,7 @@ export default function BranchesPage({ companyId }: Props) {
         // Add branch
         data = await apiClient(apiUrl, {
           method: "POST",
-          data: { ...form, companyId },
+          data: { ...form },
           tokenType: "jwt",
         });
       }
