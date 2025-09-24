@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pen, Plus, Trash } from "lucide-react";
 import { DataTable } from "@/components/ui/dataTable";
 import { Button } from "@/components/ui/button";
@@ -12,71 +12,113 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { apiClient } from "@/hook/apiClient";
 
 type Branch = {
   id?: number;
-  companyId: number;
+  company_id: number;
   name: string;
   type: string;
   phone: string;
   address: string;
+  created_by: string;
+  created_at: string;
 };
 
-export default function BranchesPage({ companyId }: { companyId: number }) {
-  const [branches, setBranches] = useState<Branch[]>([
-    {
-      id: 1,
-      companyId,
-      name: "Main Branch",
-      type: "Head Office",
-      phone: "123456789",
-      address: "123 Main St",
-    },
-    {
-      id: 2,
-      companyId,
-      name: "Branch 2",
-      type: "Retail",
-      phone: "987654321",
-      address: "456 Market St",
-    },
-  ]);
+type Props = { companyId: number };
 
+export default function BranchesPage({ companyId }: Props) {
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [form, setForm] = useState<Partial<Branch>>({});
   const [open, setOpen] = useState(false);
+  const [update, setUpdate] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const handleSave = () => {
+  const apiUrl = `${import.meta.env.VITE_SERVER}/setup/branches`;
+
+  // ✅ Fetch branches
+  const fetchBranches = async () => {
+    try {
+      setLoading(true);
+      const data = await apiClient(apiUrl, { method: "GET", tokenType: "jwt" });
+
+      setBranches(data.data);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to fetch branches");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBranches();
+  }, [update]);
+
+  // ✅ Add / Update branch
+  const handleSave = async () => {
     if (!form.name) {
-      alert("Branch name is required");
+      toast.error("Branch name is required");
       return;
     }
 
-    if (form.id) {
-      setBranches((prev) =>
-        prev.map((b) => (b.id === form.id ? ({ ...b, ...form } as Branch) : b))
-      );
-    } else {
-      const newId = branches.length
-        ? Math.max(...branches.map((b) => b.id || 0)) + 1
-        : 1;
-      setBranches((prev) => [
-        ...prev,
-        { ...form, id: newId, companyId } as Branch,
-      ]);
-    }
+    try {
+      setLoading(true);
+      let data;
+      if (form.id) {
+        // Update branch
+        data = await apiClient(`${apiUrl}/${form.id}`, {
+          method: "PUT",
+          data: form,
+          tokenType: "jwt",
+        });
+      } else {
+        // Add branch
+        data = await apiClient(apiUrl, {
+          method: "POST",
+          data: { ...form, companyId },
+          tokenType: "jwt",
+        });
+      }
 
-    setForm({});
-    setOpen(false);
+      toast.success(data.message || "Branch saved successfully!");
+      setForm({});
+      setOpen(false);
+      setUpdate(update + 1);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to save branch");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // ✅ Edit branch
   const handleEdit = (b: Branch) => {
     setForm(b);
+    console.log(b);
     setOpen(true);
   };
 
-  const handleDelete = (b: Branch) => {
+  // ✅ Delete branch
+  const handleDelete = async (b: Branch) => {
     if (!confirm(`Delete branch "${b.name}"?`)) return;
-    setBranches((prev) => prev.filter((branch) => branch.id !== b.id));
+
+    try {
+      setLoading(true);
+      const data = await apiClient(`${apiUrl}/${b.id}`, {
+        method: "DELETE",
+        tokenType: "barrier",
+      });
+      toast.success(data.message || "Branch deleted!");
+      setUpdate(update + 1);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to delete branch");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -120,7 +162,11 @@ export default function BranchesPage({ companyId }: { companyId: number }) {
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
               />
 
-              <Button className="w-full btn-bw-primary" onClick={handleSave}>
+              <Button
+                className="w-full btn-bw-primary"
+                onClick={handleSave}
+                disabled={loading}
+              >
                 {form.id ? "Update" : "Add Branch"}
               </Button>
             </div>
@@ -128,13 +174,13 @@ export default function BranchesPage({ companyId }: { companyId: number }) {
         </Dialog>
       </div>
 
-      {/* ✅ Data Table */}
       <DataTable
         data={branches}
         label="Branches List"
-        hiddenColumns={["companyId", "id"]}
+        hiddenColumns={["company_id", "id", "created_by", "created_at"]}
         selectable
         rowsPerPage={10}
+        loading={loading}
         actions={[
           {
             label: <Pen size={16} />,

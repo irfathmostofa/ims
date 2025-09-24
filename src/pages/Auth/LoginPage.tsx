@@ -9,64 +9,69 @@ import { Eye, EyeOff, User, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "@/hook/apiClient";
 import { GreetingComp } from "@/hook/greeting";
+import { useAuthStore } from "@/store/authStore";
 
 export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const setToken = useAuthStore((state) => state.setToken);
+  const setUser = useAuthStore((state) => state.setUser);
+  const token = useAuthStore((state) => state.token);
+
   const router = useNavigate();
 
+  // ✅ Check existing token on mount
   useEffect(() => {
     const checkToken = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        router("/");
-        setLoading(false);
-        return;
-      }
+      if (!token) return;
 
+      setLoading(true);
       try {
-        const data = await apiClient(
+        const profile = await apiClient(
           `${import.meta.env.VITE_SERVER}/auth/profile`,
-          {
-            method: "GET",
-            tokenType: "jwt",
-          }
+          { method: "GET", tokenType: "jwt" }
         );
+        setUser(profile.data);
         router("/dashboard");
-        console.log("Profile:", data);
       } catch (err) {
         console.error("Auth check failed:", err);
-        localStorage.removeItem("token");
-        router("/");
+        useAuthStore.getState().logout(); // clear token & user
       } finally {
         setLoading(false);
       }
     };
 
     checkToken();
-  }, []);
+  }, [token, setUser, router]);
 
+  // ✅ Handle login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     try {
-      const data = await apiClient(
+      // 1️⃣ Login API
+      const loginData = await apiClient(
         `${import.meta.env.VITE_SERVER}/auth/login`,
-        {
-          method: "POST",
-          data: { phone, password },
-        }
+        { method: "POST", data: { phone, password } }
       );
 
-      localStorage.setItem("token", data.token);
+      setToken(loginData.token); // store token in Zustand
+
+      // 2️⃣ Fetch profile
+      const profile = await apiClient(
+        `${import.meta.env.VITE_SERVER}/auth/profile`,
+        { method: "GET", tokenType: "jwt" }
+      );
+      setUser(profile.data);
 
       toast.success("Login Successful!");
       router("/dashboard");
     } catch (err: any) {
+      console.error(err);
       toast.error(err.message || "Login failed");
     } finally {
       setLoading(false);
@@ -87,7 +92,7 @@ export default function LoginPage() {
 
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-4">
-          {/* Email */}
+          {/* Phone */}
           <div className="relative flex items-center">
             <User className="absolute left-3 text-gray-400 w-5 h-5" />
             <Input
@@ -101,15 +106,14 @@ export default function LoginPage() {
           </div>
 
           {/* Password */}
-          {/* Password */}
           <div className="relative flex items-center">
             <Lock className="absolute left-3 text-gray-400 w-5 h-5" />
             <Input
-              type={showPassword ? "text" : "password"} // 👈 toggle type
+              type={showPassword ? "text" : "password"}
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 pr-10 text-black" // 👈 add right padding
+              className="pl-10 pr-10 text-black"
               required
             />
             <button
