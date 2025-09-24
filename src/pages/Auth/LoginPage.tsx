@@ -8,11 +8,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Eye, EyeOff, User, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "@/hook/apiClient";
+import { GreetingComp } from "@/hook/greeting";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [greeting, setGreeting] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -48,13 +49,6 @@ export default function LoginPage() {
 
     checkToken();
   }, []);
-  // ✅ Set greeting based on time
-  useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting("Good Morning ☀️");
-    else if (hour < 18) setGreeting("Good Afternoon 🌤️");
-    else setGreeting("Good Evening 🌙");
-  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +58,7 @@ export default function LoginPage() {
         `${import.meta.env.VITE_SERVER}/auth/login`,
         {
           method: "POST",
-          data: { email, password },
+          data: { phone, password },
         }
       );
 
@@ -84,7 +78,9 @@ export default function LoginPage() {
       <CardContent className="p-8 space-y-6">
         {/* Greeting */}
         <div className="text-center space-y-1">
-          <h2 className="text-xl font-semibold text-gray-500">{greeting}</h2>
+          <h2 className="text-xl font-semibold text-gray-500">
+            <GreetingComp />
+          </h2>
           <h1 className="text-3xl font-bold text-[#111827]">Welcome Back</h1>
           <p className="text-gray-500">Login to continue to your dashboard</p>
         </div>
@@ -95,10 +91,10 @@ export default function LoginPage() {
           <div className="relative flex items-center">
             <User className="absolute left-3 text-gray-400 w-5 h-5" />
             <Input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              placeholder="Phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
               className="pl-10 text-black"
               required
             />

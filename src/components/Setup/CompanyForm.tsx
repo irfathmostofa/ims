@@ -5,14 +5,15 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { uploadImageToCloudinary } from "@/hook/uploadImageToCloudinary";
 
 type Props = {
-  onNext: (data: any) => void;
+  onNext: (data: any) => void; // Will include company ID
   defaultValues?: any;
 };
 
 export default function CompanyForm({ onNext, defaultValues }: Props) {
-  const { register, handleSubmit, reset, setValue, watch } = useForm({
+  const { register, handleSubmit, reset, setValue } = useForm({
     defaultValues: defaultValues || {},
   });
 
@@ -26,11 +27,25 @@ export default function CompanyForm({ onNext, defaultValues }: Props) {
     }
   }, [defaultValues, reset]);
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload logo to Cloudinary
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setValue("logo", file); // ✅ store single File
-      setLogoPreview(URL.createObjectURL(file));
+    if (!file) return;
+
+    try {
+      toast.loading("Uploading logo...");
+      const uploadedUrl = await uploadImageToCloudinary(file);
+      toast.dismiss();
+
+      if (uploadedUrl) {
+        setValue("logo", uploadedUrl);
+        setLogoPreview(uploadedUrl);
+        toast.success("Logo uploaded successfully!");
+      }
+    } catch (err) {
+      console.log(err);
+      toast.dismiss();
+      toast.error("Logo upload failed");
     }
   };
 
@@ -39,40 +54,29 @@ export default function CompanyForm({ onNext, defaultValues }: Props) {
     setLogoPreview(null);
   };
 
+  // ✅ Submit company and save ID into setupData
   const onSubmit = async (formDataValues: any) => {
-    if (!formDataValues.logo && !defaultValues?.logo) {
-      return toast.error("Please upload a logo");
-    }
-
     setLoading(true);
 
     try {
-      const formData = new FormData();
-
-      // append logo if new file selected
-      if (formDataValues.logo instanceof File) {
-        formData.append("logo", formDataValues.logo);
-      }
-
-      // append other fields
-      ["name", "address", "phone", "email", "website"].forEach((field) => {
-        if (formDataValues[field])
-          formData.append(field, formDataValues[field]);
-      });
-
       const res = await fetch(
         `${import.meta.env.VITE_SERVER}/setup/create-company`,
         {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formDataValues),
         }
       );
 
       if (!res.ok) throw new Error("Failed to save company");
 
-      const data = await res.json();
+      const response = await res.json();
+      const company = response.data; 
+
       toast.success("Company saved successfully!");
-      onNext(data);
+
+      // ✅ Pass only company record into saveData
+      onNext(company);
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
     } finally {
@@ -114,7 +118,6 @@ export default function CompanyForm({ onNext, defaultValues }: Props) {
               type="file"
               accept="image/*"
               className="hidden"
-              {...register("logo")}
               onChange={handleLogoChange}
             />
           </div>
@@ -149,22 +152,10 @@ export default function CompanyForm({ onNext, defaultValues }: Props) {
       <div className="flex gap-4">
         <Button
           type="submit"
-          className="flex-1 btn-bw-primary"
           disabled={loading}
+          className="flex-1 btn-bw-primary"
         >
-          {loading ? "Saving..." : "Save"}
-        </Button>
-        <Button
-          type="button"
-          className="flex-1 btn-bw-secondary"
-          onClick={() => {
-            // ✅ pass current form values except File object
-            const currentValues = { ...watch() };
-            if (currentValues.logo instanceof File) currentValues.logo = null;
-            onNext(currentValues);
-          }}
-        >
-          Next
+          {loading ? "Saving..." : "Save & Next"}
         </Button>
       </div>
     </form>

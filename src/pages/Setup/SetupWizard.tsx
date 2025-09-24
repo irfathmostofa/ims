@@ -40,13 +40,16 @@ export default function SetupWizard() {
           defaultValues={setupData.company}
         />
       )}
+
       {currentStep === 1 && (
         <BranchForm
+          company_id={setupData.company.id}
           onNext={(data) => saveStepData("branches", data)}
           onBack={back}
           defaultValues={setupData.branches}
         />
       )}
+
       {currentStep === 2 && (
         <RoleForm
           onNext={(data) => saveStepData("roles", data)}
@@ -54,13 +57,17 @@ export default function SetupWizard() {
           defaultValues={setupData.roles}
         />
       )}
+
       {currentStep === 3 && (
         <UserForm
+          branches={setupData.branches || []} // ✅ Pass saved branches
+          roles={setupData.roles || []} // ✅ Pass saved roles
           onNext={(data) => saveStepData("users", data)}
           onBack={back}
           defaultValues={setupData.users}
         />
       )}
+
       {currentStep === 4 && <FinishSetup data={setupData} onBack={back} />}
     </div>
   );

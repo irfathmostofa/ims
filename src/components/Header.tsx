@@ -9,9 +9,12 @@ import {
   Settings,
   Globe2,
   SquareArrowOutUpLeft,
+  Clock,
+  Clock10Icon,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useClock } from "@/hook/useClock";
 
 export default function Header({
   setSidebarOpen,
@@ -21,8 +24,9 @@ export default function Header({
   const [notifOpen, setNotifOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   let location = useNavigate();
+  const time = useClock();
   return (
-    <header className="h-16 bg-bw-900 border-b border-bw-200 flex items-center justify-between px-4 shadow-sm relative">
+    <header className="h-16 bg-bw-900 border-b border-bw-200 flex items-center justify-between pr-4 shadow-sm relative">
       {/* Left - Menu */}
       <div className="flex items-center gap-3">
         <button
@@ -32,19 +36,25 @@ export default function Header({
           <Menu size={20} className="text-bw-50" />
         </button>
 
-        <Link
+        <p
+          className="flex
+         gap-2 text-amber-50 border-l-1 sm:border-l-none p-5 "
+        >
+          {time}
+        </p>
+      </div>
+
+      {/* Right - User Actions */}
+      <div className="flex items-center gap-4 relative">
+        {/* POS Shortcut */}
+        {/* <Link
           to={"https://rasian-mart.netlify.app/"}
           target="_Blank"
           className="flex
          gap-2 text-amber-50 border p-2 rounded"
         >
           <Globe2 /> Visit Website
-        </Link>
-      </div>
-
-      {/* Right - User Actions */}
-      <div className="flex items-center gap-4 relative">
-        {/* POS Shortcut */}
+        </Link> */}
         <Link
           to={"/pos"}
           className="p-2 rounded-md hover:bg-bw-700 flex gap-1 items-center text-amber-50 border border-amber-50"

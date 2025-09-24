@@ -1,16 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Pen, Plus, Trash } from "lucide-react";
-import { DataTable } from "@/components/ui/dataTable";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 type Company = {
   id: number;
@@ -25,195 +17,188 @@ type Company = {
   logoUrl?: string;
 };
 
-export default function CompanyPage() {
-  const [companies, setCompanies] = useState<Company[]>([
-    {
-      id: 1,
-      name: "My Company",
-      email: "info@mycompany.com",
-      phone: "123456789",
-      address: "123 Main St",
-      taxId: "TAX-001",
-      website: "https://mycompany.com",
-      tagline: "We deliver excellence",
-      currency: "USD",
-      logoUrl: "",
-    },
-  ]);
+export default function CompanyProfilePage() {
+  const [company, setCompany] = useState<Company>({
+    id: 1,
+    name: "My Company",
+    email: "info@mycompany.com",
+    phone: "123456789",
+    address: "123 Main St, City",
+    taxId: "TAX-001",
+    website: "https://mycompany.com",
+    tagline: "We deliver excellence",
+    currency: "USD",
+    logoUrl: "",
+  });
 
-  const [form, setForm] = useState<Partial<Company>>({});
-  const [open, setOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
 
-  // ✅ Handle Logo Upload
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () =>
-      setForm({ ...form, logoUrl: reader.result as string });
+      setCompany({ ...company, logoUrl: reader.result as string });
     reader.readAsDataURL(file);
   };
 
-  // ✅ Add / Update Company
-  const handleSave = () => {
-    if (!form.name) {
+  const handleUpdate = () => {
+    if (!company.name) {
       alert("Company name is required");
       return;
     }
-
-    if (form.id) {
-      setCompanies((prev) =>
-        prev.map((c) => (c.id === form.id ? { ...c, ...form } : c))
-      );
-    } else {
-      const newId = companies.length
-        ? Math.max(...companies.map((c) => c.id)) + 1
-        : 1;
-      setCompanies((prev) => [...prev, { ...form, id: newId } as Company]);
-    }
-
-    setForm({});
-    setOpen(false);
-  };
-
-  // ✅ Edit Company
-  const handleEdit = (c: Company) => {
-    setForm(c);
-    setOpen(true);
-  };
-
-  // ✅ Delete Company
-  const handleDelete = (c: Company) => {
-    if (!confirm(`Delete company "${c.name}"?`)) return;
-    setCompanies((prev) => prev.filter((company) => company.id !== c.id));
+    console.log("Updated Company:", company);
+    alert("Company profile updated successfully!");
+    setEditMode(false);
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Company</h1>
-
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2 btn-bw-primary">
-              <Plus size={18} /> Add Company
-            </Button>
-          </DialogTrigger>
-
-          <DialogContent className="sm:max-w-md bg-amber-50">
-            <DialogHeader>
-              <DialogTitle>
-                {form.id ? "Edit Company" : "Add Company"}
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-4 mt-2">
-              <input
-                type="text"
-                placeholder="Company Name"
-                className="border px-3 py-2 rounded w-full"
-                value={form.name || ""}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-
-              <input
-                type="email"
-                placeholder="Email"
-                className="border px-3 py-2 rounded w-full"
-                value={form.email || ""}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-
-              <input
-                type="text"
-                placeholder="Phone"
-                className="border px-3 py-2 rounded w-full"
-                value={form.phone || ""}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-
-              <input
-                type="text"
-                placeholder="Address"
-                className="border px-3 py-2 rounded w-full"
-                value={form.address || ""}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-              />
-
-              <input
-                type="text"
-                placeholder="Tax ID"
-                className="border px-3 py-2 rounded w-full"
-                value={form.taxId || ""}
-                onChange={(e) => setForm({ ...form, taxId: e.target.value })}
-              />
-
-              <input
-                type="text"
-                placeholder="Website"
-                className="border px-3 py-2 rounded w-full"
-                value={form.website || ""}
-                onChange={(e) => setForm({ ...form, website: e.target.value })}
-              />
-
-              <input
-                type="text"
-                placeholder="Tagline"
-                className="border px-3 py-2 rounded w-full"
-                value={form.tagline || ""}
-                onChange={(e) => setForm({ ...form, tagline: e.target.value })}
-              />
-
-              <input
-                type="text"
-                placeholder="Currency"
-                className="border px-3 py-2 rounded w-full"
-                value={form.currency || ""}
-                onChange={(e) => setForm({ ...form, currency: e.target.value })}
-              />
-
-              <div className="flex flex-col space-y-2">
-                <label className="text-sm font-medium">Logo</label>
-                {form.logoUrl && (
-                  <img
-                    src={form.logoUrl}
-                    alt="Logo"
-                    className="w-24 h-24 object-contain mb-2"
-                  />
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoChange}
-                />
-              </div>
-
-              <Button className="w-full btn-bw-primary" onClick={handleSave}>
-                {form.id ? "Update" : "Add Company"}
-              </Button>
+    <div className="p-6 max-w-4xl mx-auto bg-white rounded-xl shadow-lg space-y-6">
+      {/* Logo & Name */}
+      <div className="flex flex-col items-center space-y-3 relative">
+        <div className="relative group">
+          {company.logoUrl ? (
+            <img
+              src={company.logoUrl}
+              alt="Company Logo"
+              className="w-32 h-32 object-cover rounded-full border-4 border-gradient-to-r from-orange-300 via-pink-300 to-purple-400 shadow-lg transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-32 h-32 flex items-center justify-center rounded-full border-4 border-dashed border-gray-300 text-gray-400 text-xl shadow-lg">
+              Logo
             </div>
-          </DialogContent>
-        </Dialog>
+          )}
+
+          {editMode && (
+            <label className="absolute inset-0 bg-black/40 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer rounded-full transition-opacity">
+              Change Logo
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleLogoChange}
+                className="hidden"
+              />
+            </label>
+          )}
+        </div>
+
+        <h2 className="text-2xl font-bold text-gray-900">{company.name}</h2>
+        <p className="text-gray-600 italic">{company.tagline}</p>
       </div>
 
-      {/* ✅ Data Table */}
-      <DataTable
-        data={companies}
-        label="Company List"
-        hiddenColumns={["id", "logoUrl"]}
-        selectable
-        rowsPerPage={10}
-        actions={[
-          {
-            label: <Pen size={16} />,
-            onClick: (row) => handleEdit(row),
-          },
-          {
-            label: <Trash size={16} />,
-            onClick: (row) => handleDelete(row),
-          },
-        ]}
-      />
+      {/* Info Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium text-gray-500">Email</label>
+          {editMode ? (
+            <Input
+              value={company.email || ""}
+              onChange={(e) =>
+                setCompany({ ...company, email: e.target.value })
+              }
+            />
+          ) : (
+            <p className="text-gray-700">{company.email || "-"}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-500">Phone</label>
+          {editMode ? (
+            <Input
+              value={company.phone || ""}
+              onChange={(e) =>
+                setCompany({ ...company, phone: e.target.value })
+              }
+            />
+          ) : (
+            <p className="text-gray-700">{company.phone || "-"}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-500">Website</label>
+          {editMode ? (
+            <Input
+              value={company.website || ""}
+              onChange={(e) =>
+                setCompany({ ...company, website: e.target.value })
+              }
+            />
+          ) : (
+            <p className="text-gray-700">{company.website || "-"}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-500">Tax ID</label>
+          {editMode ? (
+            <Input
+              value={company.taxId || ""}
+              onChange={(e) =>
+                setCompany({ ...company, taxId: e.target.value })
+              }
+            />
+          ) : (
+            <p className="text-gray-700">{company.taxId || "-"}</p>
+          )}
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="text-sm font-medium text-gray-500">Address</label>
+          {editMode ? (
+            <Input
+              value={company.address || ""}
+              onChange={(e) =>
+                setCompany({ ...company, address: e.target.value })
+              }
+            />
+          ) : (
+            <p className="text-gray-700">{company.address || "-"}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-500">Currency</label>
+          {editMode ? (
+            <Input
+              value={company.currency || ""}
+              onChange={(e) =>
+                setCompany({ ...company, currency: e.target.value })
+              }
+            />
+          ) : (
+            <p className="text-gray-700">{company.currency || "-"}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-500">Tagline</label>
+          {editMode ? (
+            <Input
+              value={company.tagline || ""}
+              onChange={(e) =>
+                setCompany({ ...company, tagline: e.target.value })
+              }
+            />
+          ) : (
+            <p className="text-gray-700 italic">{company.tagline || "-"}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Action Button */}
+      <div className="flex justify-center">
+        {editMode ? (
+          <Button className="btn-peach" onClick={handleUpdate}>
+            Save Changes
+          </Button>
+        ) : (
+          <Button className="btn-peach" onClick={() => setEditMode(true)}>
+            Edit Profile
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

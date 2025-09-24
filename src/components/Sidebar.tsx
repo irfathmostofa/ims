@@ -116,6 +116,7 @@ const navItems: NavItem[] = [
     children: [
       { name: "Config", path: "/under-construction" },
       { name: "Tamplate", path: "/under-construction" },
+      { name: "Visit Website", path: "https://rasian-mart.netlify.app/" },
     ],
   },
 ];
