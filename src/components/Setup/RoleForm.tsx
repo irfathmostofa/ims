@@ -43,14 +43,11 @@ export default function RoleForm({ onNext, onBack, defaultValues }: Props) {
       // Save each role individually (or backend can support bulk)
       const savedRoles: Role[] = [];
       for (const role of roles) {
-        const res = await fetch(
-          `${import.meta.env.VITE_SERVER}/setup/create-role`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(role),
-          }
-        );
+        const res = await fetch(`${import.meta.env.VITE_SERVER}/setup/roles`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(role),
+        });
 
         if (!res.ok) throw new Error("Failed to save role");
         const response = await res.json();

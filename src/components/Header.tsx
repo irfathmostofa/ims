@@ -7,14 +7,12 @@ import {
   User,
   LogOut,
   Settings,
-  Globe2,
   SquareArrowOutUpLeft,
-  Clock,
-  Clock10Icon,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useClock } from "@/hook/useClock";
+import { useAuthStore } from "@/store/authStore";
 
 export default function Header({
   setSidebarOpen,
@@ -23,8 +21,12 @@ export default function Header({
 }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
-  let location = useNavigate();
+  const navigate = useNavigate();
   const time = useClock();
+
+  // 🔹 Get logged-in user from store
+  const { user } = useAuthStore();
+
   return (
     <header className="h-16 bg-bw-900 border-b border-bw-200 flex items-center justify-between pr-4 shadow-sm relative">
       {/* Left - Menu */}
@@ -36,10 +38,7 @@ export default function Header({
           <Menu size={20} className="text-bw-50" />
         </button>
 
-        <p
-          className="flex
-         gap-2 text-amber-50 border-l-1 sm:border-l-none p-5 "
-        >
+        <p className="flex gap-2 text-amber-50 border-l-1 sm:border-l-none p-5 ">
           {time}
         </p>
       </div>
@@ -47,14 +46,6 @@ export default function Header({
       {/* Right - User Actions */}
       <div className="flex items-center gap-4 relative">
         {/* POS Shortcut */}
-        {/* <Link
-          to={"https://rasian-mart.netlify.app/"}
-          target="_Blank"
-          className="flex
-         gap-2 text-amber-50 border p-2 rounded"
-        >
-          <Globe2 /> Visit Website
-        </Link> */}
         <Link
           to={"/pos"}
           className="p-2 rounded-md hover:bg-bw-700 flex gap-1 items-center text-amber-50 border border-amber-50"
@@ -73,7 +64,6 @@ export default function Header({
             <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
           </button>
 
-          {/* Notification Dropdown */}
           {notifOpen && (
             <div className="absolute right-0 mt-3 w-72 bg-white shadow-xl rounded-lg overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="px-4 py-3 font-semibold text-gray-700 border-b bg-gray-50">
@@ -106,19 +96,34 @@ export default function Header({
             className="flex items-center gap-2 cursor-pointer hover:bg-bw-700 px-3 py-1 rounded-md"
             onClick={() => setUserOpen((prev) => !prev)}
           >
-            <User size={20} className="text-bw-50" />
+            {/* Profile image or fallback icon */}
+            {user?.image ? (
+              <img
+                src={user.image}
+                alt={user.username}
+                className="w-8 h-8 rounded-full object-cover border"
+              />
+            ) : (
+              <User size={20} className="text-bw-50" />
+            )}
             <span className="text-sm font-medium hidden sm:inline text-bw-50">
-              Admin
+              {user?.username || "Guest"}
             </span>
           </div>
 
-          {/* User Dropdown */}
           {userOpen && (
-            <div className="absolute right-0 mt-3 w-52 bg-white shadow-xl rounded-lg overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="absolute right-0 mt-3 w-64 bg-white shadow-xl rounded-lg overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+              {/* User Info */}
               <div className="px-4 py-3 border-b bg-gray-50">
-                <p className="text-sm font-semibold">Admin</p>
-                <p className="text-xs text-gray-500">admin@example.com</p>
+                <p className="text-sm font-semibold">{user?.username}</p>
+                <p className="text-xs text-gray-500">{user?.address}</p>
+                <p className="text-xs text-gray-400">
+                  {user?.role?.name} • {user?.branch?.name}
+                </p>
+                <p className="text-xs text-gray-400">{user?.company?.name}</p>
               </div>
+
+              {/* Links */}
               <Link
                 to="/profile"
                 className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -135,7 +140,7 @@ export default function Header({
                 className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 onClick={() => {
                   localStorage.removeItem("token");
-                  location("/");
+                  navigate("/");
                 }}
               >
                 <LogOut size={16} /> Logout

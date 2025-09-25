@@ -60,7 +60,7 @@ export default function CompanyForm({ onNext, defaultValues }: Props) {
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_SERVER}/setup/create-company`,
+        `${import.meta.env.VITE_SERVER}/setup/companies`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -71,7 +71,7 @@ export default function CompanyForm({ onNext, defaultValues }: Props) {
       if (!res.ok) throw new Error("Failed to save company");
 
       const response = await res.json();
-      const company = response.data; 
+      const company = response.data;
 
       toast.success("Company saved successfully!");
 

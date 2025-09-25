@@ -136,11 +136,12 @@ export default function App() {
           </Route>
 
           {/* POS Layout Route */}
-          <Route element={<PosLayout />}>
-            <Route path="/pos" element={<POSPage />} />
-            <Route path="/return" element={<ReturnPage />} />
+          <Route element={<PrivateRoute />}>
+            <Route element={<PosLayout />}>
+              <Route path="/pos" element={<POSPage />} />
+              <Route path="/return" element={<ReturnPage />} />
+            </Route>
           </Route>
-
           {/* Special Layout Routes */}
           <Route element={<SpecialLayout />}>
             <Route

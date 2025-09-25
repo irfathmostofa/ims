@@ -39,7 +39,7 @@ export default function PosLayout() {
         {/* Back Button */}
         <button
           className="flex items-center gap-2 px-3 py-1 rounded-md hover:bg-bw-700 transition"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/dashboard")}
         >
           <ArrowLeft size={20} />
           <span>Back to Dashboard</span>

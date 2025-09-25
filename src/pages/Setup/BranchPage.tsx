@@ -14,9 +14,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { apiClient } from "@/hook/apiClient";
+import { useAuthStore } from "@/store/authStore";
 
 type Branch = {
   id?: number;
+  code: string;
   company_id: number;
   name: string;
   type: string;
@@ -32,15 +34,21 @@ export default function BranchesPage() {
   const [open, setOpen] = useState(false);
   const [update, setUpdate] = useState(0);
   const [loading, setLoading] = useState(false);
+  const { user } = useAuthStore();
 
-  const apiUrl = `${import.meta.env.VITE_SERVER}/setup/branches`;
-
-  // ✅ Fetch branches
+  // =========================
+  // 🔹 Fetch Branches
+  // =========================
   const fetchBranches = async () => {
     try {
       setLoading(true);
-      const data = await apiClient(apiUrl, { method: "GET", tokenType: "jwt" });
-
+      const data = await apiClient(
+        `${import.meta.env.VITE_SERVER}/setup/get-branches`,
+        {
+          method: "GET",
+          tokenType: "jwt",
+        }
+      );
       setBranches(data.data);
     } catch (err: any) {
       console.error(err);
@@ -50,12 +58,10 @@ export default function BranchesPage() {
     }
   };
 
-  useEffect(() => {
-    fetchBranches();
-  }, [update]);
-
-  // ✅ Add / Update branch
-  const handleSave = async () => {
+  // =========================
+  // 🔹 Save (Add / Update)
+  // =========================
+  const saveBranch = async () => {
     if (!form.name) {
       toast.error("Branch name is required");
       return;
@@ -64,26 +70,50 @@ export default function BranchesPage() {
     try {
       setLoading(true);
       let data;
+
       if (form.id) {
-        // Update branch
-        data = await apiClient(`${apiUrl}/${form.id}`, {
-          method: "PUT",
-          data: form,
-          tokenType: "jwt",
-        });
+        // ✅ Update
+        const updatePayload = {
+          code: form.code,
+          name: form.name,
+          type: form.type,
+          phone: form.phone,
+          address: form.address,
+          company_id: form.company_id,
+        };
+
+        data = await apiClient(
+          `${import.meta.env.VITE_SERVER}/setup/update-branches/${form.id}`,
+          {
+            method: "POST",
+            data: updatePayload,
+            tokenType: "jwt",
+          }
+        );
       } else {
-        // Add branch
-        data = await apiClient(apiUrl, {
-          method: "POST",
-          data: { ...form },
-          tokenType: "jwt",
-        });
+        // ✅ Create
+        const createPayload = {
+          name: form.name,
+          type: form.type,
+          phone: form.phone,
+          address: form.address,
+          company_id: user?.company?.id,
+        };
+
+        data = await apiClient(
+          `${import.meta.env.VITE_SERVER}/setup/branches`,
+          {
+            method: "POST",
+            data: createPayload,
+            tokenType: "jwt",
+          }
+        );
       }
 
       toast.success(data.message || "Branch saved successfully!");
       setForm({});
       setOpen(false);
-      setUpdate(update + 1);
+      setUpdate((prev) => prev + 1);
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Failed to save branch");
@@ -92,25 +122,32 @@ export default function BranchesPage() {
     }
   };
 
-  // ✅ Edit branch
-  const handleEdit = (b: Branch) => {
-    setForm(b);
-    console.log(b);
+  // =========================
+  // 🔹 Edit Branch
+  // =========================
+  const editBranch = (b: Branch) => {
+    setForm({ ...b });
     setOpen(true);
   };
 
-  // ✅ Delete branch
-  const handleDelete = async (b: Branch) => {
+  // =========================
+  // 🔹 Delete Branch
+  // =========================
+  const deleteBranch = async (b: Branch) => {
     if (!confirm(`Delete branch "${b.name}"?`)) return;
 
     try {
       setLoading(true);
-      const data = await apiClient(`${apiUrl}/${b.id}`, {
-        method: "DELETE",
-        tokenType: "barrier",
-      });
+      const data = await apiClient(
+        `${import.meta.env.VITE_SERVER}/setup/delete-branches`,
+        {
+          method: "POST",
+          data: { id: b.id },
+          tokenType: "jwt",
+        }
+      );
       toast.success(data.message || "Branch deleted!");
-      setUpdate(update + 1);
+      setUpdate((prev) => prev + 1);
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Failed to delete branch");
@@ -119,6 +156,16 @@ export default function BranchesPage() {
     }
   };
 
+  // =========================
+  // 🔹 On Mount / Update
+  // =========================
+  useEffect(() => {
+    fetchBranches();
+  }, [update]);
+
+  // =========================
+  // 🔹 UI
+  // =========================
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -162,7 +209,7 @@ export default function BranchesPage() {
 
               <Button
                 className="w-full btn-bw-primary"
-                onClick={handleSave}
+                onClick={saveBranch}
                 disabled={loading}
               >
                 {form.id ? "Update" : "Add Branch"}
@@ -180,14 +227,8 @@ export default function BranchesPage() {
         rowsPerPage={10}
         loading={loading}
         actions={[
-          {
-            label: <Pen size={16} />,
-            onClick: (row) => handleEdit(row),
-          },
-          {
-            label: <Trash size={16} />,
-            onClick: (row) => handleDelete(row),
-          },
+          { label: <Pen size={16} />, onClick: (row) => editBranch(row) },
+          { label: <Trash size={16} />, onClick: (row) => deleteBranch(row) },
         ]}
       />
     </div>

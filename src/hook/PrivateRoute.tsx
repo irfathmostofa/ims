@@ -28,7 +28,7 @@ export function PrivateRoute() {
             tokenType: "jwt", // apiClient will pick token from Zustand if configured
           }
         );
-
+        console.log(data.data);
         setUser(data.data); // store user info in Zustand
         setAuthenticated(true);
       } catch (err) {

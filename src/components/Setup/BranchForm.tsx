@@ -61,7 +61,7 @@ export default function BranchForm({
       const savedBranches: Branch[] = [];
       for (const branch of branches) {
         const res = await fetch(
-          `${import.meta.env.VITE_SERVER}/setup/create-branch`,
+          `${import.meta.env.VITE_SERVER}/setup/branches`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
