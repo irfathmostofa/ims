@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pen, Plus, Trash } from "lucide-react";
 import { DataTable } from "@/components/ui/dataTable";
 import { Button } from "@/components/ui/button";
@@ -11,96 +11,114 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
-type Role = {
-  id: number;
-  name: string;
-};
+import { toast } from "sonner";
+import { useCrud } from "@/hook/crudHelper";
+import { getData } from "@/hook/getData";
+// import LogoUploader from "@/hook/uploadImageFile";
 
 type User = {
   id: number;
+  code?: string;
+  branch_id: number;
+  username: string;
+  phone: string;
+  address?: string;
+  image?: string;
+  password_hash?: string;
+  role_id: number;
+  created_at: string;
+  status: "A" | "I";
+};
+
+type Role = {
+  id: number;
+  code?: string;
   name: string;
-  email: string;
+  description?: string;
+};
+
+type Branch = {
+  id: number;
+  code?: string;
+  company_id: number;
+  name: string;
+  type: string;
   phone?: string;
-  roleId: number;
-  roleName?: string;
-  status: "Active" | "Inactive";
+  address?: string;
 };
 
 export default function UsersPage() {
-  // ✅ Dummy roles (replace with API/fetch later)
-  const [roles] = useState<Role[]>([
-    { id: 1, name: "Admin" },
-    { id: 2, name: "Manager" },
-    { id: 3, name: "Staff" },
-  ]);
-
-  // ✅ Users state
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@example.com",
-      roleId: 1,
-      roleName: "Admin",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      email: "jane@example.com",
-      roleId: 2,
-      roleName: "Manager",
-      status: "Inactive",
-    },
-  ]);
-
+  const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [form, setForm] = useState<Partial<User>>({});
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [update, setUpdate] = useState(0);
 
-  // ✅ Add / Update User
-  const handleSave = () => {
-    if (!form.name || !form.email || !form.roleId) {
-      alert("Name, email, and role are required");
+  // Fetch roles and branches
+  useEffect(() => {
+    getData<Role>(`${import.meta.env.VITE_SERVER}/setup/get-roles`).then(
+      setRoles
+    );
+    getData<Branch>(`${import.meta.env.VITE_SERVER}/setup/get-branches`).then(
+      setBranches
+    );
+  }, []);
+
+  // CRUD hook for Users
+  const { fetchAll, save, remove } = useCrud<User>({
+    listUrl: `${import.meta.env.VITE_SERVER}/users/get-user`,
+    createUrl: `${import.meta.env.VITE_SERVER}/users/create-user`,
+    updateUrl: `${import.meta.env.VITE_SERVER}/users/update-user`,
+    deleteUrl: `${import.meta.env.VITE_SERVER}/users/delete-user`,
+    formatCreate: (data) => ({
+      username: data.username,
+      phone: data.phone,
+      branch_id: data.branch_id,
+      address: data.address,
+      password_hash: data.password_hash,
+      role_id: data.role_id,
+    }),
+    formatUpdate: (data) => ({
+      id: data.id,
+      username: data.username,
+      phone: data.phone,
+      branch_id: data.branch_id,
+      role_id: data.role_id,
+      status: data.status,
+    }),
+  });
+
+  // Load users
+  useEffect(() => {
+    fetchAll(setUsers, setLoading);
+  }, [update]);
+
+  // Save User
+  const handleSave = async () => {
+    if (!form.username || !form.role_id || !form.branch_id) {
+      toast.error("Username, role, and branch are required!");
       return;
     }
 
-    const role = roles.find((r) => r.id === form.roleId);
-    if (!role) return;
-
-    if (form.id) {
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === form.id ? { ...u, ...form, roleName: role.name } : u
-        )
-      );
-    } else {
-      const newId = users.length ? Math.max(...users.map((u) => u.id)) + 1 : 1;
-      setUsers((prev) => [
-        ...prev,
-        {
-          ...form,
-          id: newId,
-          roleName: role.name,
-          status: form.status || "Active",
-        } as User,
-      ]);
-    }
-
+    await save(form, form.id);
     setForm({});
     setOpen(false);
+    setUpdate((prev) => prev + 1);
   };
 
-  // ✅ Edit User
+  // Edit User
   const handleEdit = (u: User) => {
     setForm(u);
     setOpen(true);
   };
 
-  // ✅ Delete User
-  const handleDelete = (u: User) => {
-    if (!confirm(`Delete user "${u.name}"?`)) return;
-    setUsers((prev) => prev.filter((user) => user.id !== u.id));
+  // Delete User
+  const handleDelete = async (u: User) => {
+    if (!confirm(`Delete user "${u.username}"?`)) return;
+    await remove(u.id!);
+    setUpdate((prev) => prev + 1);
   };
 
   return (
@@ -125,16 +143,8 @@ export default function UsersPage() {
                 type="text"
                 placeholder="Full Name"
                 className="border px-3 py-2 rounded w-full"
-                value={form.name || ""}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-
-              <input
-                type="email"
-                placeholder="Email"
-                className="border px-3 py-2 rounded w-full"
-                value={form.email || ""}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                value={form.username || ""}
+                onChange={(e) => setForm({ ...form, username: e.target.value })}
               />
 
               <input
@@ -144,12 +154,43 @@ export default function UsersPage() {
                 value={form.phone || ""}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
+              <input
+                type="text"
+                placeholder="address"
+                className="border px-3 py-2 rounded w-full"
+                value={form.address || ""}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+              />
+              <input
+                type="password"
+                placeholder="password"
+                className="border px-3 py-2 rounded w-full"
+                value={form.password_hash || ""}
+                onChange={(e) =>
+                  setForm({ ...form, password_hash: e.target.value })
+                }
+              />
 
               <select
                 className="border px-3 py-2 rounded w-full"
-                value={form.roleId || ""}
+                value={form.branch_id || ""}
                 onChange={(e) =>
-                  setForm({ ...form, roleId: Number(e.target.value) })
+                  setForm({ ...form, branch_id: Number(e.target.value) })
+                }
+              >
+                <option value="">Select Branch</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                className="border px-3 py-2 rounded w-full"
+                value={form.role_id || ""}
+                onChange={(e) =>
+                  setForm({ ...form, role_id: Number(e.target.value) })
                 }
               >
                 <option value="">Select Role</option>
@@ -159,20 +200,11 @@ export default function UsersPage() {
                   </option>
                 ))}
               </select>
-
-              <select
-                className="border px-3 py-2 rounded w-full"
-                value={form.status || "Active"}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    status: e.target.value as "Active" | "Inactive",
-                  })
-                }
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
+              {/* <LogoUploader
+                initialLogo={users.image}
+                disabled={!open}
+                onChange={(newLogo) => setForm({ ...users, image: newLogo })}
+              /> */}
 
               <Button className="w-full btn-bw-primary" onClick={handleSave}>
                 {form.id ? "Update" : "Add User"}
@@ -182,13 +214,20 @@ export default function UsersPage() {
         </Dialog>
       </div>
 
-      {/* ✅ Users DataTable */}
       <DataTable
         data={users}
         label="Users List"
-        hiddenColumns={["id", "roleId"]}
+        hiddenColumns={[
+          "id",
+          "role_id",
+          "branch_id",
+          "image",
+          "password_hash",
+          "created_at",
+        ]}
         selectable
         rowsPerPage={10}
+        loading={loading}
         actions={[
           {
             label: <Pen size={16} />,

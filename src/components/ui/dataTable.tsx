@@ -349,7 +349,7 @@ export function DataTable<T extends Record<string, any>>({
                             <button
                               key={i}
                               className={`px-2 py-1 rounded text-sm ${
-                                action.className ?? "bg-blue-500 text-white"
+                                action.className ?? "bw-primary "
                               }`}
                               onClick={() => action.onClick(row)}
                             >

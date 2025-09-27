@@ -58,9 +58,6 @@ export default function BranchesPage() {
     }
   };
 
-  // =========================
-  // 🔹 Save (Add / Update)
-  // =========================
   const saveBranch = async () => {
     if (!form.name) {
       toast.error("Branch name is required");
@@ -130,9 +127,6 @@ export default function BranchesPage() {
     setOpen(true);
   };
 
-  // =========================
-  // 🔹 Delete Branch
-  // =========================
   const deleteBranch = async (b: Branch) => {
     if (!confirm(`Delete branch "${b.name}"?`)) return;
 
@@ -155,17 +149,11 @@ export default function BranchesPage() {
       setLoading(false);
     }
   };
-
-  // =========================
-  // 🔹 On Mount / Update
-  // =========================
   useEffect(() => {
     fetchBranches();
   }, [update]);
 
-  // =========================
-  // 🔹 UI
-  // =========================
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">

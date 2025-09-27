@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pen, Plus, Trash } from "lucide-react";
 import { DataTable } from "@/components/ui/dataTable";
 import { Button } from "@/components/ui/button";
@@ -11,52 +11,71 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { useCrud } from "@/hook/crudHelper";
 
 type Role = {
   id: number;
+  code?: string;
   name: string;
   description?: string;
 };
 
 export default function RolesPage() {
-  const [roles, setRoles] = useState<Role[]>([
-    { id: 1, name: "Admin", description: "Full access" },
-    { id: 2, name: "Manager", description: "Limited access to reports" },
-  ]);
-
+  const [roles, setRoles] = useState<Role[]>([]);
   const [form, setForm] = useState<Partial<Role>>({});
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [update, setUpdate] = useState(0);
 
-  // ✅ Add / Update Role
-  const handleSave = () => {
+  // ✅ Reusable CRUD hook
+  const { fetchAll, save, remove } = useCrud<Role>({
+    listUrl: `${import.meta.env.VITE_SERVER}/setup/get-roles`,
+    createUrl: `${import.meta.env.VITE_SERVER}/setup/roles`,
+    updateUrl: `${import.meta.env.VITE_SERVER}/setup/update-roles`,
+    deleteUrl: `${import.meta.env.VITE_SERVER}/setup/delete-roles`,
+
+    // transform payload if needed
+    formatCreate: (data) => ({
+      name: data.name,
+      description: data.description,
+    }),
+    formatUpdate: (data) => ({
+      code: data.code,
+      name: data.name,
+      description: data.description,
+    }),
+  });
+
+  // ✅ Fetch roles
+  useEffect(() => {
+    fetchAll(setRoles, setLoading);
+  }, [update]);
+
+  // ✅ Save Role (Create / Update)
+  const handleSave = async () => {
     if (!form.name) {
-      alert("Role name is required");
+      toast.error("Role name is required");
       return;
     }
 
-    if (form.id) {
-      setRoles((prev) =>
-        prev.map((r) => (r.id === form.id ? { ...r, ...form } : r))
-      );
-    } else {
-      const newId = roles.length ? Math.max(...roles.map((r) => r.id)) + 1 : 1;
-      setRoles((prev) => [...prev, { ...form, id: newId } as Role]);
-    }
-
+    await save(form, form.id); // if form.id exists → update, else → create
     setForm({});
     setOpen(false);
+    setUpdate((prev) => prev + 1); // refresh list
   };
 
-  // ✅ Edit Role
+  // ✅ Edit role
   const handleEdit = (r: Role) => {
     setForm(r);
     setOpen(true);
   };
 
-  // ✅ Delete Role
-  const handleDelete = (r: Role) => {
+  // ✅ Delete role
+  const handleDelete = async (r: Role) => {
     if (!confirm(`Delete role "${r.name}"?`)) return;
-    setRoles((prev) => prev.filter((role) => role.id !== r.id));
+    await remove(r.id!);
+    setUpdate((prev) => prev + 1);
   };
 
   return (
@@ -94,7 +113,11 @@ export default function RolesPage() {
                 }
               />
 
-              <Button className="w-full btn-bw-primary" onClick={handleSave}>
+              <Button
+                className="w-full btn-bw-primary"
+                onClick={handleSave}
+                disabled={loading}
+              >
                 {form.id ? "Update" : "Add Role"}
               </Button>
             </div>
@@ -109,14 +132,15 @@ export default function RolesPage() {
         hiddenColumns={["id"]}
         selectable
         rowsPerPage={10}
+        loading={loading}
         actions={[
           {
             label: <Pen size={16} />,
-            onClick: (row) => handleEdit(row),
+            onClick: handleEdit,
           },
           {
             label: <Trash size={16} />,
-            onClick: (row) => handleDelete(row),
+            onClick: handleDelete,
           },
         ]}
       />

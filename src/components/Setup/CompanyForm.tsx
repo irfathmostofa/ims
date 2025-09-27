@@ -28,14 +28,14 @@ export default function CompanyForm({ onNext, defaultValues }: Props) {
   }, [defaultValues, reset]);
 
   // Upload logo to Cloudinary
-  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    try {
-      toast.loading("Uploading logo...");
-      const uploadedUrl = await uploadImageToCloudinary(file);
-      toast.dismiss();
+      try {
+        toast.loading("Uploading logo...");
+        const uploadedUrl = await uploadImageToCloudinary(file);
+        toast.dismiss();
 
       if (uploadedUrl) {
         setValue("logo", uploadedUrl);
