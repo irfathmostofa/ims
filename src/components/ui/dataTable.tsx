@@ -233,12 +233,12 @@ export function DataTable<T extends Record<string, any>>({
             </table>
           </div>
           {/* Table */}
-          <div className="overflow-x-auto border rounded-xl shadow-sm max-h-[60vh]">
+          <div className="overflow-auto  border rounded-xl shadow-sm max-h-[60vh]">
             <table className="w-full border-collapse min-w-[600px]">
               <thead className="text-left sticky top-0 bg-bw-900 z-10">
                 <tr>
                   {selectable && (
-                    <th className="px-4 py-2 border-b">
+                    <th className="px-2 py-2 border-b">
                       <input
                         type="checkbox"
                         checked={selectedRows.length === paginatedData.length}
@@ -249,14 +249,14 @@ export function DataTable<T extends Record<string, any>>({
                   {headers.map((header) => (
                     <th
                       key={header}
-                      className="px-4 py-2 border-b text-white font-medium capitalize cursor-pointer select-none"
+                      className="px-2 py-2 border-b text-white font-medium capitalize cursor-pointer select-none text-sm md:text-base"
                       onClick={() => requestSort(header)}
                     >
                       {header} {getSortIndicator(header)}
                     </th>
                   ))}
                   {actions.length > 0 && (
-                    <th className="px-4 py-2 border-b text-white font-medium">
+                    <th className="px-2 py-2 border-b text-white font-medium text-sm md:text-base">
                       Actions
                     </th>
                   )}
@@ -271,7 +271,7 @@ export function DataTable<T extends Record<string, any>>({
                         (selectable ? 1 : 0) +
                         (actions.length > 0 ? 1 : 0)
                       }
-                      className="text-center py-6 text-gray-500"
+                      className="text-center py-6 text-gray-500 text-sm"
                     >
                       No data found
                     </td>
@@ -283,7 +283,7 @@ export function DataTable<T extends Record<string, any>>({
                       className="hover:bg-gray-50 transition-colors"
                     >
                       {selectable && (
-                        <td className="px-4 py-2 border-b">
+                        <td className="px-2 py-1 border-b">
                           <input
                             type="checkbox"
                             checked={selectedRows.includes(rowIndex)}
@@ -302,14 +302,14 @@ export function DataTable<T extends Record<string, any>>({
                         if (isImageColumn) {
                           if (Array.isArray(value)) {
                             return (
-                              <td key={header} className="px-2 py-1 border-b">
+                              <td key={header} className="px-1 py-1 border-b">
                                 <div className="flex gap-1 flex-wrap">
                                   {value.map((img: string, i: number) => (
                                     <img
                                       key={i}
-                                      src={img}
+                                      src={img || "https://placehold.co/400"}
                                       alt={`${header}-${i}`}
-                                      className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-md border cursor-pointer"
+                                      className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded-md border cursor-pointer"
                                       onClick={() => setPreviewImage(img)}
                                     />
                                   ))}
@@ -318,11 +318,11 @@ export function DataTable<T extends Record<string, any>>({
                             );
                           } else {
                             return (
-                              <td key={header} className="px-2 py-1 border-b">
+                              <td key={header} className="px-1 py-1 border-b">
                                 <img
-                                  src={value}
+                                  src={value || "https://placehold.co/400"}
                                   alt={header}
-                                  className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-md border cursor-pointer"
+                                  className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded-md border cursor-pointer"
                                   onClick={() => setPreviewImage(value)}
                                 />
                               </td>
@@ -333,7 +333,7 @@ export function DataTable<T extends Record<string, any>>({
                         return (
                           <td
                             key={header}
-                            className="px-2 py-1 border-b text-bw-900 max-w-[150px] truncate"
+                            className="px-1 py-1 border-b text-bw-900 max-w-[120px] sm:max-w-[150px] truncate text-xs sm:text-sm"
                             title={String(value)}
                           >
                             {typeof value === "string" && value.length > 30
@@ -344,11 +344,11 @@ export function DataTable<T extends Record<string, any>>({
                       })}
 
                       {actions.length > 0 && (
-                        <td className="px-2 py-1 border-b space-x-1">
+                        <td className="px-1 py-1 border-b space-x-1">
                           {actions.map((action, i) => (
                             <button
                               key={i}
-                              className={`px-2 py-1 rounded text-sm ${
+                              className={`px-2 py-1 rounded text-xs sm:text-sm ${
                                 action.className ?? "bw-primary "
                               }`}
                               onClick={() => action.onClick(row)}

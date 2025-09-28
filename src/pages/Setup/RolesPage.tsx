@@ -59,10 +59,10 @@ export default function RolesPage() {
       return;
     }
 
-    await save(form, form.id); // if form.id exists → update, else → create
+    await save(form, form.id); 
     setForm({});
     setOpen(false);
-    setUpdate((prev) => prev + 1); // refresh list
+    setUpdate((prev) => prev + 1); 
   };
 
   // ✅ Edit role
