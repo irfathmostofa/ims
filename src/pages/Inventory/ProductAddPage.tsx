@@ -62,7 +62,6 @@ export default function ProductAddPage() {
   // ✅ Fetch categories & uoms
   const fetchData = async () => {
     try {
-      setLoading(true);
       const datauom = await apiClient(
         `${import.meta.env.VITE_SERVER}/product/get-uom`,
         { method: "GET", tokenType: "jwt" }
@@ -77,7 +76,6 @@ export default function ProductAddPage() {
       console.error(err);
       toast.error(err.message || "Failed to fetch product setup data");
     } finally {
-      setLoading(false);
     }
   };
 
@@ -178,13 +176,14 @@ export default function ProductAddPage() {
 
           {/* Tabs */}
           <Tabs defaultValue="general" className="mt-6">
-            <TabsList className="bg-gray-100 rounded-lg p-1">
+            <TabsList className="rounded-lg p-1">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="variations">Variations</TabsTrigger>
+              <TabsTrigger value="images">Images</TabsTrigger>
             </TabsList>
 
             {/* General */}
-            <TabsContent value="general" className="space-y-4 mt-4">
+            <TabsContent value="general" className="space-y-4 mt-4 flex gap-2 ">
               <div>
                 <Label>Cost Price ($)</Label>
                 <Input
@@ -209,26 +208,69 @@ export default function ProductAddPage() {
                   }
                 />
               </div>
-              <div>
-                <Label>UOM</Label>
-                <select
-                  className="w-full border rounded-md p-2"
-                  value={selectedUom}
-                  onChange={(e) =>
-                    setSelectedUom(e.target.value ? Number(e.target.value) : "")
-                  }
-                >
-                  <option value="">-- Select UOM --</option>
-                  {uoms?.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name} ({u.symbol})
-                    </option>
-                  ))}
-                </select>
-              </div>
             </TabsContent>
 
             {/* Variations */}
+            <TabsContent value="images" className="space-y-4 mt-4">
+              <div className="border rounded-md p-4">
+                <h3 className="font-semibold mb-2">Product Images</h3>
+                {/* Uploader */}{" "}
+                <SimpleImageUploader onChange={handleAddImage} />
+                {/* Thumbnails */}
+                <div className="grid grid-cols-4 gap-3 mt-4 ">
+                  {images.map((img, i) => (
+                    <div
+                      key={i}
+                      className={`relative group rounded-md overflow-hidden border ${
+                        img.is_primary ? "ring-2 ring-blue-500" : ""
+                      }`}
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.alt_text}
+                        className="h-24 w-full object-cover"
+                      />
+
+                      {/* Overlay actions */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex gap-2 items-center justify-center transition">
+                        <button
+                          onClick={() =>
+                            setImages((prev) =>
+                              prev.filter((_, idx) => idx !== i)
+                            )
+                          }
+                          className="px-2 py-1 bg-red-500 text-white text-xs rounded"
+                        >
+                          Remove
+                        </button>
+                        {!img.is_primary && (
+                          <button
+                            onClick={() =>
+                              setImages((prev) =>
+                                prev.map((x, idx) => ({
+                                  ...x,
+                                  is_primary: idx === i,
+                                }))
+                              )
+                            }
+                            className="px-2 py-1 bg-blue-500 text-white text-xs rounded"
+                          >
+                            Make Primary
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Primary badge */}
+                      {img.is_primary && (
+                        <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded">
+                          Primary
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
             <TabsContent value="variations" className="space-y-4 mt-4">
               {variations.map((v) => (
                 <div
@@ -254,7 +296,10 @@ export default function ProductAddPage() {
                       setVariations((prev) =>
                         prev.map((x) =>
                           x.id === v.id
-                            ? { ...x, additional_price: Number(e.target.value) }
+                            ? {
+                                ...x,
+                                additional_price: Number(e.target.value),
+                              }
                             : x
                         )
                       )
@@ -268,7 +313,7 @@ export default function ProductAddPage() {
                   </Button>
                 </div>
               ))}
-              <Button onClick={addVariation} className="bw-primary ">
+              <Button onClick={addVariation} className="bw-primary">
                 Add Variation
               </Button>
             </TabsContent>
@@ -276,7 +321,7 @@ export default function ProductAddPage() {
         </div>
 
         {/* RIGHT */}
-        <div className="w-80 space-y-6">
+        <div className="w-80 space-y-4">
           {/* Publish */}
           <div className="border rounded-md p-4 bg-gray-50">
             <h3 className="font-semibold mb-2">Publish</h3>
@@ -293,9 +338,9 @@ export default function ProductAddPage() {
           </div>
 
           {/* Categories */}
-          <div className="border rounded-md p-4">
+          <div className="border rounded-md p-2">
             <h3 className="font-semibold mb-2">Categories</h3>
-            <div className="space-y-1">
+            <div className="space-y-1 overflow-auto h-30">
               {categories.map((cat) => (
                 <label key={cat.id} className="flex items-center gap-2">
                   <input
@@ -308,22 +353,22 @@ export default function ProductAddPage() {
               ))}
             </div>
           </div>
-
-          {/* Images */}
-          <div className="border rounded-md p-4">
-            <h3 className="font-semibold mb-2">Product Images</h3>
-
-            <SimpleImageUploader onChange={handleAddImage} />
-            <div className="flex flex-wrap gap-2 mt-2">
-              {images.map((img, i) => (
-                <img
-                  key={i}
-                  src={img.url}
-                  alt={img.alt_text}
-                  className="h-16 w-16 object-cover rounded-md"
-                />
+          <div className="border rounded-md p-2">
+            <Label>UOM</Label>
+            <select
+              className="w-full border rounded-md p-2"
+              value={selectedUom}
+              onChange={(e) =>
+                setSelectedUom(e.target.value ? Number(e.target.value) : "")
+              }
+            >
+              <option value="">-- Select UOM --</option>
+              {uoms?.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name} ({u.symbol})
+                </option>
               ))}
-            </div>
+            </select>
           </div>
         </div>
       </div>

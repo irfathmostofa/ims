@@ -28,7 +28,7 @@ export default function RolesPage() {
   const [loading, setLoading] = useState(false);
   const [update, setUpdate] = useState(0);
 
-  // ✅ Reusable CRUD hook
+  // Reusable CRUD hook
   const { fetchAll, save, remove } = useCrud<Role>({
     listUrl: `${import.meta.env.VITE_SERVER}/setup/get-roles`,
     createUrl: `${import.meta.env.VITE_SERVER}/setup/roles`,
@@ -47,12 +47,12 @@ export default function RolesPage() {
     }),
   });
 
-  // ✅ Fetch roles
+  //  Fetch roles
   useEffect(() => {
     fetchAll(setRoles, setLoading);
   }, [update]);
 
-  // ✅ Save Role (Create / Update)
+  //  Save Role (Create / Update)
   const handleSave = async () => {
     if (!form.name) {
       toast.error("Role name is required");
@@ -125,7 +125,7 @@ export default function RolesPage() {
         </Dialog>
       </div>
 
-      {/* ✅ Data Table */}
+      {/*  Data Table */}
       <DataTable
         data={roles}
         label="Roles List"

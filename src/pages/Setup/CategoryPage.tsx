@@ -21,6 +21,10 @@ type Category = {
   parent_id?: number | null;
   image?: string | null;
   status?: string | null;
+  created_at: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  updated_at: string | null;
 };
 
 export default function CategoryPage() {
@@ -152,7 +156,16 @@ export default function CategoryPage() {
       <DataTable
         data={formatted}
         label="Category List"
-        hiddenColumns={["id", "parent_id", "code"]}
+        hiddenColumns={[
+          "id",
+          "parent_id",
+          "image",
+          "status",
+          "created_at",
+          "created_by",
+          "updated_by",
+          "updated_at",
+        ]}
         selectable
         rowsPerPage={10}
         printHead={[{ label: "Name", value: "name" }]}

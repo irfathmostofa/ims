@@ -186,14 +186,23 @@ export function DataTable<T extends Record<string, any>>({
                   setPage(1);
                 }}
               />
-              <button onClick={exportExcel} className="cursor-pointer h-5">
+              <button
+                onClick={exportExcel}
+                title="Excel"
+                className="cursor-pointer h-5"
+              >
                 <FileSpreadsheet />
               </button>
-              <button onClick={exportPDF} className="cursor-pointer h-5">
+              <button
+                onClick={exportPDF}
+                title="Download PDF"
+                className="cursor-pointer h-5"
+              >
                 <FileDown />
               </button>
               <button
                 onClick={() => printView(label)}
+                title="Print"
                 className="cursor-pointer h-5"
               >
                 <Printer />

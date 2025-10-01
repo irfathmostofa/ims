@@ -140,7 +140,7 @@ export default function PurchaseOrderPage() {
       <DataTable
         data={orders}
         label="Purchase Orders List"
-        hiddenColumns={["id", "items"]}
+        hiddenColumns={["items"]}
         rowsPerPage={10}
         printHead={[
           { label: "Supplier", value: "supplier" },

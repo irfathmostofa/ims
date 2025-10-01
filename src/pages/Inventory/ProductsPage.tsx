@@ -1,18 +1,52 @@
 "use client";
 
 import { Eye, Pen, Plus, Trash } from "lucide-react";
-import { products } from "@/data/dummyProducts";
 import { DataTable } from "@/components/ui/dataTable";
 // import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { apiClient } from "@/hook/apiClient";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+type Product = {
+  id: number;
+  code: string;
+  name: string;
+  created_by: string;
+  created_at: string;
+  updated_by: string;
+  updated_at: string;
+  cost_price: number;
+  selling_price: number;
+  uom_id: number;
+};
 
 export default function AllProductsPage() {
   const router = useNavigate();
+  const [loader, setLoading] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const data = await apiClient(
+        `${import.meta.env.VITE_SERVER}/product/products`,
+        { method: "GET", tokenType: "jwt" }
+      );
 
+      setProducts(data.data);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to fetch product setup data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
   return (
     <div className="p-6">
-      {/* Header */}
       <Breadcrumbs
         labelOverrides={{
           products: "Products",
@@ -35,11 +69,20 @@ export default function AllProductsPage() {
         label="Products List"
         selectable
         rowsPerPage={10}
-        hiddenColumns={["details", "barcode", "id"]}
+        loading={loader}
+        hiddenColumns={[
+          "created_by",
+          "created_at",
+          "updated_by",
+          "updated_at",
+          "uom_id",
+          "id",
+        ]}
         printHead={[
+          { label: "code", value: "code" },
           { label: "Product Name", value: "name" },
-          { label: "Price ($)", value: "price" },
-          { label: "Stock", value: "stock" },
+          { label: "cost price", value: "cost_price" },
+          { label: "sale price", value: "selling_price" },
         ]}
         actions={[
           {
@@ -59,27 +102,6 @@ export default function AllProductsPage() {
           },
         ]}
       />
-      <div id="Products List" className="hidden">
-        <h1 className="text-xl font-bold mb-2">Product Report</h1>
-        <table className="w-full border">
-          <thead>
-            <tr>
-              <th className="border p-2">Name</th>
-              <th className="border p-2">Price</th>
-              <th className="border p-2">Stock</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((p) => (
-              <tr key={p.id}>
-                <td className="border p-2">{p.name}</td>
-                <td className="border p-2">${p.price}</td>
-                <td className="border p-2">{p.stock}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }

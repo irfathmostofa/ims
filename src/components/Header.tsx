@@ -11,8 +11,9 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useClock } from "@/hook/useClock";
+
 import { useAuthStore } from "@/store/authStore";
+import { useClockWithDate } from "@/hook/useClockwithDate";
 
 export default function Header({
   setSidebarOpen,
@@ -22,7 +23,7 @@ export default function Header({
   const [notifOpen, setNotifOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const navigate = useNavigate();
-  const time = useClock();
+  const time = useClockWithDate();
 
   // 🔹 Get logged-in user from store
   const { user } = useAuthStore();
