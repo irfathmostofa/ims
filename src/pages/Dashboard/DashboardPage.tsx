@@ -143,38 +143,38 @@ export default function DashboardPage() {
           icon={<Package />}
           title="Total Stock"
           value={totalStock}
-          bg="bg-[#1F2937]"
+          bg="bg-[#003333]"
         />
         <Card
           icon={<Store />}
           title="Branches"
           value={totalBranches}
-          bg="bg-[#1F2937]"
+          bg="bg-[#003333]"
         />
         <Card
           icon={<Users />}
           title="Customers"
           value={totalCustomers}
-          bg="bg-[#1F2937]"
+          bg="bg-[#003333]"
         />
         <Card
           icon={<Users />}
           title="Staff"
           value={totalStaff}
-          bg="bg-[#1F2937]"
+          bg="bg-[#003333]"
         />
         <Card
           icon={<DollarSign />}
           title="Total Sales"
           value={`$${totalSales}`}
-          bg="bg-[#1F2937]"
+          bg="bg-[#003333]"
         />
       </div>
 
       {/* SECTION 2: Monthly Recap + Branch Stock */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Monthly Recap */}
-        <div className="bg-[#1F2937] p-4 rounded-lg shadow">
+        <div className="bg-[#003333] p-4 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-2 text-[#fff]">
             Monthly Recap Report
           </h3>
@@ -197,7 +197,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Branch Stock + Low Stock */}
-        <div className="bg-[#1F2937] p-4 rounded-lg shadow space-y-4">
+        <div className="bg-[#003333] p-4 rounded-lg shadow space-y-4">
           <h3 className="text-lg font-semibold text-[#fff]">
             Branch-wise Stock
           </h3>
@@ -207,7 +207,7 @@ export default function DashboardPage() {
               <XAxis dataKey="branch" stroke="#fff" />
               <YAxis stroke="#fff" />
               <Tooltip
-                contentStyle={{ backgroundColor: "#1F2937", color: "#fff" }}
+                contentStyle={{ backgroundColor: "#003333", color: "#fff" }}
               />
               <Bar dataKey="stock" fill="#fff" />
             </BarChart>
@@ -248,24 +248,24 @@ export default function DashboardPage() {
           icon={<CreditCard />}
           title="Total Revenue"
           value={`$${totalRevenue}`}
-          bg="bg-[#1F2937]"
+          bg="bg-[#003333]"
         />
         <Card
           icon={<CreditCard />}
           title="Total Cost"
           value={`$${totalCost}`}
-          bg="bg-[#1F2937]"
+          bg="bg-[#003333]"
         />
         <Card
           icon={<TrendingUp />}
           title="Total Profit"
           value={`$${totalProfit}`}
-          bg="bg-[#1F2937]"
+          bg="bg-[#003333]"
         />
       </div>
       {/* SECTION 4: Latest Orders & Recently Added Products */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-[#1F2937] p-4 rounded-lg shadow">
+        <div className="bg-[#003333] p-4 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-2 text-[#FFF]">
             Latest Orders
           </h3>
@@ -276,7 +276,7 @@ export default function DashboardPage() {
           />
         </div>
 
-        <div className="bg-[#1F2937] p-4 rounded-lg shadow">
+        <div className="bg-[#003333] p-4 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-2 text-[#FFF]">
             Recently Added Products
           </h3>

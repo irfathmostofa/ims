@@ -127,6 +127,7 @@ export default function ConfigPage() {
                 className="border px-3 py-2 rounded w-full"
               >
                 <option value="">-- Select Group --</option>
+                <option value="System">System</option>
                 <option value="Website">Website</option>
                 <option value="Inventory">Inventory</option>
                 <option value="LandingPage">Landing Page</option>

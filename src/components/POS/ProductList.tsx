@@ -1,6 +1,9 @@
 "use client";
 
-import { products as allProducts } from "@/data/dummyProducts";
+import { apiClient } from "@/hook/apiClient";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import Loader from "../utils/loader";
 
 export default function ProductList({
   search,
@@ -13,11 +16,31 @@ export default function ProductList({
   category: string;
   addToCart: (product: { id: number; name: string; price: number }) => void;
 }) {
-  const filteredProducts = allProducts.filter(
-    (p) =>
-      (category === "All" || p.category === category) &&
-      p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const data = await apiClient(
+        `${import.meta.env.VITE_SERVER}/product/get-pos-products`,
+        {
+          method: "POST", // better for filters (search/category)
+          tokenType: "jwt",
+          data: { search, category },
+        }
+      );
+      setProducts(data.data || []);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to fetch Product");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, [search, category]);
 
   return (
     <div className="bg-bw-50 p-2 rounded-md shadow-md flex flex-col flex-1 overflow-y-auto">
@@ -35,26 +58,34 @@ export default function ProductList({
 
       {/* Product Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 flex-1">
-        {filteredProducts.map((product) => (
+        {loading && <Loader />}
+        {products.map((product) => (
           <div
-            key={product.id}
+            key={product.variant_id}
             className="p-2 bg-bw-100 border border-bw-primary rounded-md flex flex-col justify-between items-start hover:shadow-md transition h-36"
           >
             <h3 className="text-bw-800 font-medium text-sm">{product.name}</h3>
-            <p className="text-bw-700 text-xs">Brand: {product.brand}</p>
-            {/* <p className="text-bw-700 text-xs">Branch: {product.branch}</p> */}
-            <p className="text-bw-700 text-xs">Stock: {product.stock}</p>
-            <p className="text-bw-700 text-sm mt-1">${product.price}</p>
+            <p className="text-bw-700 text-xs">Category: {product.category}</p>
+            <p className="text-bw-700 text-xs">Stock: {product.stock_qty}</p>
+            <p className="text-bw-700 text-sm mt-1">
+              BDT {product.selling_price}
+            </p>
             <button
               className="mt-2 btn-bw-primary text-sm px-2 py-1 self-stretch text-center"
-              onClick={() => addToCart(product)}
-              disabled={product.stock === 0}
+              onClick={() =>
+                addToCart({
+                  id: product.variant_id,
+                  name: product.name,
+                  price: product.selling_price,
+                })
+              }
+              disabled={product.stock_qty === 0}
             >
-              {product.stock === 0 ? "Out of Stock" : "Add"}
+              {product.stock_qty === 0 ? "Out of Stock" : "Add"}
             </button>
           </div>
         ))}
-        {filteredProducts.length === 0 && (
+        {!loading && products.length === 0 && (
           <p className="text-bw-500 col-span-full text-center mt-4">
             No products found.
           </p>
