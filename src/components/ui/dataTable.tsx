@@ -11,6 +11,7 @@ type Action<T> = {
   label: React.ReactNode;
   onClick: (row: T) => void;
   className?: string;
+  title?: string;
 };
 
 type SortConfig = {
@@ -357,9 +358,10 @@ export function DataTable<T extends Record<string, any>>({
                           {actions.map((action, i) => (
                             <button
                               key={i}
-                              className={`px-2 py-1 rounded text-xs sm:text-sm ${
+                              className={`px-2 py-1 bw-primary rounded text-xs sm:text-sm ${
                                 action.className ?? "bw-primary "
                               }`}
+                              title={action.title}
                               onClick={() => action.onClick(row)}
                             >
                               {action.label}

@@ -114,7 +114,7 @@ const navItems: NavItem[] = [
     name: "Website Setup",
     icon: Globe2,
     children: [
-      { name: "Config", path: "/under-construction" },
+      { name: "Config", path: "/config" },
       { name: "Tamplate", path: "/under-construction" },
       { name: "Visit Website", path: "https://rasian-mart.netlify.app/" },
     ],

@@ -42,6 +42,7 @@ import AuthLayout from "./layouts/AuthLayout";
 import SetupWizard from "./pages/Setup/SetupWizard";
 import { Toaster } from "sonner";
 import { PrivateRoute } from "./hook/PrivateRoute";
+import ConfigPage from "./pages/Website/configpage";
 
 export default function App() {
   return (
@@ -132,6 +133,7 @@ export default function App() {
                 path="/reports/purchase"
                 element={<PurchaseReportPage />}
               />
+              <Route path="/config" element={<ConfigPage />} />
             </Route>
           </Route>
 

@@ -24,6 +24,7 @@ type Product = {
 export default function AllProductsPage() {
   const router = useNavigate();
   const [loader, setLoading] = useState(false);
+  const [update, setUpdate] = useState(0);
   const [products, setProducts] = useState<Product[]>([]);
   const fetchData = async () => {
     try {
@@ -44,7 +45,30 @@ export default function AllProductsPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [update]);
+  const deleteProduct = async (p: Product) => {
+    if (!confirm(`Delete product "${p.name}"?`)) return;
+
+    try {
+      setLoading(true);
+      const data = await apiClient(
+        `${import.meta.env.VITE_SERVER}/product/delete-products/${p.id}`,
+        {
+          method: "POST",
+          data: { id: p.id },
+          tokenType: "jwt",
+        }
+      );
+      toast.success(data.message || "Product deleted!");
+      setUpdate((prev) => prev + 1);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to delete Product");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="p-6">
       <Breadcrumbs
@@ -88,17 +112,19 @@ export default function AllProductsPage() {
           {
             label: <Eye size={16} className="inline" />,
             className: "",
+            title: "view",
             onClick: (row) => router(`/inventory/products/${row.id}`),
           },
           {
             label: <Pen size={16} className="inline" />,
             className: "",
+            title: "update",
             onClick: (row) => router(`/inventory/products/${row.id}/edit`),
           },
           {
             label: <Trash size={16} className="inline" />,
-            className: " ",
-            onClick: (row) => alert(`Delete ${row.name}`),
+            onClick: (row) => deleteProduct(row),
+            title: "delete",
           },
         ]}
       />

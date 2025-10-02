@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Pen, Plus, Trash } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Pen, Trash, Plus } from "lucide-react";
 import { DataTable } from "@/components/ui/dataTable";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,146 +11,199 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { apiClient } from "@/hook/apiClient";
+import { toast } from "sonner";
+import { useCrud } from "@/hook/crudHelper";
 
 type Customer = {
   id: number;
+  code?: string;
+  branch_id?: number;
+  type?: string;
   name: string;
-  email: string;
   phone: string;
+  email?: string;
   address?: string;
+  credit_limit?: number;
+  loyalty_points?: number;
+  status?: string;
+  created_at?: string;
 };
 
-export default function CustomersPage() {
-  const [customers, setCustomers] = useState<Customer[]>([
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@example.com",
-      phone: "1234567890",
-      address: "123 Main St",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      email: "jane@example.com",
-      phone: "9876543210",
-      address: "456 Elm St",
-    },
-  ]);
+type Branch = {
+  id: number;
+  code: string;
+  company_id: number;
+  name: string;
+  type: string;
+  phone: string;
+  address: string;
+  created_by: string;
+  created_at: string;
+};
 
-  const [form, setForm] = useState<{
-    id?: number;
-    name: string;
-    email: string;
-    phone: string;
-    address?: string;
-  }>({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
+export default function CustomerPage() {
+  const [customer, setCustomer] = useState<Customer[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<Partial<Customer>>({});
+  const [update, setUpdate] = useState(0);
+
+  // ✅ Load branches
+  const fetchBranches = async () => {
+    try {
+      const branch = await apiClient(
+        `${import.meta.env.VITE_SERVER}/setup/get-branches`,
+        { method: "GET", tokenType: "jwt" }
+      );
+
+      setBranches(branch.data || []);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to fetch branches");
+    }
+  };
+
+  useEffect(() => {
+    fetchBranches();
+  }, []);
+
+  // CRUD hook for Customer
+  const { fetchAll, save, remove } = useCrud<Customer>({
+    listUrl: `${import.meta.env.VITE_SERVER}/party/get-party`,
+    listMethod: "POST",
+    listPayload: { type: "CUSTOMER" },
+    createUrl: `${import.meta.env.VITE_SERVER}/party/create-party`,
+    updateUrl: `${import.meta.env.VITE_SERVER}/party/update-party`,
+    deleteUrl: `${import.meta.env.VITE_SERVER}/party/delete-party`,
+    formatCreate: (data) => ({ ...data, type: "CUSTOMER" }),
+    formatUpdate: (data) => ({ ...data, type: "CUSTOMER" }),
   });
 
-  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    fetchAll(setCustomer, setLoading);
+  }, [update]);
 
-  // ✅ Add / Update
-  const handleSave = () => {
-    if (!form.name || !form.email || !form.phone) {
-      alert("Name, Email, and Phone are required.");
+  //  Save (create/update)
+  const handleSave = async () => {
+    if (!form.name || !form.phone) {
+      toast.error("Name and Phone are required");
       return;
     }
 
-    if (form.id) {
-      setCustomers((prev) =>
-        prev.map((c) => (c.id === form.id ? { ...c, ...form } : c))
-      );
-    } else {
-      const newId = customers.length
-        ? Math.max(...customers.map((c) => c.id)) + 1
-        : 1;
-      setCustomers((prev) => [...prev, { ...form, id: newId }]);
-    }
-
-    setForm({ name: "", email: "", phone: "", address: "" });
-    setOpen(false); // close dialog
+    await save(form, form.id);
+    setForm({});
+    setOpen(false);
+    setUpdate((prev) => prev + 1);
   };
 
   // ✅ Edit
-  const handleEdit = (cust: Customer) => {
-    setForm(cust);
-    setOpen(true); // open dialog for edit
+  const handleEdit = (s: Customer) => {
+    setForm(s);
+    setOpen(true);
   };
 
   // ✅ Delete
-  const handleDelete = (cust: Customer) => {
-    if (!confirm(`Are you sure you want to delete ${cust.name}?`)) return;
-    setCustomers((prev) => prev.filter((c) => c.id !== cust.id));
+  const handleDelete = async (s: Customer) => {
+    if (!confirm(`Delete Customer "${s.name}"?`)) return;
+    await remove(s.id!);
+    setUpdate((prev) => prev + 1);
   };
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-3">
-        <h1 className="text-2xl font-bold">Customers</h1>
-
-        {/* ✅ Add Customer Dialog */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Customer Management</h1>
+        {/*  Add/Edit Dialog */}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2 btn-bw-primary">
               <Plus size={18} /> Add Customer
             </Button>
           </DialogTrigger>
-
-          <DialogContent className="sm:max-w-md bg-amber-50">
+          <DialogContent className="max-w-lg bg-amber-50">
             <DialogHeader>
               <DialogTitle>
                 {form.id ? "Edit Customer" : "Add Customer"}
               </DialogTitle>
             </DialogHeader>
-
-            <div className="space-y-4 mt-2">
+            <div className="space-y-3">
               <input
                 type="text"
-                placeholder="Name"
+                placeholder="Customer Name"
                 className="border px-3 py-2 rounded w-full"
-                value={form.name}
+                value={form.name || ""}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+
+              <select
+                className="border px-3 py-2 rounded w-full"
+                value={form.branch_id || ""}
+                onChange={(e) =>
+                  setForm({ ...form, branch_id: Number(e.target.value) })
+                }
+              >
+                <option value="">--Select Branch--</option>
+                {branches.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="text"
+                placeholder="Phone"
+                className="border px-3 py-2 rounded w-full"
+                value={form.phone || ""}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
               <input
                 type="email"
                 placeholder="Email"
                 className="border px-3 py-2 rounded w-full"
-                value={form.email}
+                value={form.email || ""}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-              <input
-                type="text"
-                placeholder="Phone"
-                className="border px-3 py-2 rounded w-full"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
               <textarea
                 placeholder="Address"
                 className="border px-3 py-2 rounded w-full"
-                value={form.address}
+                value={form.address || ""}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
               />
-
-              <Button className="w-full btn-bw-primary" onClick={handleSave}>
-                {form.id ? "Update" : "Add Customer"}
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} className="btn-bw-primary">
+                {form.id ? "Update" : "Add"}
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* ✅ Data Table */}
+      {/* ✅ Customer Table */}
       <DataTable
-        data={customers}
+        data={customer}
         label="Customer List"
-        hiddenColumns={["id"]}
-        selectable
+        hiddenColumns={[
+          "id",
+          "type",
+          "credit_limit",
+          "loyalty_points",
+          "created_at",
+        ]}
+        loading={loading}
         rowsPerPage={10}
+        selectable
+        printHead={[
+          { label: "Name", value: "name" },
+          { label: "Phone", value: "phone" },
+          { label: "Email", value: "email" },
+          { label: "Address", value: "address" },
+        ]}
         actions={[
           {
             label: <Pen size={16} />,

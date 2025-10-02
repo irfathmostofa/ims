@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pen, Trash, Plus } from "lucide-react";
 import { DataTable } from "@/components/ui/dataTable";
 import { Button } from "@/components/ui/button";
@@ -9,111 +9,197 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
+import { apiClient } from "@/hook/apiClient";
+import { toast } from "sonner";
+import { useCrud } from "@/hook/crudHelper";
 
 type Supplier = {
   id: number;
+  code?: string;
+  branch_id?: number;
+  type?: string;
   name: string;
-  contactPerson: string;
   phone: string;
-  email: string;
+  email?: string;
+  address?: string;
+  credit_limit?: number;
+  loyalty_points?: number;
+  status?: string;
+  created_at?: string;
+};
+
+type Branch = {
+  id: number;
+  code: string;
+  company_id: number;
+  name: string;
+  type: string;
+  phone: string;
   address: string;
+  created_by: string;
+  created_at: string;
 };
 
 export default function SupplierPage() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([
-    {
-      id: 1,
-      name: "Tech Distributors Ltd.",
-      contactPerson: "John Doe",
-      phone: "+1 234 567 890",
-      email: "john@techdist.com",
-      address: "123 Market Street, New York, USA",
-    },
-    {
-      id: 2,
-      name: "Global Supplies",
-      contactPerson: "Jane Smith",
-      phone: "+44 20 1234 5678",
-      email: "jane@globalsupplies.com",
-      address: "45 Oxford Street, London, UK",
-    },
-  ]);
-
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<Supplier>({
-    id: 0,
-    name: "",
-    contactPerson: "",
-    phone: "",
-    email: "",
-    address: "",
+  const [form, setForm] = useState<Partial<Supplier>>({});
+  const [update, setUpdate] = useState(0);
+
+  // ✅ Load branches
+  const fetchBranches = async () => {
+    try {
+      const branch = await apiClient(
+        `${import.meta.env.VITE_SERVER}/setup/get-branches`,
+        { method: "GET", tokenType: "jwt" }
+      );
+
+      setBranches(branch.data || []);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to fetch branches");
+    }
+  };
+
+  useEffect(() => {
+    fetchBranches();
+  }, []);
+
+  // CRUD hook for suppliers
+  const { fetchAll, save, remove } = useCrud<Supplier>({
+    listUrl: `${import.meta.env.VITE_SERVER}/party/get-party`,
+    listMethod: "POST",
+    listPayload: { type: "SUPPLIER" },
+    createUrl: `${import.meta.env.VITE_SERVER}/party/create-party`,
+    updateUrl: `${import.meta.env.VITE_SERVER}/party/update-party`,
+    deleteUrl: `${import.meta.env.VITE_SERVER}/party/delete-party`,
+    formatCreate: (data) => ({ ...data, type: "SUPPLIER" }),
+    formatUpdate: (data) => ({ ...data, type: "SUPPLIER" }),
   });
 
-  // ✅ Open dialog for Add or Edit
-  const handleOpen = (supplier?: Supplier) => {
-    if (supplier) {
-      setForm({ ...supplier });
-    } else {
-      setForm({
-        id: 0,
-        name: "",
-        contactPerson: "",
-        phone: "",
-        email: "",
-        address: "",
-      });
+  useEffect(() => {
+    fetchAll(setSuppliers, setLoading);
+  }, [update]);
+
+  //  Save (create/update)
+  const handleSave = async () => {
+    if (!form.name || !form.phone) {
+      toast.error("Name and Phone are required");
+      return;
     }
+
+    await save(form, form.id);
+    setForm({});
+    setOpen(false);
+    setUpdate((prev) => prev + 1);
+  };
+
+  // ✅ Edit
+  const handleEdit = (s: Supplier) => {
+    setForm(s);
     setOpen(true);
   };
 
-  // ✅ Save
-  const handleSave = () => {
-    if (!form.name || !form.contactPerson || !form.phone) {
-      return alert("Name, Contact Person, and Phone are required!");
-    }
-
-    if (form.id) {
-      setSuppliers((prev) =>
-        prev.map((s) => (s.id === form.id ? { ...form } : s))
-      );
-    } else {
-      const newId = suppliers.length
-        ? Math.max(...suppliers.map((s) => s.id)) + 1
-        : 1;
-      setSuppliers((prev) => [...prev, { ...form, id: newId }]);
-    }
-
-    setOpen(false);
-  };
-
   // ✅ Delete
-  const handleDelete = (s: Supplier) => {
-    if (!confirm(`Delete supplier ${s.name}?`)) return;
-    setSuppliers((prev) => prev.filter((x) => x.id !== s.id));
+  const handleDelete = async (s: Supplier) => {
+    if (!confirm(`Delete supplier "${s.name}"?`)) return;
+    await remove(s.id!);
+    setUpdate((prev) => prev + 1);
   };
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Suppliers Management</h1>
-        <Button
-          onClick={() => handleOpen()}
-          className="btn-bw-primary flex gap-1"
-        >
-          <Plus size={16} /> Add Supplier
-        </Button>
+        {/*  Add/Edit Dialog */}
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2 btn-bw-primary">
+              <Plus size={18} /> Add Supplier
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg bg-amber-50">
+            <DialogHeader>
+              <DialogTitle>
+                {form.id ? "Edit Supplier" : "Add Supplier"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="Supplier Name"
+                className="border px-3 py-2 rounded w-full"
+                value={form.name || ""}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+
+              <select
+                className="border px-3 py-2 rounded w-full"
+                value={form.branch_id || ""}
+                onChange={(e) =>
+                  setForm({ ...form, branch_id: Number(e.target.value) })
+                }
+              >
+                <option value="">--Select Branch--</option>
+                {branches.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="text"
+                placeholder="Phone"
+                className="border px-3 py-2 rounded w-full"
+                value={form.phone || ""}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                className="border px-3 py-2 rounded w-full"
+                value={form.email || ""}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+              <textarea
+                placeholder="Address"
+                className="border px-3 py-2 rounded w-full"
+                value={form.address || ""}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+              />
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} className="btn-bw-primary">
+                {form.id ? "Update" : "Add"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* ✅ Supplier Table */}
       <DataTable
         data={suppliers}
         label="Supplier List"
-        hiddenColumns={["id"]}
+        hiddenColumns={[
+          "id",
+          "type",
+          "credit_limit",
+          "loyalty_points",
+          "created_at",
+        ]}
+        loading={loading}
         rowsPerPage={10}
+        selectable
         printHead={[
           { label: "Name", value: "name" },
-          { label: "Contact Person", value: "contactPerson" },
           { label: "Phone", value: "phone" },
           { label: "Email", value: "email" },
           { label: "Address", value: "address" },
@@ -121,7 +207,7 @@ export default function SupplierPage() {
         actions={[
           {
             label: <Pen size={16} />,
-            onClick: (row) => handleOpen(row),
+            onClick: (row) => handleEdit(row),
           },
           {
             label: <Trash size={16} />,
@@ -129,63 +215,6 @@ export default function SupplierPage() {
           },
         ]}
       />
-
-      {/* ✅ Add/Edit Dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg bg-amber-50">
-          <DialogHeader>
-            <DialogTitle>
-              {form.id ? "Edit Supplier" : "Add Supplier"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="Supplier Name"
-              className="border px-3 py-2 rounded w-full"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-            <input
-              type="text"
-              placeholder="Contact Person"
-              className="border px-3 py-2 rounded w-full"
-              value={form.contactPerson}
-              onChange={(e) =>
-                setForm({ ...form, contactPerson: e.target.value })
-              }
-            />
-            <input
-              type="text"
-              placeholder="Phone"
-              className="border px-3 py-2 rounded w-full"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              className="border px-3 py-2 rounded w-full"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-            <textarea
-              placeholder="Address"
-              className="border px-3 py-2 rounded w-full"
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-            />
-          </div>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} className="btn-bw-primary">
-              {form.id ? "Update" : "Add"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

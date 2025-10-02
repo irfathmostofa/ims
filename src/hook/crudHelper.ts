@@ -1,18 +1,21 @@
-// utils/crudHelper.ts
-import { apiClient } from "@/hook/apiClient";
 import { toast } from "sonner";
+import { apiClient } from "./apiClient";
 
 type CrudOptions<T> = {
   listUrl: string;
+  listMethod?: "GET" | "POST"; // ✅ new
+  listPayload?: any; // ✅ default payload
   createUrl: string;
-  updateUrl: string; // must accept /:id
-  deleteUrl: string; // must accept /:id
-  formatCreate?: (data: Partial<T>) => any; // ✅ transform before create
-  formatUpdate?: (data: Partial<T>) => any; // ✅ transform before update
+  updateUrl: string;
+  deleteUrl: string;
+  formatCreate?: (data: Partial<T>) => any;
+  formatUpdate?: (data: Partial<T>) => any;
 };
 
 export function useCrud<T>({
   listUrl,
+  listMethod = "GET",
+  listPayload,
   createUrl,
   updateUrl,
   deleteUrl,
@@ -21,13 +24,15 @@ export function useCrud<T>({
 }: CrudOptions<T>) {
   const fetchAll = async (
     setData: (data: T[]) => void,
-    setLoading?: (val: boolean) => void
+    setLoading?: (val: boolean) => void,
+    payload?: any // ✅ override default payload if needed
   ) => {
     try {
       setLoading?.(true);
       const res = await apiClient(listUrl, {
-        method: "GET",
+        method: listMethod,
         tokenType: "jwt",
+        ...(listMethod === "POST" ? { data: payload || listPayload } : {}),
       });
       setData(res.data || []);
     } catch (err: any) {
@@ -67,7 +72,7 @@ export function useCrud<T>({
 
   const remove = async (id: number) => {
     try {
-      const res = await apiClient(`${deleteUrl}`, {
+      const res = await apiClient(deleteUrl, {
         method: "POST",
         data: { id },
         tokenType: "jwt",
