@@ -1,10 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { demoCustomers } from "@/data/demoCustomers";
+import { apiClient } from "@/hook/apiClient";
+import { toast } from "sonner";
 
 export default function CustomerInfo({
+  customerId,
+  setCustomerId,
   customerName,
   setCustomerName,
   customerPhone,
@@ -12,6 +15,8 @@ export default function CustomerInfo({
   customerAddress,
   setCustomerAddress,
 }: {
+  customerId: number;
+  setCustomerId: (id: number) => void;
   customerName: string;
   setCustomerName: (name: string) => void;
   customerPhone: string;
@@ -22,12 +27,33 @@ export default function CustomerInfo({
   const [suggestions, setSuggestions] = useState<
     { id: number; name: string; phone: string; address: string }[]
   >([]);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const data = await apiClient(
+        `${import.meta.env.VITE_SERVER}/party/get-party`,
+        { method: "POST", tokenType: "jwt", data: { type: "CUSTOMER" } }
+      );
+
+      setCustomers(data.data || []);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to fetch branches");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
   // Handle name typing
   const handleNameChange = (value: string) => {
     setCustomerName(value);
     if (value.length > 0) {
-      const filtered = demoCustomers.filter((c) =>
+      const filtered = customers.filter((c) =>
         c.name.toLowerCase().includes(value.toLowerCase())
       );
       setSuggestions(filtered);
@@ -40,7 +66,7 @@ export default function CustomerInfo({
   const handlePhoneChange = (value: string) => {
     setCustomerPhone(value);
     if (value.length > 0) {
-      const filtered = demoCustomers.filter((c) => c.phone.includes(value));
+      const filtered = customers.filter((c) => c.phone.includes(value));
       setSuggestions(filtered);
     } else {
       setSuggestions([]);
@@ -54,6 +80,7 @@ export default function CustomerInfo({
     phone: string;
     address: string;
   }) => {
+    setCustomerId(customer.id);
     setCustomerName(customer.name);
     setCustomerPhone(customer.phone);
     setCustomerAddress(customer.address);
@@ -61,10 +88,13 @@ export default function CustomerInfo({
   };
   return (
     <div className="bg-bw-50 px-4 pb-4 rounded-md shadow-md ">
-      <h2 className="text-bw-900 font-bold mb-2">Customer</h2>
+      <h2 className="text-bw-900 font-bold mb-2">
+        Customer {loading && "Data Loading..."}
+      </h2>
 
       <div className="flex w-full gap-2">
         <div className="flex-1 space-7-1 relative">
+          <p className="hidden">{customerId}</p>
           <Label htmlFor="customer-name">Name</Label>
           <Input
             id="customer-name"

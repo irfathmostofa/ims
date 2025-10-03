@@ -23,11 +23,12 @@ export default function ProductList({
     try {
       setLoading(true);
       const data = await apiClient(
-        `${import.meta.env.VITE_SERVER}/product/get-pos-products`,
+        `${
+          import.meta.env.VITE_SERVER
+        }/product/get-pos-products/${category}/${search}`,
         {
-          method: "POST", // better for filters (search/category)
+          method: "GET",
           tokenType: "jwt",
-          data: { search, category },
         }
       );
       setProducts(data.data || []);
