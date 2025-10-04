@@ -18,6 +18,7 @@ export default function POSPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [customerId, setCustomerId] = useState(0);
+  const [invoiceId, setInvoiceId] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
@@ -87,6 +88,36 @@ export default function POSPage() {
     setCategory("All");
   };
 
+  const addCustomer = async (): Promise<number | null> => {
+    const formData = {
+      name: customerName,
+      branch_id: user?.branch_id,
+      phone: customerPhone,
+      address: customerAddress,
+      type: "CUSTOMER",
+    };
+    try {
+      setLoading(true);
+      const data = await apiClient(
+        `${import.meta.env.VITE_SERVER}/party/create-party`,
+        {
+          method: "POST",
+          tokenType: "jwt",
+          data: formData,
+        }
+      );
+
+      toast.success(data.message);
+      // Return the newly created party/customer ID
+      return data.data?.id;
+    } catch (err: any) {
+      toast.error(err.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handlePay = async () => {
     if (cart.length === 0) {
       toast.error("Cart is empty");
@@ -98,44 +129,58 @@ export default function POSPage() {
       return;
     }
 
-    const invoiceItems = cart.map((item) => ({
-      product_variant_id: item.id,
-      quantity: item.quantity,
-      unit_price: item.price,
-      discount: 0,
-    }));
-
-    // Correct formData structure
-    const formData = {
-      branch_id: user.branch_id,
-      party_id: customerId || null, // null if no customer selected
-      type: "SALE" as const,
-      invoice_date: new Date().toISOString().split("T")[0],
-      items: invoiceItems,
-      payments: [
-        // Array of payments
-        {
-          method: paymentMethod,
-          amount: total,
-          reference_no: null,
-        },
-      ],
-    };
-
     try {
       setLoading(true);
+
+      let finalCustomerId = customerId;
+
+      // If party_id doesn't exist (is 0 or null), create customer first
+      if (!customerId || customerId === 0) {
+        const newCustomerId = await addCustomer();
+
+        if (!newCustomerId) {
+          toast.error("Failed to create customer");
+          return;
+        }
+
+        finalCustomerId = newCustomerId;
+      }
+
+      // Now create the invoice with the party_id
+      const invoiceItems = cart.map((item) => ({
+        product_variant_id: item.id,
+        quantity: item.quantity,
+        unit_price: item.price,
+        discount: 0,
+      }));
+
+      const formData = {
+        branch_id: user.branch_id,
+        party_id: finalCustomerId,
+        type: "SALE" as const,
+        invoice_date: new Date().toISOString().split("T")[0],
+        items: invoiceItems,
+        payments: [
+          {
+            method: paymentMethod.toUpperCase() as "CASH" | "BANK" | "ONLINE",
+            amount: total,
+            reference_no: null,
+          },
+        ],
+      };
+
       const data = await apiClient(
-        `${import.meta.env.VITE_SERVER}/sales/create-invoices`, 
+        `${import.meta.env.VITE_SERVER}/sales/create-invoices`,
         {
           method: "POST",
           tokenType: "jwt",
           data: formData,
         }
       );
-
+      setInvoiceId(data.data.code);
       toast.success(data.message || "Invoice created successfully");
-      clearNoConfirm(); // Clear cart after success
       setInvoiceOpen(true);
+      // clearNoConfirm();
     } catch (err: any) {
       console.error("Invoice creation error:", err);
       toast.error(err.message || "Failed to create invoice");
@@ -175,6 +220,7 @@ export default function POSPage() {
       {/* Right: Cart (now manages saved carts locally) */}
       <Cart
         cart={cart}
+        loading={Loading}
         setCart={setCart}
         adjustQuantity={adjustQuantity}
         removeFromCart={removeFromCart}
@@ -202,6 +248,7 @@ export default function POSPage() {
         cart={cart}
         total={total}
         paymentMethod={paymentMethod}
+        invoiceNumber={invoiceId}
       />
     </div>
   );

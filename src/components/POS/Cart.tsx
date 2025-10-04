@@ -31,6 +31,7 @@ type SavedCart = {
 };
 
 export default function Cart({
+  loading,
   cart,
   setCart,
   adjustQuantity,
@@ -49,6 +50,7 @@ export default function Cart({
   setPaymentMethod,
   paymentMethod,
 }: {
+  loading: boolean;
   cart: CartItem[];
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
   adjustQuantity: (id: number, delta: number) => void;
@@ -349,8 +351,9 @@ export default function Cart({
           <button
             className="btn-bw-primary flex-1 py-2 text-lg font-semibold"
             onClick={handlePay}
+            disabled={loading}
           >
-            Pay ${total}
+            {loading ? "Process..." : `Pay ${total}`}
           </button>
         </div>
       </div>

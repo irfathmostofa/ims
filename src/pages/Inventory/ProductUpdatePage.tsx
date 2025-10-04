@@ -7,13 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+
 import { apiClient } from "@/hook/apiClient";
 import { toast } from "sonner";
 
@@ -164,22 +158,22 @@ export default function ProductEditPage() {
       images.forEach((file) => {
         formData.append("images", file);
       });
-      console.log(formData);
-      // const res = await apiClient(
-      //   `${import.meta.env.VITE_SERVER}/product/products/${id}`,
-      //   {
-      //     method: "PUT",
-      //     tokenType: "jwt",
-      //     data: formData,
-      //   }
-      // );
 
-      // if (res.success) {
-      //   toast.success("Product updated successfully!");
-      //   navigate("/products");
-      // } else {
-      //   toast.error(res.message || "Update failed");
-      // }
+      const res = await apiClient(
+        `${import.meta.env.VITE_SERVER}/product/products/${id}`,
+        {
+          method: "PUT",
+          tokenType: "jwt",
+          data: formData,
+        }
+      );
+
+      if (res.success) {
+        toast.success("Product updated successfully!");
+        navigate("/products");
+      } else {
+        toast.error(res.message || "Update failed");
+      }
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Something went wrong during update");

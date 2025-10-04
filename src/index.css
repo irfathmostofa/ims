@@ -123,3 +123,21 @@
   scrollbar-width: thin;
   scrollbar-color: #4b5563 #003333;
 }
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #invoice-content,
+  #invoice-content * {
+    visibility: visible;
+  }
+  #invoice-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  button {
+    display: none !important;
+  }
+}

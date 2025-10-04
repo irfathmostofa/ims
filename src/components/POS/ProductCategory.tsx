@@ -3,6 +3,7 @@
 import { apiClient } from "@/hook/apiClient";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import Loader from "../utils/loader";
 
 export default function ProductCategory({
   category,
@@ -36,6 +37,7 @@ export default function ProductCategory({
 
   return (
     <div className="bg-bw-50 px-2 pb-2 rounded-md shadow-md ">
+      {loading && <Loader />}
       <h2 className="text-bw-900 font-bold mb-2 text-center">Categories</h2>
       <div className="flex flex-col gap-2">
         {categories.map((cat) => (
