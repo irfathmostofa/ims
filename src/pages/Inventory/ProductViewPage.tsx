@@ -52,7 +52,7 @@ export default function ProductViewPage() {
           </p>
         </div>
         <div className="text-right">
-          <p className="text-3xl font-semibold text-blue-600">
+          <p className="text-3xl font-semibold text-gray-800">
             ${product.selling_price}
           </p>
           <p className="text-sm text-gray-500">Cost: ${product.cost_price}</p>
@@ -176,14 +176,12 @@ export default function ProductViewPage() {
               {product.variants?.find((v: any) => v.id === bv.variant_id)
                 ?.name || `#${bv.variant_id}`}
             </h2>
-            <div className="grid grid-cols-3 gap-4 ">
+            <div className="grid grid-cols-2 gap-4 ">
               {bv.barcodes.map((b: any) =>
                 [...Array(copies)].map((_, cIdx) => (
-                  <Barcode
-                    key={`${b.id}-${cIdx}`}
-                    value={b.barcode}
-                    height={60}
-                  />
+                  <div key={`${b.id}-${cIdx}`} className="border">
+                    <Barcode value={b.barcode} height={100} />
+                  </div>
                 ))
               )}
             </div>

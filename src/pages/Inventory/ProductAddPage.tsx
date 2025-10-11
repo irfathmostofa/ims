@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { apiClient } from "@/hook/apiClient";
 import { toast } from "sonner";
 import SimpleImageUploader from "@/hook/imageUploader";
+import CategoryTree from "@/components/ui/CategoryTree";
+import { useNavigate } from "react-router-dom";
 
 type Category = {
   id: number;
@@ -58,7 +60,7 @@ export default function ProductAddPage() {
   const [variations, setVariations] = useState<Variation[]>([]);
 
   const [images, setImages] = useState<ProductImage[]>([]);
-
+  const router = useNavigate();
   // ✅ Fetch categories & uoms
   const fetchData = async () => {
     try {
@@ -131,7 +133,7 @@ export default function ProductAddPage() {
         })),
 
         images: images.map((img, index) => ({
-          url: img.url || img, // fallback if only base64/string
+          url: img.url || img,
           alt_text: img.alt_text || "Product Image",
           is_primary: index === 0,
         })),
@@ -142,10 +144,11 @@ export default function ProductAddPage() {
         { method: "POST", data: product, tokenType: "jwt" }
       );
 
-      toast.success(data.message || "✅ Product Published Successfully");
+      toast.success(data.message || "Product Published Successfully");
+      router("/inventory/products");
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || "❌ Failed to publish product");
+      toast.error(error.message || " Failed to publish product");
     } finally {
       setLoading(false); // stop loader
     }
@@ -338,21 +341,18 @@ export default function ProductAddPage() {
           </div>
 
           {/* Categories */}
-          <div className="border rounded-md p-2">
+          {/* Categories */}
+          <div className="border rounded-md p-2 bg-white">
             <h3 className="font-semibold mb-2">Categories</h3>
-            <div className="space-y-1 overflow-auto h-30">
-              {categories.map((cat) => (
-                <label key={cat.id} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={selectedCategories.includes(cat.id)}
-                    onChange={() => toggleCategory(cat.id)}
-                  />
-                  {cat.name}
-                </label>
-              ))}
+            <div className="overflow-auto max-h-72">
+              <CategoryTree
+                categories={categories}
+                selectedCategories={selectedCategories}
+                toggleCategory={toggleCategory}
+              />
             </div>
           </div>
+
           <div className="border rounded-md p-2">
             <Label>UOM</Label>
             <select
