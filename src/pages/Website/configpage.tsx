@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useCrud } from "@/hook/crudHelper";
+import { Textarea } from "@/components/ui/textarea";
 
 type Setup = {
   id?: number;
@@ -132,6 +133,7 @@ export default function ConfigPage() {
                 <option value="Inventory">Inventory</option>
                 <option value="LandingPage">Landing Page</option>
                 <option value="Theme">Theme</option>
+                <option value="FAQ">FAQ</option>
                 <option value="UOM">UOM</option>
               </select>
 
