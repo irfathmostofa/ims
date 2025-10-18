@@ -14,7 +14,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useCrud } from "@/hook/crudHelper";
-import { Textarea } from "@/components/ui/textarea";
 
 type Setup = {
   id?: number;
