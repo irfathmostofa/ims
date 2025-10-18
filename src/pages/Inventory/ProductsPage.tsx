@@ -2,23 +2,45 @@
 
 import { Eye, Pen, Plus, Trash } from "lucide-react";
 import { DataTable } from "@/components/ui/dataTable";
-// import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { apiClient } from "@/hook/apiClient";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+type Image = {
+  id: number;
+  url: string;
+  alt_text: string;
+  is_primary: boolean;
+};
+
+type Category = {
+  id: number;
+  name: string;
+  slug: string;
+  code: string;
+  image: string;
+  is_primary: boolean;
+};
+
 type Product = {
   id: number;
   code: string;
   name: string;
-  created_by: string;
-  created_at: string;
-  updated_by: string;
-  updated_at: string;
-  cost_price: number;
-  selling_price: number;
-  uom_id: number;
+  description: string;
+  cost_price: number | string;
+  selling_price: number | string;
+  status: string;
+  uom_name: string;
+  images: Image[] | null;
+  categories: Category[] | null;
+  total_stock: number | string;
+  badge: string | null;
+  rating: number | null;
+  review_count: number | null;
+  total_sales: number | string;
+  primary_variant_id: number | null;
 };
 
 export default function AllProductsPage() {
@@ -26,18 +48,23 @@ export default function AllProductsPage() {
   const [loader, setLoading] = useState(false);
   const [update, setUpdate] = useState(0);
   const [products, setProducts] = useState<Product[]>([]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
       const data = await apiClient(
-        `${import.meta.env.VITE_SERVER}/product/products`,
-        { method: "GET", tokenType: "jwt" }
+        `${import.meta.env.VITE_SERVER}/product/get-all-products`,
+        {
+          method: "POST",
+          data: { page: 1, limit: 10 },
+          tokenType: "jwt",
+        }
       );
 
-      setProducts(data.data);
+      setProducts(data.data.data || []);
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "Failed to fetch product setup data");
+      toast.error(err.message || "Failed to fetch products");
     } finally {
       setLoading(false);
     }
@@ -46,12 +73,13 @@ export default function AllProductsPage() {
   useEffect(() => {
     fetchData();
   }, [update]);
+  // console.log(products);
   const deleteProduct = async (p: Product) => {
     if (!confirm(`Delete product "${p.name}"?`)) return;
 
     try {
       setLoading(true);
-      const data = await apiClient(
+      const result = await apiClient(
         `${import.meta.env.VITE_SERVER}/product/delete-products/${p.id}`,
         {
           method: "POST",
@@ -59,11 +87,11 @@ export default function AllProductsPage() {
           tokenType: "jwt",
         }
       );
-      toast.success(data.message || "Product deleted!");
+      toast.success(result.message || "Product deleted!");
       setUpdate((prev) => prev + 1);
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "Failed to delete Product");
+      toast.error(err.message || "Failed to delete product");
     } finally {
       setLoading(false);
     }
@@ -77,6 +105,7 @@ export default function AllProductsPage() {
           all: "All Products",
         }}
       />
+
       <div className="flex flex-col md:flex-row justify-between items-center gap-3 mb-4">
         <h1 className="text-2xl font-bold text-bw-900">All Products</h1>
         <Link
@@ -87,7 +116,6 @@ export default function AllProductsPage() {
         </Link>
       </div>
 
-      {/* Table */}
       <DataTable
         data={products}
         label="Products List"
@@ -95,36 +123,42 @@ export default function AllProductsPage() {
         rowsPerPage={10}
         loading={loader}
         hiddenColumns={[
-          "created_by",
-          "created_at",
-          "updated_by",
-          "updated_at",
-          "uom_id",
           "id",
+          "primary_variant_id",
+          "description",
+          "images",
+          "categories",
+          "badge",
+          "rating",
+          "review_count",
+          "total_stock",
         ]}
         printHead={[
-          { label: "code", value: "code" },
+          { label: "Code", value: "code" },
           { label: "Product Name", value: "name" },
-          { label: "cost price", value: "cost_price" },
-          { label: "sale price", value: "selling_price" },
+          { label: "UOM", value: "uom_name" },
+          { label: "Cost Price", value: "cost_price" },
+          { label: "Selling Price", value: "selling_price" },
+          { label: "Stock", value: "total_stock" },
+          { label: "Status", value: "status" },
         ]}
         actions={[
           {
             label: <Eye size={16} className="inline" />,
             className: "",
-            title: "view",
+            title: "View",
             onClick: (row) => router(`/inventory/products/${row.id}`),
           },
           {
             label: <Pen size={16} className="inline" />,
             className: "",
-            title: "update",
+            title: "Edit",
             onClick: (row) => router(`/inventory/products/${row.id}/edit`),
           },
           {
             label: <Trash size={16} className="inline" />,
             onClick: (row) => deleteProduct(row),
-            title: "delete",
+            title: "Delete",
           },
         ]}
       />

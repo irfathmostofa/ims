@@ -50,6 +50,7 @@ export default function ProductAddPage() {
   const [description, setDescription] = useState("");
   const [costPrice, setCostPrice] = useState<number | "">("");
   const [sellingPrice, setSellingPrice] = useState<number | "">("");
+  const [regularPrice, setRegularPrice] = useState<number | "">("");
   const [loading, setLoading] = useState(false);
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -123,6 +124,7 @@ export default function ProductAddPage() {
         description,
         cost_price: costPrice,
         selling_price: sellingPrice,
+        regular_price: regularPrice,
         categories: selectedCategories.map((id, index) => ({
           id,
           is_primary: index === 0,
@@ -194,6 +196,18 @@ export default function ProductAddPage() {
                   value={costPrice}
                   onChange={(e) =>
                     setCostPrice(
+                      e.target.value === "" ? "" : Number(e.target.value)
+                    )
+                  }
+                />
+              </div>
+              <div>
+                <Label>Regular Price ($)</Label>
+                <Input
+                  type="number"
+                  value={regularPrice}
+                  onChange={(e) =>
+                    setRegularPrice(
                       e.target.value === "" ? "" : Number(e.target.value)
                     )
                   }
