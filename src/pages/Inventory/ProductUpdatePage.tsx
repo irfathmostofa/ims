@@ -1,83 +1,118 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-import { apiClient } from "@/hook/apiClient";
 import { toast } from "sonner";
+import { apiClient } from "@/hook/apiClient";
+import SimpleImageUploader from "@/hook/imageUploader";
+import CategoryTree from "@/components/ui/CategoryTree";
+import { useNavigate, useParams } from "react-router-dom";
 
 type Category = {
   id: number;
+  code: string;
   name: string;
-  is_primary: boolean;
+  parent_id?: number | null;
+  image?: string | null;
+  status?: string | null;
 };
 
-type Variant = {
+type UOM = {
   id: number;
   code: string;
   name: string;
-  additional_price: string;
+  symbol: string;
+  description: string;
+  created_by: string;
+  created_at: string;
+  updated_by: string;
+  updated_at: string;
+};
+
+type Variation = {
+  id: number;
+  name?: string;
+  additional_price?: number;
 };
 
 type ProductImage = {
-  id: number;
   url: string;
-  alt_text?: string;
-  is_primary: boolean;
-};
-
-type Barcode = {
-  id: number;
-  barcode: string;
-  type: string;
+  alt_text: string;
   is_primary: boolean;
 };
 
 type Product = {
   id: number;
-  code: string;
   name: string;
   description: string;
-  cost_price: string;
-  selling_price: string;
+  cost_price: number;
+  selling_price: number;
+  regular_price: number;
   uom_id: number;
-  uom_name: string;
-  uom_symbol: string;
   categories: Category[];
-  variants: Variant[];
+  variants: Variation[];
   images: ProductImage[];
-  barcodes: { variant_id: number; barcodes: Barcode[] }[];
 };
 
 export default function ProductEditPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const router = useNavigate();
 
-  const [product, setProduct] = useState<Product | null>(null);
-  const [form, setForm] = useState<Partial<Product>>({});
-  const [images, setImages] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [uoms, setUoms] = useState<UOM[]>([]);
 
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [selectedUom, setSelectedUom] = useState<number | "">("");
+
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [costPrice, setCostPrice] = useState<number | "">("");
+  const [sellingPrice, setSellingPrice] = useState<number | "">("");
+  const [regularPrice, setRegularPrice] = useState<number | "">("");
+  const [variations, setVariations] = useState<Variation[]>([]);
+  const [images, setImages] = useState<ProductImage[]>([]);
+
+  // ✅ Fetch UOMs, Categories, and Product Details
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await apiClient(
-        `${import.meta.env.VITE_SERVER}/product/products/${id}`,
-        { method: "GET", tokenType: "jwt" }
-      );
+      const [uomRes, catRes, productRes] = await Promise.all([
+        apiClient(`${import.meta.env.VITE_SERVER}/product/get-uom`, {
+          method: "GET",
+          tokenType: "jwt",
+        }),
+        apiClient(`${import.meta.env.VITE_SERVER}/product/get-product-cat`, {
+          method: "GET",
+          tokenType: "jwt",
+        }),
+        apiClient(`${import.meta.env.VITE_SERVER}/product/products/${id}`, {
+          method: "GET",
+          tokenType: "jwt",
+        }),
+      ]);
 
-      if (res.data) {
-        setProduct(res.data);
-        setForm(res.data);
-      }
+      setUoms(uomRes.data);
+      setCategories(catRes.data);
+
+      const product: Product = productRes.data;
+
+      // Fill form with fetched data
+      setName(product.name);
+      setDescription(product.description || "");
+      setCostPrice(product.cost_price);
+      setSellingPrice(product.selling_price);
+      setRegularPrice(product.regular_price);
+      setSelectedUom(product.uom_id);
+      setVariations(product.variants || []);
+      setImages(product.images || []);
+      setSelectedCategories(product.categories?.map((c) => c.id) || []);
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "Failed to fetch product details");
+      toast.error(err.message || "Failed to load product details");
     } finally {
       setLoading(false);
     }
@@ -85,270 +120,308 @@ export default function ProductEditPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [id]);
 
-  const handleChange = (field: keyof Product, value: any) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+  // ✅ toggle category selection
+  const toggleCategory = (catId: number) => {
+    setSelectedCategories((prev) =>
+      prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId]
+    );
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setImages(Array.from(e.target.files));
-    }
+  // ✅ add/remove variation
+  const addVariation = () =>
+    setVariations((prev) => [...prev, { id: Date.now() }]);
+
+  const removeVariation = (id: number) =>
+    setVariations((prev) => prev.filter((v) => v.id !== id));
+
+  // ✅ image handler
+  const handleAddImage = (url: string) => {
+    setImages((prev) => [
+      ...prev,
+      {
+        url,
+        alt_text: `Product Image ${prev.length + 1}`,
+        is_primary: prev.length === 0,
+      },
+    ]);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // ✅ update product
+  const handleUpdate = async () => {
     setLoading(true);
-
     try {
-      const formData = new FormData();
-
-      // append simple fields
-      formData.append("name", form?.name || "");
-      formData.append("description", form?.description || "");
-      formData.append("cost_price", form?.cost_price || "");
-      formData.append("selling_price", form?.selling_price || "");
-      formData.append("uom_id", String(form?.uom_id || ""));
-
-      // append categories
-      if (form.categories) {
-        form.categories.forEach((cat, idx) => {
-          formData.append(`categories[${idx}][id]`, String(cat.id));
-          formData.append(
-            `categories[${idx}][is_primary]`,
-            String(cat.is_primary)
-          );
-        });
-      }
-
-      // append variants
-      if (form.variants) {
-        form.variants.forEach((variant, idx) => {
-          formData.append(`variants[${idx}][id]`, String(variant.id));
-          formData.append(`variants[${idx}][name]`, variant.name);
-          formData.append(
-            `variants[${idx}][additional_price]`,
-            variant.additional_price
-          );
-        });
-      }
-
-      // append barcodes
-      if (form.barcodes) {
-        form.barcodes.forEach((group, gIdx) => {
-          group.barcodes.forEach((barcode, bIdx) => {
-            formData.append(
-              `barcodes[${gIdx}][barcodes][${bIdx}][id]`,
-              String(barcode.id)
-            );
-            formData.append(
-              `barcodes[${gIdx}][barcodes][${bIdx}][barcode]`,
-              barcode.barcode
-            );
-            formData.append(
-              `barcodes[${gIdx}][barcodes][${bIdx}][type]`,
-              barcode.type
-            );
-          });
-        });
-      }
-
-      // append images
-      images.forEach((file) => {
-        formData.append("images", file);
-      });
+      const updatedProduct = {
+        uom_id: selectedUom,
+        name,
+        description,
+        cost_price: costPrice,
+        selling_price: sellingPrice,
+        regular_price: regularPrice,
+        categories: selectedCategories.map((id, index) => ({
+          id,
+          is_primary: index === 0,
+        })),
+        variants: variations.map((v) => ({
+          id: v.id,
+          name: v.name,
+          additional_price: v.additional_price ?? 0,
+        })),
+        images: images.map((img, index) => ({
+          url: img.url,
+          alt_text: img.alt_text || "Product Image",
+          is_primary: index === 0,
+        })),
+      };
 
       const res = await apiClient(
-        `${import.meta.env.VITE_SERVER}/product/products/${id}`,
-        {
-          method: "PUT",
-          tokenType: "jwt",
-          data: formData,
-        }
+        `${import.meta.env.VITE_SERVER}/product/update-products/${id}`,
+        { method: "POST", data: updatedProduct, tokenType: "jwt" }
       );
 
       if (res.success) {
         toast.success("Product updated successfully!");
-        navigate("/products");
+        router("/inventory/products");
       } else {
-        toast.error(res.message || "Update failed");
+        toast.error(res.message || "Failed to update product");
       }
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "Something went wrong during update");
+      toast.error(err.message || "Error updating product");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!product)
-    return <p className="p-6 text-center">Product not found or loading...</p>;
-
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <Card>
-        <CardHeader>
-          <CardTitle>Edit Product</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Product Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label>Product Name</Label>
-                <Input
-                  value={form.name || ""}
-                  onChange={(e) => handleChange("name", e.target.value)}
-                  required
-                />
-              </div>
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-6 text-bw-900">Edit Product</h1>
 
+      <div className="flex gap-6">
+        {/* LEFT */}
+        <div className="flex-1 space-y-6">
+          {/* Title */}
+          <Input
+            placeholder="Product name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="text-2xl font-semibold"
+          />
+
+          {/* Description */}
+          <textarea
+            placeholder="Write product description here..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full border rounded-md p-2 h-32"
+          />
+
+          {/* Tabs */}
+          <Tabs defaultValue="general" className="mt-6">
+            <TabsList className="rounded-lg p-1">
+              <TabsTrigger value="general">General</TabsTrigger>
+              <TabsTrigger value="variations">Variations</TabsTrigger>
+              <TabsTrigger value="images">Images</TabsTrigger>
+            </TabsList>
+
+            {/* General */}
+            <TabsContent value="general" className="space-y-4 mt-4 flex gap-2">
               <div>
-                <Label>Cost Price</Label>
+                <Label>Cost Price ($)</Label>
                 <Input
                   type="number"
-                  value={form.cost_price || ""}
-                  onChange={(e) => handleChange("cost_price", e.target.value)}
-                />
-              </div>
-
-              <div>
-                <Label>Selling Price</Label>
-                <Input
-                  type="number"
-                  value={form.selling_price || ""}
+                  value={costPrice}
                   onChange={(e) =>
-                    handleChange("selling_price", e.target.value)
+                    setCostPrice(
+                      e.target.value === "" ? "" : Number(e.target.value)
+                    )
                   }
                 />
               </div>
-
               <div>
-                <Label>Unit</Label>
-                <Input value={form.uom_name || ""} disabled />
+                <Label>Regular Price ($)</Label>
+                <Input
+                  type="number"
+                  value={regularPrice}
+                  onChange={(e) =>
+                    setRegularPrice(
+                      e.target.value === "" ? "" : Number(e.target.value)
+                    )
+                  }
+                />
               </div>
-            </div>
+              <div>
+                <Label>Selling Price ($)</Label>
+                <Input
+                  type="number"
+                  value={sellingPrice}
+                  onChange={(e) =>
+                    setSellingPrice(
+                      e.target.value === "" ? "" : Number(e.target.value)
+                    )
+                  }
+                />
+              </div>
+            </TabsContent>
 
-            {/* Description */}
-            <div>
-              <Label>Description</Label>
-              <Textarea
-                value={form.description || ""}
-                onChange={(e) => handleChange("description", e.target.value)}
-              />
-            </div>
-
-            {/* Categories */}
-            <div>
-              <Label>Categories</Label>
-              <div className="flex gap-2 flex-wrap">
-                {form.categories?.map((cat) => (
-                  <span
-                    key={cat.id}
-                    className="px-3 py-1 bg-gray-100 rounded text-sm"
+            {/* Variations */}
+            <TabsContent value="variations" className="space-y-4 mt-4">
+              {variations.map((v) => (
+                <div
+                  key={v.id}
+                  className="p-3 border rounded-md grid grid-cols-3 gap-2"
+                >
+                  <Input
+                    placeholder="Variation Name"
+                    value={v.name ?? ""}
+                    onChange={(e) =>
+                      setVariations((prev) =>
+                        prev.map((x) =>
+                          x.id === v.id ? { ...x, name: e.target.value } : x
+                        )
+                      )
+                    }
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Additional Price"
+                    value={v.additional_price ?? ""}
+                    onChange={(e) =>
+                      setVariations((prev) =>
+                        prev.map((x) =>
+                          x.id === v.id
+                            ? {
+                                ...x,
+                                additional_price: Number(e.target.value),
+                              }
+                            : x
+                        )
+                      )
+                    }
+                  />
+                  <Button
+                    variant="destructive"
+                    onClick={() => removeVariation(v.id)}
                   >
-                    {cat.name} {cat.is_primary && "(Primary)"}
-                  </span>
-                ))}
-              </div>
-            </div>
+                    Remove
+                  </Button>
+                </div>
+              ))}
+              <Button onClick={addVariation} className="bw-primary">
+                Add Variation
+              </Button>
+            </TabsContent>
 
-            {/* Variants */}
-            <div>
-              <Label>Variants</Label>
-              <div className="space-y-2">
-                {form.variants?.map((variant) => (
-                  <div
-                    key={variant.id}
-                    className="flex gap-4 items-center border p-2 rounded"
-                  >
-                    <Input
-                      value={variant.name}
-                      onChange={(e) => {
-                        const updated = form.variants?.map((v) =>
-                          v.id === variant.id
-                            ? { ...v, name: e.target.value }
-                            : v
-                        );
-                        handleChange("variants", updated);
-                      }}
-                    />
-                    <Input
-                      type="number"
-                      value={variant.additional_price}
-                      onChange={(e) => {
-                        const updated = form.variants?.map((v) =>
-                          v.id === variant.id
-                            ? { ...v, additional_price: e.target.value }
-                            : v
-                        );
-                        handleChange("variants", updated);
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Barcodes */}
-            <div>
-              <Label>Barcodes</Label>
-              {form.barcodes?.map((group) => (
-                <div key={group.variant_id} className="space-y-2">
-                  <p className="text-sm font-semibold">
-                    Variant ID: {group.variant_id}
-                  </p>
-                  {group.barcodes.map((barcode) => (
+            {/* Images */}
+            <TabsContent value="images" className="space-y-4 mt-4">
+              <div className="border rounded-md p-4">
+                <h3 className="font-semibold mb-2">Product Images</h3>
+                <SimpleImageUploader onChange={handleAddImage} />
+                <div className="grid grid-cols-4 gap-3 mt-4">
+                  {images.map((img, i) => (
                     <div
-                      key={barcode.id}
-                      className="flex gap-2 items-center border p-2 rounded"
+                      key={i}
+                      className={`relative group rounded-md overflow-hidden border ${
+                        img.is_primary ? "ring-2 ring-blue-500" : ""
+                      }`}
                     >
-                      <Input value={barcode.barcode} readOnly />
-                      <span className="text-xs">{barcode.type}</span>
+                      <img
+                        src={img.url}
+                        alt={img.alt_text}
+                        className="h-24 w-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex gap-2 items-center justify-center transition">
+                        <button
+                          onClick={() =>
+                            setImages((prev) =>
+                              prev.filter((_, idx) => idx !== i)
+                            )
+                          }
+                          className="px-2 py-1 bg-red-500 text-white text-xs rounded"
+                        >
+                          Remove
+                        </button>
+                        {!img.is_primary && (
+                          <button
+                            onClick={() =>
+                              setImages((prev) =>
+                                prev.map((x, idx) => ({
+                                  ...x,
+                                  is_primary: idx === i,
+                                }))
+                              )
+                            }
+                            className="px-2 py-1 bg-blue-500 text-white text-xs rounded"
+                          >
+                            Make Primary
+                          </button>
+                        )}
+                      </div>
+                      {img.is_primary && (
+                        <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded">
+                          Primary
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
-              ))}
-            </div>
-
-            {/* Images */}
-            <div>
-              <Label>Product Images</Label>
-              <Input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleImageUpload}
-              />
-              <div className="flex gap-2 mt-2 flex-wrap">
-                {form.images?.map((img) => (
-                  <img
-                    key={img.id}
-                    src={img.url}
-                    alt={img.alt_text || "Product Image"}
-                    className="h-20 w-20 object-cover border rounded"
-                  />
-                ))}
-                {images.map((file, idx) => (
-                  <img
-                    key={idx}
-                    src={URL.createObjectURL(file)}
-                    alt={`New ${idx}`}
-                    className="h-20 w-20 object-cover border rounded"
-                  />
-                ))}
               </div>
-            </div>
+            </TabsContent>
+          </Tabs>
+        </div>
 
-            <div className="pt-4">
-              <Button type="submit" disabled={loading}>
-                {loading ? "Updating..." : "Update Product"}
+        {/* RIGHT */}
+        <div className="w-80 space-y-4">
+          <div className="border rounded-md p-4 bg-gray-50">
+            <h3 className="font-semibold mb-2">Update</h3>
+            <div className="flex justify-between">
+              <Button
+                variant="outline"
+                onClick={() => router("/inventory/products")}
+              >
+                Cancel
               </Button>
+              <button
+                onClick={handleUpdate}
+                disabled={loading}
+                className="px-4 py-2 bw-primary rounded-lg disabled:opacity-50"
+              >
+                {loading ? "Updating..." : "Update Product"}
+              </button>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
+
+          <div className="border rounded-md p-2 bg-white">
+            <h3 className="font-semibold mb-2">Categories</h3>
+            <div className="overflow-auto max-h-72">
+              <CategoryTree
+                categories={categories}
+                selectedCategories={selectedCategories}
+                toggleCategory={toggleCategory}
+              />
+            </div>
+          </div>
+
+          <div className="border rounded-md p-2">
+            <Label>UOM</Label>
+            <select
+              className="w-full border rounded-md p-2"
+              value={selectedUom}
+              onChange={(e) =>
+                setSelectedUom(e.target.value ? Number(e.target.value) : "")
+              }
+            >
+              <option value="">-- Select UOM --</option>
+              {uoms?.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name} ({u.symbol})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
