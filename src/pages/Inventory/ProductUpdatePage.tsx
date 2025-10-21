@@ -33,12 +33,13 @@ type UOM = {
 };
 
 type Variation = {
-  id: number;
+  id?: number;
   name?: string;
   additional_price?: number;
 };
 
 type ProductImage = {
+  id?: number;
   url: string;
   alt_text: string;
   is_primary: boolean;
@@ -99,7 +100,6 @@ export default function ProductEditPage() {
       setCategories(catRes.data);
 
       const product: Product = productRes.data;
-
       // Fill form with fetched data
       setName(product.name);
       setDescription(product.description || "");
@@ -131,10 +131,10 @@ export default function ProductEditPage() {
 
   // ✅ add/remove variation
   const addVariation = () =>
-    setVariations((prev) => [...prev, { id: Date.now() }]);
+    setVariations((prev) => [...prev, { name: "", additional_price: 0 }]);
 
-  const removeVariation = (id: number) =>
-    setVariations((prev) => prev.filter((v) => v.id !== id));
+  const removeVariation = (index: number) =>
+    setVariations((prev) => prev.filter((_, i) => i !== index));
 
   // ✅ image handler
   const handleAddImage = (url: string) => {
@@ -169,12 +169,13 @@ export default function ProductEditPage() {
           additional_price: v.additional_price ?? 0,
         })),
         images: images.map((img, index) => ({
+          id: img.id,
           url: img.url,
           alt_text: img.alt_text || "Product Image",
           is_primary: index === 0,
         })),
       };
-
+      console.log(updatedProduct);
       const res = await apiClient(
         `${import.meta.env.VITE_SERVER}/product/update-products/${id}`,
         { method: "POST", data: updatedProduct, tokenType: "jwt" }
@@ -267,9 +268,9 @@ export default function ProductEditPage() {
 
             {/* Variations */}
             <TabsContent value="variations" className="space-y-4 mt-4">
-              {variations.map((v) => (
+              {variations.map((v, index) => (
                 <div
-                  key={v.id}
+                  key={index}
                   className="p-3 border rounded-md grid grid-cols-3 gap-2"
                 >
                   <Input
@@ -277,8 +278,8 @@ export default function ProductEditPage() {
                     value={v.name ?? ""}
                     onChange={(e) =>
                       setVariations((prev) =>
-                        prev.map((x) =>
-                          x.id === v.id ? { ...x, name: e.target.value } : x
+                        prev.map((x, i) =>
+                          i === index ? { ...x, name: e.target.value } : x
                         )
                       )
                     }
@@ -289,12 +290,9 @@ export default function ProductEditPage() {
                     value={v.additional_price ?? ""}
                     onChange={(e) =>
                       setVariations((prev) =>
-                        prev.map((x) =>
-                          x.id === v.id
-                            ? {
-                                ...x,
-                                additional_price: Number(e.target.value),
-                              }
+                        prev.map((x, i) =>
+                          i === index
+                            ? { ...x, additional_price: Number(e.target.value) }
                             : x
                         )
                       )
@@ -302,7 +300,8 @@ export default function ProductEditPage() {
                   />
                   <Button
                     variant="destructive"
-                    onClick={() => removeVariation(v.id)}
+                    className="btn-bw-primary"
+                    onClick={() => removeVariation(index)}
                   >
                     Remove
                   </Button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Barcode from "react-barcode";
 import { printView } from "@/components/utils/print";
 import { toast } from "sonner";
@@ -32,7 +32,7 @@ export default function ProductViewPage() {
       setLoading(false);
     }
   };
-
+  console.log(product);
   useEffect(() => {
     fetchData();
   }, []);
@@ -55,7 +55,15 @@ export default function ProductViewPage() {
           <p className="text-3xl font-semibold text-gray-800">
             ${product.selling_price}
           </p>
-          <p className="text-sm text-gray-500">Cost: ${product.cost_price}</p>
+          <p className="text-sm text-gray-500 mb-2">
+            Cost: ${product.cost_price}
+          </p>
+          <Link
+            to={`/inventory/products/${product.id}/edit`}
+            className="btn-bw-primary"
+          >
+            Update
+          </Link>
         </div>
       </div>
 
@@ -116,22 +124,24 @@ export default function ProductViewPage() {
       <div className="bg-white p-6 rounded-xl shadow-md border space-y-4">
         <h2 className="text-xl font-semibold text-gray-800">Barcodes</h2>
 
-        {product.barcodes && product.barcodes.length > 0 ? (
+        {product.variants && product.variants.length > 0 ? (
           <div className="space-y-6">
-            {product.barcodes.map((bv: any, idx: number) => (
-              <div key={idx} className="space-y-3">
+            {product.variants.map((variant: any, idx: number) => (
+              <div key={variant.id || idx} className="space-y-3">
                 <h3 className="font-medium text-gray-700">
-                  Variant:{" "}
-                  {product.variants?.find((v: any) => v.id === bv.variant_id)
-                    ?.name || `#${bv.variant_id}`}
+                  Variant: {variant.name || `#${variant.id}`}
                 </h3>
-                <div className="flex flex-wrap gap-6">
-                  {bv.barcodes.map((b: any) => (
-                    <div key={b.id} className="flex flex-col items-center">
-                      <Barcode value={b.barcode} height={60} />
-                    </div>
-                  ))}
-                </div>
+                {variant.barcodes && variant.barcodes.length > 0 ? (
+                  <div className="flex flex-wrap gap-6">
+                    {variant.barcodes.map((b: any) => (
+                      <div key={b.id} className="flex flex-col items-center">
+                        <Barcode value={b.barcode} height={60} />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No barcodes for this variant</p>
+                )}
               </div>
             ))}
           </div>
@@ -169,24 +179,30 @@ export default function ProductViewPage() {
       {/* Hidden Print Area */}
       <div id="barcodeArea" className="hidden px-2">
         <h1 className="text-xl font-bold mb-4">{product.name} - Barcodes</h1>
-        {product.barcodes.map((bv: any, idx: number) => (
-          <div key={idx} className="mb-6 px-2">
-            <h2 className="font-medium mb-2">
-              Variant:{" "}
-              {product.variants?.find((v: any) => v.id === bv.variant_id)
-                ?.name || `#${bv.variant_id}`}
-            </h2>
-            <div className="grid grid-cols-2 gap-4 ">
-              {bv.barcodes.map((b: any) =>
-                [...Array(copies)].map((_, cIdx) => (
-                  <div key={`${b.id}-${cIdx}`} className="border">
-                    <Barcode value={b.barcode} height={100} />
-                  </div>
-                ))
-              )}
+        {product.variants && product.variants.length > 0 ? (
+          product.variants.map((bv: any, idx: number) => (
+            <div key={bv.id || idx} className="mb-6 px-2">
+              <h2 className="font-medium mb-2">
+                Variant: {bv.name || `#${bv.id}`}
+              </h2>
+              <div className="grid grid-cols-2 gap-4 ">
+                {bv.barcodes && bv.barcodes.length > 0 ? (
+                  bv.barcodes.map((b: any) =>
+                    [...Array(copies)].map((_, cIdx) => (
+                      <div key={`${b.id}-${cIdx}`} className="border">
+                        <Barcode value={b.barcode} height={100} />
+                      </div>
+                    ))
+                  )
+                ) : (
+                  <p className="text-gray-500">No barcodes for this variant</p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p className="text-gray-500">No variants</p>
+        )}
       </div>
     </div>
   );

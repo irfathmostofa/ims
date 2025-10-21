@@ -22,6 +22,7 @@ import {
   ChevronRight,
   X,
   Globe2,
+  ShoppingBag,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -56,6 +57,18 @@ const navItems: NavItem[] = [
       { name: "Returns / Refunds", path: "/sales/returns-list" },
       { name: "Hold & Resume", path: "/sales/hold" },
       { name: "Discounts & Promotions", path: "/sales/discounts" },
+    ],
+  },
+  {
+    name: "Online Sales",
+    icon: ShoppingBag,
+    children: [
+      { name: "Order List", path: "/order/list" },
+      { name: "Order Payment", path: "/order/payment" },
+      { name: "Order Tracking", path: "/order/tracking" },
+      { name: "Order Return", path: "/order/return" },
+      { name: "Coupon Management", path: "/order/coupon" },
+      { name: "Logistics", path: "/order/logistics" },
     ],
   },
 

@@ -43,6 +43,12 @@ import SetupWizard from "./pages/Setup/SetupWizard";
 import { Toaster } from "sonner";
 import { PrivateRoute } from "./hook/PrivateRoute";
 import ConfigPage from "./pages/Website/configpage";
+import { OrderList } from "./pages/Orders/OrderList";
+import { OrderPayment } from "./pages/Orders/OrderPayment";
+import { OrderTracking } from "./pages/Orders/OrderTracking";
+import { OrderReturn } from "./pages/Orders/OrderReturn";
+import { Logistics } from "./pages/Orders/Logistics";
+import { CouponMgmt } from "./pages/Orders/CouponMgmt";
 
 export default function App() {
   return (
@@ -97,6 +103,14 @@ export default function App() {
               <Route path="/sales/returns-list" element={<ReturnsListPage />} />
               <Route path="/sales/hold" element={<HoldSalesPage />} />
               <Route path="/sales/discounts" element={<DiscountPage />} />
+
+              {/* Online Order */}
+              <Route path="/order/list" element={<OrderList />} />
+              <Route path="/order/payment" element={<OrderPayment />} />
+              <Route path="/order/tracking" element={<OrderTracking />} />
+              <Route path="/order/return" element={<OrderReturn />} />
+              <Route path="/order/coupon" element={<CouponMgmt />} />
+              <Route path="/order/logistics" element={<Logistics />} />
               {/* Customers */}
               <Route
                 path="/customers/customer-list"
