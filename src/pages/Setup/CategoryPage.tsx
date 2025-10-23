@@ -54,7 +54,6 @@ export default function CategoryPage() {
   const [form, setForm] = useState<Partial<Category>>({});
   const [loading, setLoading] = useState(false);
   const [update, setUpdate] = useState(0);
-
   // ✅ Reusable CRUD hook
   const { fetchAll, save, remove } = useCrud<Category>({
     listUrl: `${import.meta.env.VITE_SERVER}/product/get-product-cat`,

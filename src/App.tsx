@@ -79,6 +79,8 @@ export default function App() {
                 element={<PurchaseOrderPage />}
               />
               <Route path="/inventory/grn" element={<GRNPage />} />
+              <Route path="/inventory/categories" element={<CategoryPage />} />
+              <Route path="/inventory/units" element={<UnitPage />} />
               <Route
                 path="/inventory/stock-ledger"
                 element={<StockLedgerPage />}
@@ -92,8 +94,7 @@ export default function App() {
                 element={<AdjustmentsPage />}
               />
               {/* setup */}
-              <Route path="/setup/categories" element={<CategoryPage />} />
-              <Route path="/setup/units" element={<UnitPage />} />
+
               <Route path="/setup/branches" element={<BranchPage />} />
               <Route path="/setup/roles" element={<RolesPage />} />
               <Route path="/setup/company" element={<CompanyPage />} />

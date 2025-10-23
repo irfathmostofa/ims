@@ -84,22 +84,96 @@
 
 /* Show only print_section when printing */
 @media print {
-  body * {
-    visibility: hidden;
+  body {
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
+
+  /* Prevent all other UI from appearing */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Print Section */
   .print_section,
   .print_section * {
-    visibility: visible;
+    visibility: visible !important;
   }
+
   .print_section {
-    position: absolute;
+    position: absolute !important;
     top: 0;
     left: 0;
     width: 100%;
-    padding: 10px;
-    background: white;
+    padding: 10mm;
+    background: #fff !important;
+    box-sizing: border-box;
+  }
+
+  /* Ensure barcode area always prints */
+  #barcodeArea {
+    display: block !important;
+    position: relative;
+    width: 100%;
+  }
+
+  /* A4 setup */
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  /* Label card design */
+  .label-card {
+    width: 180px; /* Fixed label width */
+    height: 100px; /* Fixed label height */
+    padding: 6px 4px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    page-break-inside: avoid;
+    background: #fff;
+  }
+
+  /* Grid layout for consistent A4 alignment */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    justify-content: center;
+    gap: 10px;
+  }
+
+  /* Avoid cutting groups */
+  .break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Typography */
+  h1,
+  h2 {
+    color: #000;
+    margin: 0;
+    padding: 0;
+  }
+
+  p {
+    color: #000;
+  }
+
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Center page header */
+  .text-center {
+    text-align: center;
   }
 }
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px; /* scrollbar width */

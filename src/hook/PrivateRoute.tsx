@@ -7,7 +7,6 @@ export function PrivateRoute() {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
 
-  // ✅ Get token from Zustand store
   const token = useAuthStore((state) => state.token);
   const setUser = useAuthStore((state) => state.setUser);
 
@@ -20,20 +19,18 @@ export function PrivateRoute() {
       }
 
       try {
-        // Fetch profile using token from Zustand
         const data = await apiClient(
           `${import.meta.env.VITE_SERVER}/auth/profile`,
           {
             method: "GET",
-            tokenType: "jwt", // apiClient will pick token from Zustand if configured
+            tokenType: "jwt",
           }
         );
-        console.log(data.data);
-        setUser(data.data); // store user info in Zustand
+
+        setUser(data.data);
         setAuthenticated(true);
       } catch (err) {
-        console.error("Auth check failed:", err);
-        useAuthStore.getState().logout(); // clear token & user
+        useAuthStore.getState().logout();
         setAuthenticated(false);
       } finally {
         setLoading(false);
