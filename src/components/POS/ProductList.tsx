@@ -23,11 +23,11 @@ export default function ProductList({
     try {
       setLoading(true);
       const data = await apiClient(
-        `${
-          import.meta.env.VITE_SERVER
-        }/product/get-pos-products/${category}/${search}`,
+        `${import.meta.env.VITE_SERVER}/product/get-pos-products`,
+
         {
-          method: "GET",
+          data: { category, search },
+          method: "POST",
           tokenType: "jwt",
         }
       );
@@ -63,7 +63,8 @@ export default function ProductList({
         {products.map((product) => (
           <div
             key={product.variant_id}
-            className="p-2 bg-bw-100 border border-bw-primary rounded-md flex flex-col justify-between items-start hover:shadow-md transition h-36"
+            title={product.name}
+            className="p-2 bg-bw-100 border border-bw-primary rounded-md flex flex-col justify-between items-start hover:shadow-md transition h-36 truncate"
           >
             <h3 className="text-bw-800 font-medium text-sm">{product.name}</h3>
             <p className="text-bw-700 text-xs">Category: {product.category}</p>
