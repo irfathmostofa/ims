@@ -64,7 +64,7 @@ export default function SaleListPage() {
       <DataTable
         data={sales}
         label="Sales"
-        hiddenColumns={["id"]}
+   
         rowsPerPage={10}
         printHead={[
           { label: "Invoice No", value: "invoiceNo" },

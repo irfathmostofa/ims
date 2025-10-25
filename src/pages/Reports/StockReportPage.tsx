@@ -6,12 +6,10 @@ import { products } from "@/data/dummyProducts"; // Your product inventory
 export default function StockReportPage() {
   return (
     <div className="p-6 space-y-4">
-
       {/* Dynamic Data Table */}
       <DataTable
         data={products}
         label="Stock List"
-        hiddenColumns={["details"]}
         rowsPerPage={10}
         selectable
         printHead={[

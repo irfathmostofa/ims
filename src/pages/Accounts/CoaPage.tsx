@@ -154,7 +154,7 @@ export default function CoaPage() {
             : "",
         }))}
         label="Accounts List"
-        hiddenColumns={["id", "parentId"]}
+       
         selectable
         rowsPerPage={10}
         actions={[

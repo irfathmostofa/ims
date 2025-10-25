@@ -93,7 +93,7 @@ export default function DiscountPage() {
       <DataTable
         data={discounts}
         label="Discount List"
-        hiddenColumns={["id"]}
+      
         rowsPerPage={10}
         printHead={[
           { label: "Name", value: "name" },

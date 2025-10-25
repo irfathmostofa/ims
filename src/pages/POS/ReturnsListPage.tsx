@@ -64,7 +64,7 @@ export default function ReturnsListPage() {
       <DataTable
         data={returns}
         label="Returns"
-        hiddenColumns={["id"]}
+     
         rowsPerPage={10}
         printHead={[
           { label: "Return No", value: "returnNo" },

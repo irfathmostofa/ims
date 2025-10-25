@@ -44,7 +44,7 @@ export default function SalesReportPage() {
         <DataTable
           data={salesData}
           label="Sales List"
-          hiddenColumns={["id"]}
+      
           rowsPerPage={10}
           printHead={[
             { label: "Date", value: "date" },

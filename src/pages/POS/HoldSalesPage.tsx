@@ -69,7 +69,7 @@ export default function HoldSalesPage() {
       <DataTable
         data={holds}
         label="Hold Sales"
-        hiddenColumns={["id"]}
+      
         rowsPerPage={10}
         printHead={[
           { label: "Hold No", value: "holdNo" },

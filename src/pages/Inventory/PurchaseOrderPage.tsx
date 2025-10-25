@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Eye, Pen, Trash, Plus, X, Search } from "lucide-react";
+import { Eye, Pen, Trash, Plus, X } from "lucide-react";
 import { DataTable } from "@/components/ui/dataTable";
 import { Button } from "@/components/ui/button";
 import {

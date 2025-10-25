@@ -42,7 +42,7 @@ export default function PurchaseReportPage() {
       <DataTable
         data={purchaseData}
         label="Purchase List"
-        hiddenColumns={["id"]}
+      
         rowsPerPage={10}
         selectable
         printHead={[

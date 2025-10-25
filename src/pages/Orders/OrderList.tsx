@@ -76,19 +76,7 @@ export const OrderList = () => {
           selectable
           rowsPerPage={10}
           loading={loader}
-          hiddenColumns={
-            [
-              // "id",
-              // "primary_variant_id",
-              // "description",
-              // "images",
-              // "categories",
-              // "badge",
-              // "rating",
-              // "review_count",
-              // "total_stock",
-            ]
-          }
+       
           printHead={
             [
               // { label: "Code", value: "code" },

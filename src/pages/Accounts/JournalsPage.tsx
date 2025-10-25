@@ -244,7 +244,7 @@ export default function JournalsPage() {
           totalCredit: j.lines.reduce((sum, l) => sum + l.credit, 0),
         }))}
         label="Journal Entries"
-        hiddenColumns={["id"]}
+    
         selectable
         rowsPerPage={10}
         actions={[

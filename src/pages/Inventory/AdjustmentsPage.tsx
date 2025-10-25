@@ -115,7 +115,7 @@ export default function AdjustmentsPage() {
       <DataTable
         data={adjustments}
         label="Stock Adjustments"
-        hiddenColumns={["id"]}
+ 
         rowsPerPage={10}
         printHead={[
           { label: "Branch", value: "branch" },

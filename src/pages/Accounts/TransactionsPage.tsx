@@ -211,7 +211,7 @@ export default function TransactionsPage() {
       <DataTable
         data={transactions}
         label="Transactions"
-        hiddenColumns={["id", "accountId", "partyId"]}
+     
         selectable
         rowsPerPage={10}
         actions={[

@@ -148,15 +148,7 @@ export default function ConfigPage() {
       <DataTable
         data={records}
         label="Setup Data"
-        hiddenColumns={[
-          "id",
-          "created_by",
-          "created_by_name",
-          "created_at",
-          "updated_at",
-          "updated_by",
-          "updated_by_name",
-        ]}
+       
         selectable
         rowsPerPage={10}
         loading={loading}
