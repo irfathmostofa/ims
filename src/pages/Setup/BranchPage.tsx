@@ -210,7 +210,7 @@ export default function BranchesPage() {
       <DataTable
         data={branches}
         label="Branches List"
-        hiddenColumns={["company_id", "id", "created_by", "created_at"]}
+
         selectable
         rowsPerPage={10}
         loading={loading}

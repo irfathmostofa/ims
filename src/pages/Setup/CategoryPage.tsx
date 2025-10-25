@@ -180,17 +180,7 @@ export default function CategoryPage() {
       <DataTable
         data={flattened}
         label="Category List"
-        hiddenColumns={[
-          "id",
-          "parent_id",
-          "children",
-          "image",
-          "status",
-          "created_at",
-          "created_by",
-          "updated_by",
-          "updated_at",
-        ]}
+        showColumns={["code", "name", "Parent"]}
         selectable
         rowsPerPage={10}
         printHead={[{ label: "Name", value: "Parent" }]} // show hierarchy

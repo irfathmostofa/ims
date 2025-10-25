@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pen, Trash, Plus } from "lucide-react";
 import { DataTable } from "@/components/ui/dataTable";
 import { Button } from "@/components/ui/button";
@@ -10,59 +10,48 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { apiClient } from "@/hook/apiClient";
+import { toast } from "sonner";
+import { formatDateForInput } from "@/components/utils/formatter";
+import { useAuthStore } from "@/store/authStore";
 
 type GRNItem = {
-  id: number;
+  po_item_id: number;
   product: string;
   orderedQty: number;
   receivedQty: number;
+  leftToReceive: number;
+  notes?: string | null;
 };
 
 type GRN = {
   id: number;
   poNumber: number;
   grnDate: string;
-  items: GRNItem[];
   status: "Pending" | "Received" | "Partially Received";
+  items: GRNItem[];
+};
+
+type PurchaseOrderItem = {
+  id: number;
+  product_variant_id: number;
+  quantity: number;
+  received_quantity: number;
+  product_name?: string;
 };
 
 type PurchaseOrder = {
   id: number;
-  supplier: string;
-  items: { id: number; product: string; qty: number }[];
+  code: string;
+  supplier_name: string;
+  items: PurchaseOrderItem[];
 };
 
 export default function GRNPage() {
-  // Sample POs
-  const [purchaseOrders] = useState<PurchaseOrder[]>([
-    {
-      id: 1,
-      supplier: "ABC Suppliers",
-      items: [
-        { id: 1, product: "Laptop", qty: 2 },
-        { id: 2, product: "Mouse", qty: 5 },
-      ],
-    },
-    {
-      id: 2,
-      supplier: "XYZ Traders",
-      items: [{ id: 3, product: "Keyboard", qty: 10 }],
-    },
-  ]);
-
-  const [grns, setGrns] = useState<GRN[]>([
-    {
-      id: 1,
-      poNumber: 1,
-      grnDate: "2025-09-14",
-      status: "Pending",
-      items: [
-        { id: 1, product: "Laptop", orderedQty: 2, receivedQty: 0 },
-        { id: 2, product: "Mouse", orderedQty: 5, receivedQty: 0 },
-      ],
-    },
-  ]);
-
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const { user } = useAuthStore();
+  const [grns, setGrns] = useState<GRN[]>([]);
+  const [update, setUpdate] = useState(0);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<GRN>({
     id: 0,
@@ -71,16 +60,47 @@ export default function GRNPage() {
     status: "Pending",
     items: [],
   });
+  const [loading, setLoading] = useState(false);
 
-  // ✅ Open Dialog
+  // Fetch POs and GRNs
+  const fetchData = async () => {
+    try {
+      const [poRes, grnRes] = await Promise.all([
+        apiClient(`${import.meta.env.VITE_SERVER}/po/purchase-orders`, {
+          method: "GET",
+          tokenType: "jwt",
+        }),
+        apiClient(`${import.meta.env.VITE_SERVER}/po/grns`, {
+          method: "GET",
+          tokenType: "jwt",
+        }),
+      ]);
+      setPurchaseOrders(poRes.data || []);
+      setGrns(grnRes.data || []);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to fetch data");
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [update]);
+
+  // Open dialog
   const handleOpen = (grn?: GRN) => {
     if (grn) {
-      setForm(grn);
+      // Edit existing GRN
+      setForm({
+        ...grn,
+        grnDate: formatDateForInput(grn.grnDate),
+      });
     } else {
+      // New GRN
       setForm({
         id: 0,
         poNumber: 0,
-        grnDate: "",
+        grnDate: formatDateForInput(new Date().toISOString()),
         status: "Pending",
         items: [],
       });
@@ -88,51 +108,101 @@ export default function GRNPage() {
     setOpen(true);
   };
 
-  // ✅ When PO selected, populate items
+  // Load PO items and calculate left to receive
   const handlePOChange = (poId: number) => {
     const po = purchaseOrders.find((p) => p.id === poId);
-    if (po) {
-      const items = po.items.map((i) => ({
-        ...i,
-        receivedQty: 0,
-        id: i.id,
-        orderedQty: i.qty,
-      }));
-      setForm({ ...form, poNumber: poId, items });
-    } else {
-      setForm({ ...form, poNumber: 0, items: [] });
-    }
+    if (!po) return setForm({ ...form, poNumber: 0, items: [] });
+
+    const items: GRNItem[] = po.items.map((i) => ({
+      po_item_id: i.id,
+      product: i.product_name || `Variant #${i.product_variant_id}`,
+      orderedQty: i.quantity,
+      receivedQty: 0, // user input now
+      leftToReceive: i.quantity - (i.received_quantity || 0),
+      notes: null,
+    }));
+
+    setForm({ ...form, poNumber: poId, items });
   };
 
-  // ✅ Update item received quantity
-  const handleItemChange = (id: number, value: number) => {
+  // Handle item quantity input
+  const handleItemChange = (po_item_id: number, value: number) => {
     setForm((prev) => ({
       ...prev,
       items: prev.items.map((i) =>
-        i.id === id ? { ...i, receivedQty: value } : i
+        i.po_item_id === po_item_id
+          ? { ...i, receivedQty: Math.min(Math.max(0, value), i.leftToReceive) }
+          : i
       ),
     }));
   };
 
-  // ✅ Save GRN
-  const handleSave = () => {
+  // Save GRN
+  const handleSave = async () => {
     if (!form.poNumber || !form.grnDate || !form.items.length) {
-      return alert("Please fill all required fields");
+      return toast.error("Please fill all required fields");
     }
+    setLoading(true);
 
-    if (form.id) {
-      setGrns((prev) => prev.map((g) => (g.id === form.id ? form : g)));
-    } else {
-      const newId = grns.length ? Math.max(...grns.map((g) => g.id)) + 1 : 1;
-      setGrns((prev) => [...prev, { ...form, id: newId }]);
+    try {
+      const payload = {
+        purchase_order_id: form.poNumber,
+        received_by: user?.id,
+        grn_date: form.grnDate,
+        items: form.items
+          .filter((i) => i.receivedQty > 0)
+          .map((i) => ({
+            po_item_id: i.po_item_id,
+            received_quantity: i.receivedQty,
+            notes: i.notes || null,
+          })),
+      };
+
+      const url = form.id
+        ? `${import.meta.env.VITE_SERVER}/po/update-grn/${form.id}`
+        : `${import.meta.env.VITE_SERVER}/po/grn`;
+
+      const response = await apiClient(url, {
+        method: "POST",
+        tokenType: "jwt",
+        data: payload,
+      });
+
+      if (response.success) {
+        toast.success(response.message || "GRN saved successfully");
+        setOpen(false);
+        setUpdate(update + 1);
+      } else {
+        toast.error(response.message || "Failed to save GRN");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to save GRN");
+    } finally {
+      setLoading(false);
     }
-    setOpen(false);
   };
 
-  // ✅ Delete GRN
-  const handleDelete = (grn: GRN) => {
+  // Delete GRN
+  const handleDelete = async (grn: GRN) => {
     if (!confirm(`Delete GRN #${grn.id}?`)) return;
-    setGrns((prev) => prev.filter((g) => g.id !== grn.id));
+    try {
+      const res = await apiClient(
+        `${import.meta.env.VITE_SERVER}/po/delete-grn`,
+        {
+          method: "POST",
+          data: { id: grn.id },
+          tokenType: "jwt",
+        }
+      );
+      if (res.success) {
+        toast.success("GRN deleted successfully");
+        fetchData();
+      } else toast.error(res.message || "Failed to delete GRN");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to delete GRN");
+    }
   };
 
   return (
@@ -147,11 +217,9 @@ export default function GRNPage() {
         </Button>
       </div>
 
-      {/* ✅ Data Table */}
       <DataTable
         data={grns}
         label="GRN List"
-        hiddenColumns={["id", "items"]}
         rowsPerPage={10}
         printHead={[
           { label: "PO Number", value: "poNumber" },
@@ -159,23 +227,18 @@ export default function GRNPage() {
           { label: "Status", value: "status" },
         ]}
         actions={[
-          {
-            label: <Pen size={16} />,
-            onClick: (row) => handleOpen(row),
-          },
-          {
-            label: <Trash size={16} />,
-            onClick: (row) => handleDelete(row),
-          },
+          { label: <Pen size={16} />, onClick: (row) => handleOpen(row) },
+          { label: <Trash size={16} />, onClick: (row) => handleDelete(row) },
         ]}
+        columnFormats={{ grnDate: (val) => formatDateForInput(val) }}
       />
 
-      {/* ✅ GRN Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl bg-amber-50">
+        <DialogContent className="!max-w-2xl bg-amber-50">
           <DialogHeader>
             <DialogTitle>{form.id ? "Edit GRN" : "New GRN"}</DialogTitle>
           </DialogHeader>
+
           <div className="space-y-4">
             {/* GRN Header */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -183,28 +246,28 @@ export default function GRNPage() {
                 className="border px-3 py-2 rounded w-full"
                 value={form.poNumber}
                 onChange={(e) => handlePOChange(Number(e.target.value))}
+                disabled={!!form.id}
               >
                 <option value={0}>Select Purchase Order</option>
                 {purchaseOrders.map((po) => (
                   <option key={po.id} value={po.id}>
-                    #{po.id} - {po.supplier}
+                    #{po.id} - {po.supplier_name}
                   </option>
                 ))}
               </select>
+
               <input
                 type="date"
                 className="border px-3 py-2 rounded w-full"
-                value={form.grnDate}
+                value={formatDateForInput(form.grnDate)}
                 onChange={(e) => setForm({ ...form, grnDate: e.target.value })}
               />
+
               <select
                 className="border px-3 py-2 rounded w-full"
                 value={form.status}
                 onChange={(e) =>
-                  setForm({
-                    ...form,
-                    status: e.target.value as GRN["status"],
-                  })
+                  setForm({ ...form, status: e.target.value as GRN["status"] })
                 }
               >
                 <option value="Pending">Pending</option>
@@ -221,15 +284,19 @@ export default function GRNPage() {
                   <tr className="bg-gray-100">
                     <th className="border p-2">Product</th>
                     <th className="border p-2">Ordered Qty</th>
-                    <th className="border p-2">Received Qty</th>
+                    <th className="border p-2">Left to Receive</th>
+                    <th className="border p-2">Receive Now</th>
                   </tr>
                 </thead>
                 <tbody>
                   {form.items.map((item) => (
-                    <tr key={item.id}>
+                    <tr key={item.po_item_id}>
                       <td className="border p-2">{item.product}</td>
                       <td className="border p-2 text-center">
                         {item.orderedQty}
+                      </td>
+                      <td className="border p-2 text-center">
+                        {item.leftToReceive}
                       </td>
                       <td className="border p-2">
                         <input
@@ -237,8 +304,13 @@ export default function GRNPage() {
                           className="border px-2 py-1 rounded w-full"
                           value={item.receivedQty}
                           onChange={(e) =>
-                            handleItemChange(item.id, Number(e.target.value))
+                            handleItemChange(
+                              item.po_item_id,
+                              Number(e.target.value)
+                            )
                           }
+                          min={0}
+                          max={item.leftToReceive}
                         />
                       </td>
                     </tr>
@@ -247,13 +319,16 @@ export default function GRNPage() {
               </table>
             </div>
 
-            {/* Actions */}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} className="btn-bw-primary">
-                {form.id ? "Update" : "Create"}
+              <Button
+                onClick={handleSave}
+                className="btn-bw-primary"
+                disabled={loading}
+              >
+                {loading ? "Saving..." : form.id ? "Update" : "Create"}
               </Button>
             </div>
           </div>

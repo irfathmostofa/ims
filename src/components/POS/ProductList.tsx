@@ -81,7 +81,7 @@ export default function ProductList({
                   price: product.selling_price,
                 })
               }
-              disabled={product.stock_qty === 0}
+              disabled={Number(product.stock_qty) === 0}
             >
               {product.stock_qty === 0 ? "Out of Stock" : "Add"}
             </button>

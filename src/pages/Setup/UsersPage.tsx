@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { useCrud } from "@/hook/crudHelper";
 import { getData } from "@/hook/getData";
+import { formatStatus } from "@/components/utils/formatter";
 // import LogoUploader from "@/hook/uploadImageFile";
 
 type User = {
@@ -217,14 +218,18 @@ export default function UsersPage() {
       <DataTable
         data={users}
         label="Users List"
-        hiddenColumns={[
-          "id",
-          "role_id",
+        showColumns={[
+          "code",
           "branch_id",
+          "username",
+          "phone",
+          "address",
+          "status",
           "image",
-          "password_hash",
-          "created_at",
         ]}
+        columnFormats={{
+          status: (val) => formatStatus(val),
+        }}
         selectable
         rowsPerPage={10}
         loading={loading}

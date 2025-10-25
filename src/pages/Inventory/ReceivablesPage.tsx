@@ -176,7 +176,7 @@ export default function ReceivablesPage() {
       <DataTable
         data={receivables}
         label="Receivables List"
-        hiddenColumns={["id", "customerId"]}
+    
         selectable
         rowsPerPage={10}
         actions={[

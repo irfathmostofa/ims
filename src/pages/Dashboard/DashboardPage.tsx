@@ -138,7 +138,7 @@ export default function DashboardPage() {
   return (
     <div className="p-6 space-y-6  min-h-screen text-gray-100">
       {/* SECTION 1: Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card
           icon={<Package />}
           title="Total Stock"
@@ -243,7 +243,7 @@ export default function DashboardPage() {
       </div>
 
       {/* SECTION 3: Finance Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Card
           icon={<CreditCard />}
           title="Total Revenue"

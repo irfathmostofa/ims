@@ -114,7 +114,7 @@ export default function StockTransferPage() {
       <DataTable
         data={transfers}
         label="Stock Transfers"
-        hiddenColumns={["id"]}
+
         rowsPerPage={10}
         printHead={[
           { label: "From Branch", value: "fromBranch" },

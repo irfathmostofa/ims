@@ -44,7 +44,7 @@ const navItems: NavItem[] = [
       { name: "Product Category", path: "/inventory/categories" },
       { name: "Unit of mesurment", path: "/inventory/units" },
       { name: "Purchase Orders", path: "/inventory/purchase-orders" },
-      { name: "GRN", path: "/inventory/grn" },
+      { name: "Goods Received Notes", path: "/inventory/grn" },
       { name: "Stock Ledger", path: "/inventory/stock-ledger" },
       { name: "Stock Transfer", path: "/inventory/stock-transfer" },
       { name: "Adjustments", path: "/inventory/adjustments" },
@@ -246,7 +246,7 @@ export default function Sidebar({
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-bw-200 text-sm text-bw-500">
+        <div className="p-4 border-t border-bw-200 text-sm text-bw-200">
           © {new Date().getFullYear()} InventorySys
         </div>
       </aside>

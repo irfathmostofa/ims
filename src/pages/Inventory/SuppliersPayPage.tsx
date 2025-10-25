@@ -193,7 +193,6 @@ export default function SuppliersPayPage() {
       <DataTable
         data={payables}
         label="Payables List"
-        hiddenColumns={["id", "supplierId"]}
         selectable
         rowsPerPage={10}
         actions={[

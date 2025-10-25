@@ -139,18 +139,12 @@ export default function UnitPage() {
       <DataTable
         data={units}
         label="Unit List"
-        hiddenColumns={[
-          "id",
-          "created_by",
-          "created_at",
-          "updated_by",
-          "updated_at",
-        ]}
+        showColumns={["name", "symbol", "name"]}
         rowsPerPage={10}
         printHead={[
           { label: "Name", value: "name" },
           { label: "Symbol", value: "symbol" },
-          { label: "Description", value: "description" },
+          { label: "Description", value: "name" },
         ]}
         loading={loading}
         actions={[

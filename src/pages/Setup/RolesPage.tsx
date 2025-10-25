@@ -129,7 +129,7 @@ export default function RolesPage() {
       <DataTable
         data={roles}
         label="Roles List"
-        hiddenColumns={["id"]}
+    
         selectable
         rowsPerPage={10}
         loading={loading}

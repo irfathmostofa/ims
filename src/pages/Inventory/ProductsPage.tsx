@@ -120,19 +120,17 @@ export default function AllProductsPage() {
         data={products}
         label="Products List"
         selectable
+        showColumns={[
+          "code",
+          "name",
+          "uom_name",
+          "cost_price",
+          "selling_price",
+          "total_stock",
+          "status",
+        ]}
         rowsPerPage={10}
         loading={loader}
-        hiddenColumns={[
-          "id",
-          "primary_variant_id",
-          "description",
-          "images",
-          "categories",
-          "badge",
-          "rating",
-          "review_count",
-          "total_stock",
-        ]}
         printHead={[
           { label: "Code", value: "code" },
           { label: "Product Name", value: "name" },

@@ -188,13 +188,7 @@ export default function SupplierPage() {
       <DataTable
         data={suppliers}
         label="Supplier List"
-        hiddenColumns={[
-          "id",
-          "type",
-          "credit_limit",
-          "loyalty_points",
-          "created_at",
-        ]}
+        showColumns={["name", "phone", "email", "address"]}
         loading={loading}
         rowsPerPage={10}
         selectable

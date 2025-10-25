@@ -77,7 +77,7 @@ export default function StockLedgerPage() {
       <DataTable
         data={dataWithBalance}
         label="Stock Ledger"
-        hiddenColumns={["id"]}
+
         rowsPerPage={10}
         printHead={[
           { label: "Product", value: "product" },
