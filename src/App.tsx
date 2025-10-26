@@ -110,7 +110,7 @@ export default function App() {
                 element={<Requisition />}
               />
               <Route
-                path="/procurement/requisition-view"
+                path="/procurement/requisition-view/:id"
                 element={<RequisitionView />}
               />
               <Route
