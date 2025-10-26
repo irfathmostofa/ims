@@ -148,7 +148,6 @@ export default function ConfigPage() {
       <DataTable
         data={records}
         label="Setup Data"
-       
         selectable
         rowsPerPage={10}
         loading={loading}

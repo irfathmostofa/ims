@@ -13,20 +13,20 @@ import DashboardPage from "./pages/Dashboard/DashboardPage";
 import ProductEditPage from "./pages/Inventory/ProductUpdatePage";
 import CategoryPage from "./pages/Setup/CategoryPage";
 import UnitPage from "./pages/Setup/UnitPage";
-import SupplierPage from "./pages/Setup/SupplierPage";
-import PurchaseOrderPage from "./pages/Inventory/PurchaseOrderPage";
-import GRNPage from "./pages/Inventory/GRNPage";
+import SupplierPage from "./pages/Suppliers/SupplierPage";
+import PurchaseOrderPage from "./pages/Procurement/PurchaseOrderPage";
+import GRNPage from "./pages/Procurement/GRNPage";
 import StockLedgerPage from "./pages/Inventory/StockLedgerPage";
 import BranchPage from "./pages/Setup/BranchPage";
-import StockTransferPage from "./pages/Inventory/StockTransferPage";
+import StockTransferPage from "./pages/Procurement/StockTransferPage";
 import AdjustmentsPage from "./pages/Inventory/AdjustmentsPage";
 import SaleListPage from "./pages/POS/SaleListPage";
 import ReturnsListPage from "./pages/POS/ReturnsListPage";
 import HoldSalesPage from "./pages/POS/HoldSalesPage";
 import DiscountPage from "./pages/POS/DiscountPage";
-import CustomersPage from "./pages/Inventory/CustomersPage";
-import ReceivablesPage from "./pages/Inventory/ReceivablesPage";
-import SuppliersPayPage from "./pages/Inventory/SuppliersPayPage";
+import CustomersPage from "./pages/Customers/CustomersPage";
+import ReceivablesPage from "./pages/Customers/ReceivablesPage";
+import SuppliersPayPage from "./pages/Suppliers/SuppliersPayPage";
 import RolesPage from "./pages/Setup/RolesPage";
 import CompanyPage from "./pages/Setup/CompanyPage";
 import UsersPage from "./pages/Setup/UsersPage";
@@ -49,6 +49,8 @@ import { OrderTracking } from "./pages/Orders/OrderTracking";
 import { OrderReturn } from "./pages/Orders/OrderReturn";
 import { Logistics } from "./pages/Orders/Logistics";
 import { CouponMgmt } from "./pages/Orders/CouponMgmt";
+import { Requisition } from "./pages/Procurement/Requisition";
+import { RequisitionView } from "./pages/Procurement/RequisitionView";
 
 export default function App() {
   return (
@@ -74,21 +76,14 @@ export default function App() {
                 path="/inventory/products/:id/edit"
                 element={<ProductEditPage />}
               />
-              <Route
-                path="/inventory/purchase-orders"
-                element={<PurchaseOrderPage />}
-              />
-              <Route path="/inventory/grn" element={<GRNPage />} />
+
               <Route path="/inventory/categories" element={<CategoryPage />} />
               <Route path="/inventory/units" element={<UnitPage />} />
               <Route
                 path="/inventory/stock-ledger"
                 element={<StockLedgerPage />}
               />
-              <Route
-                path="/inventory/stock-transfer"
-                element={<StockTransferPage />}
-              />
+
               <Route
                 path="/inventory/adjustments"
                 element={<AdjustmentsPage />}
@@ -104,7 +99,24 @@ export default function App() {
               <Route path="/sales/returns-list" element={<ReturnsListPage />} />
               <Route path="/sales/hold" element={<HoldSalesPage />} />
               <Route path="/sales/discounts" element={<DiscountPage />} />
-
+              {/* Procurement */}
+              <Route
+                path="/procurement/purchase-orders"
+                element={<PurchaseOrderPage />}
+              />
+              <Route path="/procurement/grn" element={<GRNPage />} />
+              <Route
+                path="/procurement/requisition"
+                element={<Requisition />}
+              />
+              <Route
+                path="/procurement/requisition-view"
+                element={<RequisitionView />}
+              />
+              <Route
+                path="/procurement/stock-transfer"
+                element={<StockTransferPage />}
+              />
               {/* Online Order */}
               <Route path="/order/list" element={<OrderList />} />
               <Route path="/order/payment" element={<OrderPayment />} />

@@ -23,6 +23,7 @@ import {
   X,
   Globe2,
   ShoppingBag,
+  SendToBack,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -43,11 +44,18 @@ const navItems: NavItem[] = [
       { name: "All Products", path: "/inventory/products" },
       { name: "Product Category", path: "/inventory/categories" },
       { name: "Unit of mesurment", path: "/inventory/units" },
-      { name: "Purchase Orders", path: "/inventory/purchase-orders" },
-      { name: "Goods Received Notes", path: "/inventory/grn" },
       { name: "Stock Ledger", path: "/inventory/stock-ledger" },
-      { name: "Stock Transfer", path: "/inventory/stock-transfer" },
       { name: "Adjustments", path: "/inventory/adjustments" },
+    ],
+  },
+  {
+    name: "Procurement",
+    icon: SendToBack,
+    children: [
+      { name: "Purchase Orders", path: "/procurement/purchase-orders" },
+      { name: "Goods Received Notes", path: "/procurement/grn" },
+      { name: "Requisition", path: "/procurement/requisition" },
+      { name: "Stock Transfer", path: "/procurement/stock-transfer" },
     ],
   },
 

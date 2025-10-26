@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { apiClient } from "@/hook/apiClient";
 import { toast } from "sonner";
-import { formatDateForInput } from "@/components/utils/formatter";
+import { formatDate, formatDateForInput } from "@/components/utils/formatter";
 import { useAuthStore } from "@/store/authStore";
 
 type GRNItem = {
@@ -27,7 +27,12 @@ type GRNItem = {
 type GRN = {
   id: number;
   poNumber: number;
+  code?: string;
+  received_by?: string;
+  notes?: string;
   grnDate: string;
+  received_date?: string;
+  created_at?: string;
   status: "Pending" | "Received" | "Partially Received";
   items: GRNItem[];
 };
@@ -82,7 +87,6 @@ export default function GRNPage() {
       toast.error(err.message || "Failed to fetch data");
     }
   };
-
   useEffect(() => {
     fetchData();
   }, [update]);
@@ -221,6 +225,14 @@ export default function GRNPage() {
         data={grns}
         label="GRN List"
         rowsPerPage={10}
+        showColumns={[
+          "code",
+          "received_date",
+          "created_at",
+          "received_by",
+          "notes",
+          "status",
+        ]}
         printHead={[
           { label: "PO Number", value: "poNumber" },
           { label: "Date", value: "grnDate" },
@@ -230,7 +242,11 @@ export default function GRNPage() {
           { label: <Pen size={16} />, onClick: (row) => handleOpen(row) },
           { label: <Trash size={16} />, onClick: (row) => handleDelete(row) },
         ]}
-        columnFormats={{ grnDate: (val) => formatDateForInput(val) }}
+        columnFormats={{
+          grnDate: (val) => formatDateForInput(val),
+          received_date: (val) => formatDate(val),
+          created_at: (val) => formatDate(val),
+        }}
       />
 
       <Dialog open={open} onOpenChange={setOpen}>
