@@ -63,11 +63,18 @@ export default function ProductList({
         {products.map((product) => (
           <div
             key={product.variant_id}
-            title={product.name}
+            title={product.display_name}
             className="p-2 bg-bw-100 border border-bw-primary rounded-md flex flex-col justify-between items-start hover:shadow-md transition h-36 truncate"
           >
-            <h3 className="text-bw-800 font-medium text-sm">{product.name}</h3>
-            <p className="text-bw-700 text-xs">Category: {product.category}</p>
+            <h3 className="text-bw-800 font-medium text-sm max-w-full truncate">
+              {product.display_name}
+            </h3>
+            <p
+              className="text-bw-700 text-xs max-w-full truncate"
+              title={product.category_name}
+            >
+              Category: {product.category_name}
+            </p>
             <p className="text-bw-700 text-xs">Stock: {product.stock_qty}</p>
             <p className="text-bw-700 text-sm mt-1">
               BDT {product.selling_price}
@@ -77,13 +84,13 @@ export default function ProductList({
               onClick={() =>
                 addToCart({
                   id: product.variant_id,
-                  name: product.name,
+                  name: product.display_name,
                   price: product.selling_price,
                 })
               }
               disabled={Number(product.stock_qty) === 0}
             >
-              {product.stock_qty === 0 ? "Out of Stock" : "Add"}
+              {Number(product.stock_qty) === 0 ? "Stock Out" : "Add"}
             </button>
           </div>
         ))}

@@ -1,5 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+* {
+  font-family: "Tiro Bangla", serif;
+}
 .btn-peach {
   @apply bg-[#003333] text-white hover:bg-[#374151] font-semibold px-6 py-2 rounded-lg;
 }

@@ -43,7 +43,7 @@ export default function ProductCategory({
         {categories.map((cat) => (
           <button
             key={cat}
-            className={`px-3 py-1 rounded-md text-sm font-medium ${
+            className={`px-3 py-1 rounded-md text-sm font-medium cursor-pointer ${
               category === cat.id
                 ? "bg-bw-700 text-bw-50"
                 : "bg-bw-100 text-bw-900 hover:bg-bw-200"
