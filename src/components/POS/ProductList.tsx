@@ -57,7 +57,7 @@ export default function ProductList({
         />
       </div>
 
-      {/* Product Grid */}
+    
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 flex-1">
         {loading && <Loader />}
         {products.map((product) => (
