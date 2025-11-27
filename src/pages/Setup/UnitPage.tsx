@@ -139,7 +139,7 @@ export default function UnitPage() {
       <DataTable
         data={units}
         label="Unit List"
-        showColumns={["name", "symbol", "name"]}
+        showColumns={["code", "name", "symbol", "name"]}
         rowsPerPage={10}
         printHead={[
           { label: "Name", value: "name" },
