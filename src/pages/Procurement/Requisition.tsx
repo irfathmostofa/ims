@@ -82,7 +82,6 @@ interface CreateRequisitionRequest {
 export const Requisition = () => {
   const router = useNavigate();
 
-  // Store data with proper typing
   const { user } = useAuthStore();
   const { branches, products, fetchProducts, fetchBranches } = useQuickStore();
 
