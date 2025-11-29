@@ -1,15 +1,6 @@
 import { apiClient } from "@/hook/apiClient";
 import { create } from "zustand";
 
-// Your custom API client type
-interface ApiClientOptions {
-  method?: string;
-  tokenType?: "jwt" | "none";
-  body?: any;
-}
-
-declare const toast: { error: (msg: string) => void };
-
 // Types
 export interface Branch {
   id: number;
@@ -22,9 +13,30 @@ export interface Category {
 }
 
 export interface Product {
-  id: number;
-  name: string;
-  category_id: number;
+  product_id: number;
+  variant_id: number;
+  code: string;
+  product_name: string;
+  variant_name: string;
+  display_name: string;
+  description: string;
+  selling_price: string;
+  cost_price: string;
+  additional_price: string;
+  uom_symbol: string;
+  uom_name: string;
+  category_name: string;
+  stock_qty: string;
+  status: string;
+  variant_status: string;
+  branch_name?: string;
+  branch_id?: number;
+}
+
+interface FetchProductsParams {
+  category_id?: number;
+  search?: string;
+  branch_id?: number;
 }
 
 interface StoreState {
@@ -35,7 +47,7 @@ interface StoreState {
 
   fetchBranches: () => Promise<void>;
   fetchCategories: () => Promise<void>;
-  fetchProducts: () => Promise<void>;
+  fetchProducts: (params?: FetchProductsParams) => Promise<void>;
 
   setBranches: (data: Branch[]) => void;
   setCategories: (data: Category[]) => void;
@@ -55,7 +67,7 @@ export const useQuickStore = create<StoreState>((set) => ({
   setProducts: (data) => set({ products: data }),
   setLoading: (value) => set({ loading: value }),
 
-  // Fetch Branches (TypeScript safe)
+  // Fetch Branches
   fetchBranches: async () => {
     try {
       set({ loading: true });
@@ -68,9 +80,13 @@ export const useQuickStore = create<StoreState>((set) => ({
         }
       );
 
-      set({ branches: result.data });
+      if (result.success) {
+        set({ branches: result.data });
+      } else {
+        console.error("Failed to fetch branches:", result.message);
+      }
     } catch (err: unknown) {
-      console.error(err);
+      console.error("Error fetching branches:", err);
     } finally {
       set({ loading: false });
     }
@@ -89,16 +105,20 @@ export const useQuickStore = create<StoreState>((set) => ({
         }
       );
 
-      set({ categories: result.data });
+      if (result.success) {
+        set({ categories: result.data });
+      } else {
+        console.error("Failed to fetch categories:", result.message);
+      }
     } catch (err: unknown) {
-      console.error(err);
+      console.error("Error fetching categories:", err);
     } finally {
       set({ loading: false });
     }
   },
 
-  // Fetch Products
-  fetchProducts: async () => {
+  // Fetch Products with optional parameters
+  fetchProducts: async (params: FetchProductsParams = {}) => {
     try {
       set({ loading: true });
 
@@ -106,14 +126,22 @@ export const useQuickStore = create<StoreState>((set) => ({
         `${import.meta.env.VITE_SERVER}/product/get-pos-products`,
         {
           method: "POST",
-          data: { category_id: null, search: null },
+          data: {
+            category_id: params.category_id || null,
+            search: params.search || null,
+            branch_id: params.branch_id || null,
+          },
           tokenType: "jwt",
         }
       );
 
-      set({ products: result.data });
+      if (result.success) {
+        set({ products: result.data });
+      } else {
+        console.error("Failed to fetch products:", result.message);
+      }
     } catch (err: unknown) {
-      console.error(err);
+      console.error("Error fetching products:", err);
     } finally {
       set({ loading: false });
     }

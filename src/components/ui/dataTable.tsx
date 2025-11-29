@@ -13,6 +13,7 @@ type Action<T> = {
   onClick: (row: T) => void;
   className?: string;
   title?: string;
+  hide?: (row: T) => boolean; // New hide condition
 };
 
 type SortConfig = {
@@ -180,6 +181,11 @@ export function DataTable<T extends Record<string, any>>({
     doc.save(`${label}.pdf`);
   };
 
+  // Filter visible actions for a row
+  const getVisibleActions = (row: T): Action<T>[] => {
+    return actions.filter((action) => !action.hide || !action.hide(row));
+  };
+
   return (
     <div className="space-y-4 w-full">
       {loading && (
@@ -308,105 +314,109 @@ export function DataTable<T extends Record<string, any>>({
                     </td>
                   </tr>
                 ) : (
-                  paginatedData.map((row, rowIndex) => (
-                    <tr
-                      key={rowIndex}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      {selectable && (
-                        <td className="px-3 py-2 border-b">
-                          <input
-                            type="checkbox"
-                            checked={selectedRows.includes(rowIndex)}
-                            onChange={() => toggleRow(rowIndex)}
-                          />
-                        </td>
-                      )}
+                  paginatedData.map((row, rowIndex) => {
+                    const visibleActions = getVisibleActions(row);
 
-                      {headers.map((header) => {
-                        const value = row[header];
-                        const formatFn = columnFormats[header as keyof T];
+                    return (
+                      <tr
+                        key={rowIndex}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        {selectable && (
+                          <td className="px-3 py-2 border-b">
+                            <input
+                              type="checkbox"
+                              checked={selectedRows.includes(rowIndex)}
+                              onChange={() => toggleRow(rowIndex)}
+                            />
+                          </td>
+                        )}
 
-                        // ✅ Apply custom format if provided
-                        if (formatFn) {
-                          return (
-                            <td
-                              key={header}
-                              className="px-2 py-2 border-b text-sm whitespace-nowrap"
-                            >
-                              {formatFn(value, row)}
-                            </td>
-                          );
-                        }
+                        {headers.map((header) => {
+                          const value = row[header];
+                          const formatFn = columnFormats[header as keyof T];
 
-                        // Image column handling
-                        const isImageColumn =
-                          header.toLowerCase().includes("image") ||
-                          header.toLowerCase().includes("photo") ||
-                          header.toLowerCase().includes("avatar");
-
-                        if (isImageColumn) {
-                          if (Array.isArray(value)) {
+                          // ✅ Apply custom format if provided
+                          if (formatFn) {
                             return (
-                              <td key={header} className="px-2 py-2 border-b">
-                                <div className="flex gap-1 flex-wrap">
-                                  {value.map((img: string, i: number) => (
-                                    <img
-                                      key={i}
-                                      src={img || "https://placehold.co/400"}
-                                      alt={`${header}-${i}`}
-                                      className="w-10 h-10 object-cover rounded-md border cursor-pointer"
-                                      onClick={() => setPreviewImage(img)}
-                                    />
-                                  ))}
-                                </div>
-                              </td>
-                            );
-                          } else {
-                            return (
-                              <td key={header} className="px-2 py-2 border-b">
-                                <img
-                                  src={value || "https://placehold.co/400"}
-                                  alt={header}
-                                  className="w-10 h-10 object-cover rounded-md border cursor-pointer"
-                                  onClick={() => setPreviewImage(value)}
-                                />
+                              <td
+                                key={header}
+                                className="px-2 py-2 border-b text-sm whitespace-nowrap"
+                              >
+                                {formatFn(value, row)}
                               </td>
                             );
                           }
-                        }
 
-                        return (
-                          <td
-                            key={header}
-                            className="px-2 py-2 border-b text-bw-900 text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
-                            title={String(value)}
-                          >
-                            {value}
+                          // Image column handling
+                          const isImageColumn =
+                            header.toLowerCase().includes("image") ||
+                            header.toLowerCase().includes("photo") ||
+                            header.toLowerCase().includes("avatar");
+
+                          if (isImageColumn) {
+                            if (Array.isArray(value)) {
+                              return (
+                                <td key={header} className="px-2 py-2 border-b">
+                                  <div className="flex gap-1 flex-wrap">
+                                    {value.map((img: string, i: number) => (
+                                      <img
+                                        key={i}
+                                        src={img || "https://placehold.co/400"}
+                                        alt={`${header}-${i}`}
+                                        className="w-10 h-10 object-cover rounded-md border cursor-pointer"
+                                        onClick={() => setPreviewImage(img)}
+                                      />
+                                    ))}
+                                  </div>
+                                </td>
+                              );
+                            } else {
+                              return (
+                                <td key={header} className="px-2 py-2 border-b">
+                                  <img
+                                    src={value || "https://placehold.co/400"}
+                                    alt={header}
+                                    className="w-10 h-10 object-cover rounded-md border cursor-pointer"
+                                    onClick={() => setPreviewImage(value)}
+                                  />
+                                </td>
+                              );
+                            }
+                          }
+
+                          return (
+                            <td
+                              key={header}
+                              className="px-2 py-2 border-b text-bw-900 text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
+                              title={String(value)}
+                            >
+                              {value}
+                            </td>
+                          );
+                        })}
+
+                        {actions.length > 0 && (
+                          <td className="px-2 py-2 border-b whitespace-nowrap">
+                            <div className="flex gap-1">
+                              {visibleActions.map((action, i) => (
+                                <button
+                                  key={i}
+                                  className={`px-2 py-1 rounded text-xs ${
+                                    action.className ?? "bw-primary"
+                                  }`}
+                                  title={action.title}
+                                  onClick={() => action.onClick(row)}
+                                >
+                                  {action.label}
+                                </button>
+                              ))}
+                            </div>
                           </td>
-                        );
-                      })}
-
-                      {actions.length > 0 && (
-                        <td className="px-2 py-2 border-b whitespace-nowrap">
-                          <div className="flex gap-1">
-                            {actions.map((action, i) => (
-                              <button
-                                key={i}
-                                className={`px-2 py-1 rounded text-xs ${
-                                  action.className ?? "bw-primary"
-                                }`}
-                                title={action.title}
-                                onClick={() => action.onClick(row)}
-                              >
-                                {action.label}
-                              </button>
-                            ))}
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  ))
+                        )}
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -442,5 +452,3 @@ export function DataTable<T extends Record<string, any>>({
     </div>
   );
 }
-
-// 🔹 Pagination Component

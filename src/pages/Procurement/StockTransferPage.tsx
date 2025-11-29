@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Pen, Trash, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Pen, Trash, Plus, Minus } from "lucide-react";
 import { DataTable } from "@/components/ui/dataTable";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,175 +11,314 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { apiClient } from "@/hook/apiClient";
+import { useQuickStore } from "@/store/quickStore";
 
-type StockTransfer = {
+interface StockTransfer {
   id: number;
-  fromBranch: string;
-  toBranch: string;
-  product: string;
+  branch_id: number;
+  branch_name: string;
+  product_variant_id: number;
+  product_name: string;
+  variant_name: string;
   quantity: number;
-  date: string;
-};
+  created_at: string;
+  updated_at: string;
+}
+
+interface Branch {
+  id: number;
+  name: string;
+}
+
+interface Product {
+  product_id: number;
+  variant_id: number;
+  product_name: string;
+  variant_name: string;
+  display_name: string;
+  stock_qty: string;
+}
+
+interface StockRequest {
+  branch_id: number;
+  product_variant_id: number;
+  quantity: number;
+}
 
 export default function StockTransferPage() {
-  const [transfers, setTransfers] = useState<StockTransfer[]>([
-    {
-      id: 1,
-      fromBranch: "Main Branch",
-      toBranch: "Warehouse",
-      product: "Laptop",
-      quantity: 5,
-      date: "2025-09-14",
-    },
-    {
-      id: 2,
-      fromBranch: "Warehouse",
-      toBranch: "Main Branch",
-      product: "Phone",
-      quantity: 10,
-      date: "2025-09-12",
-    },
-  ]);
+  const [transfers, setTransfers] = useState<StockTransfer[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogType, setDialogType] = useState<"add" | "adjust">("add");
 
-  const [form, setForm] = useState<StockTransfer>({
-    id: 0,
-    fromBranch: "",
-    toBranch: "",
-    product: "",
+  const { branches, products, fetchBranches, fetchProducts } = useQuickStore();
+
+  const [form, setForm] = useState<StockRequest>({
+    branch_id: 0,
+    product_variant_id: 0,
     quantity: 0,
-    date: new Date().toISOString().split("T")[0],
   });
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  // ✅ Add / Update Transfer
-  const handleSave = () => {
-    if (
-      !form.fromBranch ||
-      !form.toBranch ||
-      !form.product ||
-      form.quantity <= 0
-    ) {
-      return alert("Please fill all fields correctly");
-    }
-
-    if (form.id) {
-      setTransfers((prev) =>
-        prev.map((t) => (t.id === form.id ? { ...form } : t))
+  // Fetch stock transfers
+  const fetchStockTransfers = async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient(
+        `${import.meta.env.VITE_SERVER}/inventory/stock`,
+        {
+          method: "GET",
+          tokenType: "jwt",
+        }
       );
-    } else {
-      const newId = transfers.length
-        ? Math.max(...transfers.map((t) => t.id)) + 1
-        : 1;
-      setTransfers((prev) => [...prev, { ...form, id: newId }]);
-    }
 
-    setForm({
-      id: 0,
-      fromBranch: "",
-      toBranch: "",
-      product: "",
-      quantity: 0,
-      date: new Date().toISOString().split("T")[0],
-    });
-    setDialogOpen(false);
+      if (response.success) {
+        setTransfers(response.data || []);
+      }
+    } catch (err: any) {
+      console.error("Fetch stock transfers error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ✅ Edit
-  const handleEdit = (t: StockTransfer) => {
-    setForm({ ...t });
+  useEffect(() => {
+    fetchBranches();
+    fetchProducts();
+    fetchStockTransfers();
+  }, [fetchBranches, fetchProducts]);
+
+  // Open Add Dialog
+  const handleOpenAdd = () => {
+    setDialogType("add");
+    setForm({ branch_id: 0, product_variant_id: 0, quantity: 0 });
     setDialogOpen(true);
   };
 
-  // ✅ Delete
-  const handleDelete = (t: StockTransfer) => {
-    if (!confirm(`Delete transfer of ${t.product}?`)) return;
-    setTransfers((prev) => prev.filter((x) => x.id !== t.id));
+  // Open Adjust Dialog
+  const handleOpenAdjust = (transfer: StockTransfer) => {
+    setDialogType("adjust");
+    setForm({
+      branch_id: transfer.branch_id,
+      product_variant_id: transfer.product_variant_id,
+      quantity: 0, // Start with 0 for adjustment
+    });
+    setDialogOpen(true);
   };
 
+  // Save Stock
+  const handleSave = async () => {
+    if (!form.branch_id || !form.product_variant_id || form.quantity === 0) {
+      return alert("Please fill all fields correctly");
+    }
+
+    try {
+      const response = await apiClient(
+        `${import.meta.env.VITE_SERVER}/inventory/stock`,
+        {
+          method: "POST",
+          tokenType: "jwt",
+          data: form,
+        }
+      );
+
+      if (response.success) {
+        await fetchStockTransfers();
+        setForm({ branch_id: 0, product_variant_id: 0, quantity: 0 });
+        setDialogOpen(false);
+        alert("Stock updated successfully!");
+      } else {
+        throw new Error(response.message || "Failed to update stock");
+      }
+    } catch (err: any) {
+      console.error("Stock update error:", err);
+      alert(err.message || "Failed to update stock");
+    }
+  };
+
+  // Delete Stock (set to zero)
+  const handleDelete = async (transfer: StockTransfer) => {
+    if (!confirm(`Remove all stock for ${transfer.product_name}?`)) return;
+
+    try {
+      const response = await apiClient(
+        `${import.meta.env.VITE_SERVER}/inventory/stock`,
+        {
+          method: "POST",
+          tokenType: "jwt",
+          data: {
+            branch_id: transfer.branch_id,
+            product_variant_id: transfer.product_variant_id,
+            quantity: -transfer.quantity,
+          },
+        }
+      );
+
+      if (response.success) {
+        await fetchStockTransfers();
+        alert("Stock removed successfully!");
+      } else {
+        throw new Error(response.message || "Failed to remove stock");
+      }
+    } catch (err: any) {
+      console.error("Delete stock error:", err);
+      alert(err.message || "Failed to remove stock");
+    }
+  };
+
+  const getProductDisplayName = (transfer: StockTransfer) => {
+    return transfer.variant_name
+      ? `${transfer.product_name} (${transfer.variant_name})`
+      : transfer.product_name;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-center gap-3 mb-4">
-        <h1 className="text-2xl font-bold">Stock Transfer</h1>
+        <h1 className="text-2xl font-bold">Stock Management</h1>
 
-        {/* Add Transfer Button */}
-        <Button
-          onClick={() => setDialogOpen(true)}
-          className="btn-bw-primary flex items-center gap-2"
-        >
-          <Plus size={16} /> Add Transfer
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleOpenAdd}
+            className="btn-bw-primary flex items-center gap-2"
+          >
+            <Plus size={16} /> Add Stock
+          </Button>
+        </div>
       </div>
+
       {/* DataTable */}
       <DataTable
         data={transfers}
-        label="Stock Transfers"
-
+        label="Stock Records"
+        loading={loading}
         rowsPerPage={10}
+        showColumns={[
+          "branch_name",
+          "product_name",
+          "variant_name",
+          "quantity",
+          "updated_at",
+        ]}
+        columnFormats={{
+          product_name: (val, row) => getProductDisplayName(row),
+          updated_at: (val) => formatDate(val),
+          quantity: (val) => (
+            <span
+              className={`font-semibold ${
+                val > 0
+                  ? "text-green-600"
+                  : val < 0
+                  ? "text-red-600"
+                  : "text-gray-600"
+              }`}
+            >
+              {val}
+            </span>
+          ),
+        }}
         printHead={[
-          { label: "From Branch", value: "fromBranch" },
-          { label: "To Branch", value: "toBranch" },
-          { label: "Product", value: "product" },
+          { label: "Branch", value: "branch_name" },
+          { label: "Product", value: "product_name" },
+          { label: "Variant", value: "variant_name" },
           { label: "Quantity", value: "quantity" },
-          { label: "Date", value: "date" },
+          { label: "Last Updated", value: "updated_at" },
         ]}
         actions={[
-          { label: <Pen size={16} />, onClick: handleEdit },
-          { label: <Trash size={16} />, onClick: handleDelete },
+          {
+            label: <Plus size={16} />,
+            onClick: handleOpenAdjust,
+            title: "Adjust Stock",
+          },
+          {
+            label: <Trash size={16} />,
+            onClick: handleDelete,
+            title: "Remove Stock",
+          },
         ]}
       />
 
-      {/* Dialog for Add / Edit */}
+      {/* Dialog for Add/Adjust Stock */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-amber-50">
+        <DialogContent className="sm:max-w-md bg-gray-50">
           <DialogHeader>
             <DialogTitle>
-              {form.id ? "Edit Transfer" : "Add Transfer"}
+              {dialogType === "add" ? "Add Stock" : "Adjust Stock"}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 mt-2">
-            <input
-              type="text"
-              placeholder="From Branch"
-              className="border px-3 py-2 rounded w-full"
-              value={form.fromBranch}
-              onChange={(e) => setForm({ ...form, fromBranch: e.target.value })}
-            />
-            <input
-              type="text"
-              placeholder="To Branch"
-              className="border px-3 py-2 rounded w-full"
-              value={form.toBranch}
-              onChange={(e) => setForm({ ...form, toBranch: e.target.value })}
-            />
-            <input
-              type="text"
-              placeholder="Product"
-              className="border px-3 py-2 rounded w-full"
-              value={form.product}
-              onChange={(e) => setForm({ ...form, product: e.target.value })}
-            />
-            <input
-              type="number"
-              placeholder="Quantity"
-              className="border px-3 py-2 rounded w-full"
-              value={form.quantity}
+            <select
+              value={form.branch_id}
               onChange={(e) =>
-                setForm({ ...form, quantity: Number(e.target.value) })
+                setForm({ ...form, branch_id: Number(e.target.value) })
               }
-            />
-            <input
-              type="date"
               className="border px-3 py-2 rounded w-full"
-              value={form.date}
-              onChange={(e) => setForm({ ...form, date: e.target.value })}
-            />
+            >
+              <option value={0}>Select Branch</option>
+              {branches.map((branch: Branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={form.product_variant_id}
+              onChange={(e) =>
+                setForm({ ...form, product_variant_id: Number(e.target.value) })
+              }
+              className="border px-3 py-2 rounded w-full"
+            >
+              <option value={0}>Select Product</option>
+              {products.map((product: Product) => (
+                <option
+                  key={`${product.product_id}-${product.variant_id}`}
+                  value={product.variant_id}
+                >
+                  {product.display_name}
+                </option>
+              ))}
+            </select>
+
+            <div>
+              <input
+                type="number"
+                placeholder={
+                  dialogType === "add" ? "Quantity to add" : "Adjustment amount"
+                }
+                className="border px-3 py-2 rounded w-full"
+                value={form.quantity}
+                onChange={(e) =>
+                  setForm({ ...form, quantity: Number(e.target.value) })
+                }
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {dialogType === "add"
+                  ? "Enter positive quantity to add stock"
+                  : "Positive to add, negative to remove stock"}
+              </p>
+            </div>
           </div>
 
           <DialogFooter>
-            <Button onClick={handleSave} className="btn-bw-primary">
-              {form.id ? "Update" : "Add"}
+            <Button
+              onClick={handleSave}
+              className="btn-bw-primary"
+              disabled={
+                !form.branch_id ||
+                !form.product_variant_id ||
+                form.quantity === 0
+              }
+            >
+              {dialogType === "add" ? "Add" : "Adjust"} Stock
             </Button>
           </DialogFooter>
         </DialogContent>
