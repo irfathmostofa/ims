@@ -208,7 +208,7 @@ export default function StockTransferPage() {
           "updated_at",
         ]}
         columnFormats={{
-          product_name: (val, row) => getProductDisplayName(row),
+          product_name: (row) => getProductDisplayName(row),
           updated_at: (val) => formatDate(val),
           quantity: (val) => (
             <span
