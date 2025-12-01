@@ -51,6 +51,7 @@ import { Logistics } from "./pages/Orders/Logistics";
 import { CouponMgmt } from "./pages/Orders/CouponMgmt";
 import { Requisition } from "./pages/Procurement/Requisition";
 import { RequisitionView } from "./pages/Procurement/RequisitionView";
+import { OrderDetails } from "./pages/Orders/OrderDetails";
 
 export default function App() {
   return (
@@ -119,11 +120,12 @@ export default function App() {
               />
               {/* Online Order */}
               <Route path="/order/list" element={<OrderList />} />
+              <Route path="/order/:id" element={<OrderDetails />} />
               <Route path="/order/payment" element={<OrderPayment />} />
               <Route path="/order/tracking" element={<OrderTracking />} />
               <Route path="/order/return" element={<OrderReturn />} />
               <Route path="/order/coupon" element={<CouponMgmt />} />
-              <Route path="/order/logistics" element={<Logistics />} />
+              <Route path="/order/logistics/:id" element={<Logistics />} />
               {/* Customers */}
               <Route
                 path="/customers/customer-list"

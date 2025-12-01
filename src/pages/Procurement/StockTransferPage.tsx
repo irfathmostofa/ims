@@ -200,13 +200,6 @@ export default function StockTransferPage() {
         label="Stock Records"
         loading={loading}
         rowsPerPage={10}
-        showColumns={[
-          "branch_name",
-          "product_name",
-          "variant_name",
-          "quantity",
-          "updated_at",
-        ]}
         columnFormats={{
           product_name: (row) => getProductDisplayName(row),
           updated_at: (val) => formatDate(val),

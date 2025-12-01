@@ -13,7 +13,7 @@ type Action<T> = {
   onClick: (row: T) => void;
   className?: string;
   title?: string;
-  hide?: (row: T) => boolean; // New hide condition
+  hide?: (row: T) => boolean;
 };
 
 type SortConfig = {
@@ -26,10 +26,15 @@ type PrintColumn<T> = {
   value: keyof T;
 };
 
+type ColumnConfig<T> = {
+  key: keyof T;
+  label: string;
+};
+
 type DataTableProps<T> = {
   data: T[];
   label?: string;
-  showColumns?: (keyof T)[];
+  showColumns?: (keyof T)[] | ColumnConfig<T>[]; // Updated: Can be array of keys or column configs
   actions?: Action<T>[];
   selectable?: boolean;
   rowsPerPage?: number;
@@ -57,12 +62,44 @@ export function DataTable<T extends Record<string, any>>({
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  // ✅ Use showColumns explicitly, fall back to all columns
-  const headers = useMemo(() => {
+  // Process showColumns to extract keys and labels
+  const columnConfigs = useMemo((): ColumnConfig<T>[] => {
     if (!data || data.length === 0) return [];
-    if (showColumns.length > 0) return showColumns as string[];
-    return Object.keys(data[0]);
+
+    // If showColumns is empty, use all columns with default labels
+    if (showColumns.length === 0) {
+      return Object.keys(data[0]).map((key) => ({
+        key: key as keyof T,
+        label: key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()), // Convert snake_case to Title Case
+      }));
+    }
+
+    // Process showColumns array
+    return showColumns.map((col) => {
+      if (
+        typeof col === "string" ||
+        typeof col === "number" ||
+        typeof col === "symbol"
+      ) {
+        // Simple key without custom label
+        return {
+          key: col as keyof T,
+          label: String(col)
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (l) => l.toUpperCase()),
+        };
+      } else {
+        // ColumnConfig object with custom label
+        return col as ColumnConfig<T>;
+      }
+    });
   }, [data, showColumns]);
+
+  // Extract just the keys for internal use
+  const headers = useMemo(
+    () => columnConfigs.map((col) => col.key as string),
+    [columnConfigs]
+  );
 
   const sortedData = useMemo(() => {
     let sortable = [...data];
@@ -124,14 +161,14 @@ export function DataTable<T extends Record<string, any>>({
   const exportExcel = () => {
     const exportData = filteredData.map((row) => {
       const obj: Record<string, any> = {};
-      headers.forEach((h) => {
-        const formatFn = columnFormats[h as keyof T];
-        let value: any = row[h]; // <-- use any here
+      columnConfigs.forEach((col) => {
+        const formatFn = columnFormats[col.key];
+        let value: any = row[col.key];
         if (formatFn) {
           const formatted = formatFn(value, row);
           value = typeof formatted === "string" ? formatted : String(formatted);
         }
-        obj[h] = value;
+        obj[col.label] = value;
       });
       return obj;
     });
@@ -146,22 +183,16 @@ export function DataTable<T extends Record<string, any>>({
     const doc = new jsPDF();
     doc.text(label, 14, 10);
 
-    const columnsToPrint = headers.map((h) => ({
-      label: h,
-      value: h as keyof T,
-    }));
-
     const body = filteredData.map((row) =>
-      columnsToPrint.map((col) => {
-        const formatFn = columnFormats[col.value];
-        let value: any = row[col.value]; // <-- use any
+      columnConfigs.map((col) => {
+        const formatFn = columnFormats[col.key];
+        let value: any = row[col.key];
 
         if (formatFn) {
           const formatted = formatFn(value, row);
           value = typeof formatted === "string" ? formatted : String(formatted);
         }
 
-        // Handle images
         if (
           Array.isArray(value) ||
           (typeof value === "string" && value.startsWith("http"))
@@ -174,14 +205,13 @@ export function DataTable<T extends Record<string, any>>({
     );
 
     autoTable(doc, {
-      head: [columnsToPrint.map((c) => c.label)],
+      head: [columnConfigs.map((c) => c.label)],
       body: body,
     });
 
     doc.save(`${label}.pdf`);
   };
 
-  // Filter visible actions for a row
   const getVisibleActions = (row: T): Action<T>[] => {
     return actions.filter((action) => !action.hide || !action.hide(row));
   };
@@ -237,6 +267,7 @@ export function DataTable<T extends Record<string, any>>({
               </div>
             </div>
           </div>
+
           {/* Print data */}
           <div id={label} className="hidden">
             <h1 className="text-xl font-bold mb-2">{label}</h1>
@@ -245,7 +276,10 @@ export function DataTable<T extends Record<string, any>>({
                 <tr>
                   {(printHead && printHead.length > 0
                     ? printHead
-                    : headers.map((h) => ({ label: h, value: h as keyof T }))
+                    : columnConfigs.map((col) => ({
+                        label: col.label,
+                        value: col.key,
+                      }))
                   ).map((col) => (
                     <th key={col.label} className="border border-b-black">
                       {col.label}
@@ -258,7 +292,10 @@ export function DataTable<T extends Record<string, any>>({
                   <tr key={rowIndex}>
                     {(printHead && printHead.length > 0
                       ? printHead
-                      : headers.map((h) => ({ label: h, value: h as keyof T }))
+                      : columnConfigs.map((col) => ({
+                          label: col.label,
+                          value: col.key,
+                        }))
                     ).map((col, colIndex) => (
                       <td key={colIndex} className="border p-2">
                         {row[col.value]}
@@ -269,6 +306,7 @@ export function DataTable<T extends Record<string, any>>({
               </tbody>
             </table>
           </div>
+
           {/* Desktop Table */}
           <div className=" lg:block overflow-x-auto border rounded-xl shadow-sm max-h-[60vh]">
             <table className="w-full border-collapse">
@@ -283,13 +321,13 @@ export function DataTable<T extends Record<string, any>>({
                       />
                     </th>
                   )}
-                  {headers.map((header) => (
+                  {columnConfigs.map((col) => (
                     <th
-                      key={header}
-                      className="px-3 py-2 border-b text-white font-medium capitalize cursor-pointer select-none text-sm whitespace-nowrap"
-                      onClick={() => requestSort(header)}
+                      key={String(col.key)}
+                      className="px-3 py-2 border-b text-white font-medium cursor-pointer select-none text-sm whitespace-nowrap"
+                      onClick={() => requestSort(String(col.key))}
                     >
-                      {header} {getSortIndicator(header)}
+                      {col.label} {getSortIndicator(String(col.key))}
                     </th>
                   ))}
                   {actions.length > 0 && (
@@ -304,7 +342,7 @@ export function DataTable<T extends Record<string, any>>({
                   <tr>
                     <td
                       colSpan={
-                        headers.length +
+                        columnConfigs.length +
                         (selectable ? 1 : 0) +
                         (actions.length > 0 ? 1 : 0)
                       }
@@ -332,15 +370,14 @@ export function DataTable<T extends Record<string, any>>({
                           </td>
                         )}
 
-                        {headers.map((header) => {
-                          const value = row[header];
-                          const formatFn = columnFormats[header as keyof T];
+                        {columnConfigs.map((col) => {
+                          const value = row[col.key];
+                          const formatFn = columnFormats[col.key];
 
-                          // ✅ Apply custom format if provided
                           if (formatFn) {
                             return (
                               <td
-                                key={header}
+                                key={String(col.key)}
                                 className="px-2 py-2 border-b text-sm whitespace-nowrap"
                               >
                                 {formatFn(value, row)}
@@ -348,22 +385,24 @@ export function DataTable<T extends Record<string, any>>({
                             );
                           }
 
-                          // Image column handling
                           const isImageColumn =
-                            header.toLowerCase().includes("image") ||
-                            header.toLowerCase().includes("photo") ||
-                            header.toLowerCase().includes("avatar");
+                            String(col.key).toLowerCase().includes("image") ||
+                            String(col.key).toLowerCase().includes("photo") ||
+                            String(col.key).toLowerCase().includes("avatar");
 
                           if (isImageColumn) {
                             if (Array.isArray(value)) {
                               return (
-                                <td key={header} className="px-2 py-2 border-b">
+                                <td
+                                  key={String(col.key)}
+                                  className="px-2 py-2 border-b"
+                                >
                                   <div className="flex gap-1 flex-wrap">
                                     {value.map((img: string, i: number) => (
                                       <img
                                         key={i}
                                         src={img || "https://placehold.co/400"}
-                                        alt={`${header}-${i}`}
+                                        alt={`${col.label}-${i}`}
                                         className="w-10 h-10 object-cover rounded-md border cursor-pointer"
                                         onClick={() => setPreviewImage(img)}
                                       />
@@ -373,10 +412,13 @@ export function DataTable<T extends Record<string, any>>({
                               );
                             } else {
                               return (
-                                <td key={header} className="px-2 py-2 border-b">
+                                <td
+                                  key={String(col.key)}
+                                  className="px-2 py-2 border-b"
+                                >
                                   <img
                                     src={value || "https://placehold.co/400"}
-                                    alt={header}
+                                    alt={col.label}
                                     className="w-10 h-10 object-cover rounded-md border cursor-pointer"
                                     onClick={() => setPreviewImage(value)}
                                   />
@@ -387,7 +429,7 @@ export function DataTable<T extends Record<string, any>>({
 
                           return (
                             <td
-                              key={header}
+                              key={String(col.key)}
                               className="px-2 py-2 border-b text-bw-900 text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
                               title={String(value)}
                             >
