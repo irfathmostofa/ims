@@ -22,7 +22,7 @@ import {
   AlertCircle,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -76,6 +76,7 @@ interface StatusConfig {
   label: string;
   tabColor: string;
   countColor: string;
+  activeTabColor: string;
 }
 
 const statusConfigs: Record<OrderStatusTab, StatusConfig> = {
@@ -83,8 +84,9 @@ const statusConfigs: Record<OrderStatusTab, StatusConfig> = {
     color: "bg-gray-100 text-gray-800",
     icon: ShoppingBag,
     label: "All Orders",
-    tabColor: "text-gray-600 hover:text-gray-700",
+    tabColor: "text-gray-700 hover:text-black",
     countColor: "bg-gray-100 text-gray-800",
+    activeTabColor: "bg-black text-white border-black",
   },
   PENDING: {
     color: "bg-yellow-50 text-yellow-700 border border-yellow-200",
@@ -92,6 +94,7 @@ const statusConfigs: Record<OrderStatusTab, StatusConfig> = {
     label: "Pending",
     tabColor: "text-gray-700 hover:text-black",
     countColor: "bg-yellow-50 text-yellow-700",
+    activeTabColor: "bg-black text-white border-black",
   },
   CONFIRMED: {
     color: "bg-blue-50 text-blue-700 border border-blue-200",
@@ -99,6 +102,7 @@ const statusConfigs: Record<OrderStatusTab, StatusConfig> = {
     label: "Confirmed",
     tabColor: "text-gray-700 hover:text-black",
     countColor: "bg-blue-50 text-blue-700",
+    activeTabColor: "bg-black text-white border-black",
   },
   PROCESSING: {
     color: "bg-indigo-50 text-indigo-700 border border-indigo-200",
@@ -106,6 +110,7 @@ const statusConfigs: Record<OrderStatusTab, StatusConfig> = {
     label: "Processing",
     tabColor: "text-gray-700 hover:text-black",
     countColor: "bg-indigo-50 text-indigo-700",
+    activeTabColor: "bg-black text-white border-black",
   },
   SHIPPED: {
     color: "bg-purple-50 text-purple-700 border border-purple-200",
@@ -113,6 +118,7 @@ const statusConfigs: Record<OrderStatusTab, StatusConfig> = {
     label: "Shipped",
     tabColor: "text-gray-700 hover:text-black",
     countColor: "bg-purple-50 text-purple-700",
+    activeTabColor: "bg-black text-white border-black",
   },
   DELIVERED: {
     color: "bg-green-50 text-green-700 border border-green-200",
@@ -120,6 +126,7 @@ const statusConfigs: Record<OrderStatusTab, StatusConfig> = {
     label: "Delivered",
     tabColor: "text-gray-700 hover:text-black",
     countColor: "bg-green-50 text-green-700",
+    activeTabColor: "bg-black text-white border-black",
   },
   CANCELLED: {
     color: "bg-red-50 text-red-700 border border-red-200",
@@ -127,6 +134,7 @@ const statusConfigs: Record<OrderStatusTab, StatusConfig> = {
     label: "Cancelled",
     tabColor: "text-gray-700 hover:text-black",
     countColor: "bg-red-50 text-red-700",
+    activeTabColor: "bg-black text-white border-black",
   },
   REFUNDED: {
     color: "bg-gray-100 text-gray-700 border border-gray-300",
@@ -134,6 +142,7 @@ const statusConfigs: Record<OrderStatusTab, StatusConfig> = {
     label: "Refunded",
     tabColor: "text-gray-700 hover:text-black",
     countColor: "bg-gray-100 text-gray-700",
+    activeTabColor: "bg-black text-white border-black",
   },
 };
 
@@ -152,13 +161,13 @@ interface OrderTableProps {
   orders: Order[];
   loader: boolean;
   handleQuickView: (order: Order) => void;
-  handleAcceptOrder: (orderId: number) => void;
+  handleUpdateOrderStatus: (orderId: number, status: string) => Promise<void>;
   processingOrderId: number | null;
   router: (path: string) => void;
   getOrderStatusBadge: (status: string) => JSX.Element;
   getPaymentStatusBadge: (status: string) => JSX.Element;
   formatDate: (dateString: string) => string;
-  formatCurrency: (amount: string) => string;
+  formatCurrency: (amount: number) => string;
   status?: OrderStatusTab;
 }
 
@@ -166,7 +175,7 @@ const OrderTable = ({
   orders,
   loader,
   handleQuickView,
-  handleAcceptOrder,
+  handleUpdateOrderStatus,
   processingOrderId,
   router,
   getOrderStatusBadge,
@@ -175,45 +184,127 @@ const OrderTable = ({
   formatCurrency,
   status,
 }: OrderTableProps) => {
+  // Get status-specific actions based on order status
+  const getStatusSpecificActions = (row: Order) => {
+    const commonActions = [
+      {
+        label: <Eye size={16} />,
+        className: "text-green-600 hover:text-green-800",
+        title: "Quick View",
+        onClick: () => handleQuickView(row),
+      },
+    ];
+
+    switch (row.order_status) {
+      case "PENDING":
+        return [
+          ...commonActions,
+          {
+            label: <Check size={16} />,
+            className: "text-yellow-600 hover:text-yellow-800",
+            title: "Accept Order",
+            disabled: processingOrderId === row.id,
+            onClick: () => handleUpdateOrderStatus(row.id, "CONFIRMED"),
+          },
+          {
+            label: <XCircle size={16} />,
+            className: "text-red-600 hover:text-red-800",
+            title: "Cancel Order",
+            disabled: processingOrderId === row.id,
+            onClick: () => handleUpdateOrderStatus(row.id, "CANCELLED"),
+          },
+        ];
+
+      case "CONFIRMED":
+        return [
+          ...commonActions,
+          {
+            label: <Package size={16} />,
+            className: "text-indigo-600 hover:text-indigo-800",
+            title: "Start Processing",
+            disabled: processingOrderId === row.id,
+            onClick: () => handleUpdateOrderStatus(row.id, "PROCESSING"),
+          },
+          {
+            label: <Send size={16} />,
+            className: "text-purple-600 hover:text-purple-800",
+            title: "Ship Order",
+            disabled: processingOrderId === row.id,
+            onClick: () => {
+              handleUpdateOrderStatus(row.id, "SHIPPED");
+            },
+          },
+          {
+            label: <XCircle size={16} />,
+            className: "text-red-600 hover:text-red-800",
+            title: "Cancel Order",
+            disabled: processingOrderId === row.id,
+            onClick: () => handleUpdateOrderStatus(row.id, "CANCELLED"),
+          },
+        ];
+
+      case "PROCESSING":
+        return [
+          ...commonActions,
+          {
+            label: <Send size={16} />,
+            className: "text-purple-600 hover:text-purple-800",
+            title: "Ship Order",
+            disabled: processingOrderId === row.id,
+            onClick: () => handleUpdateOrderStatus(row.id, "SHIPPED"),
+          },
+          {
+            label: <XCircle size={16} />,
+            className: "text-red-600 hover:text-red-800",
+            title: "Cancel Order",
+            disabled: processingOrderId === row.id,
+            onClick: () => handleUpdateOrderStatus(row.id, "CANCELLED"),
+          },
+        ];
+
+      case "SHIPPED":
+        return [
+          ...commonActions,
+          {
+            label: <CheckCircle size={16} />,
+            className: "text-green-600 hover:text-green-800",
+            title: "Mark as Delivered",
+            disabled: processingOrderId === row.id,
+            onClick: () => handleUpdateOrderStatus(row.id, "DELIVERED"),
+          },
+        ];
+
+      case "DELIVERED":
+        return [
+          ...commonActions,
+          {
+            label: <AlertCircle size={16} />,
+            className: "text-gray-600 hover:text-gray-800",
+            title: "Refund Order",
+            disabled: processingOrderId === row.id,
+            onClick: () => handleUpdateOrderStatus(row.id, "REFUNDED"),
+          },
+        ];
+
+      case "CANCELLED":
+        return [
+          ...commonActions,
+          // No additional actions for cancelled orders
+        ];
+
+      case "REFUNDED":
+        return [
+          ...commonActions,
+          // No additional actions for refunded orders
+        ];
+
+      default:
+        return commonActions;
+    }
+  };
+
   // Create actions configuration that DataTable expects
-  const tableActions = [
-    // {
-    //   label: <Eye size={16} />,
-    //   className: "text-blue-600 hover:text-blue-800",
-    //   title: "View Details",
-    //   onClick: (row: Order) => router(`/order/${row.id}`),
-    // },
-    {
-      label: <Eye size={16} />,
-      className: "text-green-600 hover:text-green-800",
-      title: "Quick View",
-      onClick: (row: Order) => handleQuickView(row),
-    },
-    {
-      label: <Check size={16} />,
-      className: "text-yellow-600 hover:text-yellow-800",
-      title: "Accept Order",
-      disabled: (row: Order) =>
-        row.order_status !== "PENDING" || processingOrderId === row.id,
-      show: (row: Order) => row.order_status === "PENDING",
-      onClick: (row: Order) => handleAcceptOrder(row.id),
-    },
-    {
-      label: <Send size={16} />,
-      className: "text-purple-600 hover:text-purple-800",
-      title: "Send Logistics",
-      show: (row: Order) =>
-        row.order_status === "CONFIRMED" || row.order_status === "PROCESSING",
-      onClick: (row: Order) => router(`/order/logistics/${row.id}`),
-    },
-    {
-      label: <CheckCircle size={16} />,
-      className: "text-green-600 hover:text-green-800",
-      title: "Mark as Delivered",
-      show: (row: Order) => row.order_status === "SHIPPED",
-      onClick: (row: Order) => router(`/order/${row.id}/deliver`),
-    },
-  ];
+  const tableActions = (row: Order) => getStatusSpecificActions(row);
 
   return (
     <div>
@@ -242,7 +333,7 @@ const OrderTable = ({
               <div className="text-xs text-gray-500">{row.customer_email}</div>
             </div>
           ),
-          net_amount: (val: string) => formatCurrency(val),
+          net_amount: (val: string) => formatCurrency(parseFloat(val)),
         }}
         printHead={[
           { label: "Order Code", value: "code" },
@@ -263,6 +354,7 @@ interface StatusTabTriggerProps {
   status: OrderStatusTab;
   config: StatusConfig;
   count: number;
+  isActive: boolean;
   onClick: () => void;
 }
 
@@ -270,6 +362,7 @@ const StatusTabTrigger = ({
   status,
   config,
   count,
+  isActive,
   onClick,
 }: StatusTabTriggerProps) => {
   const Icon = config.icon;
@@ -277,14 +370,20 @@ const StatusTabTrigger = ({
   return (
     <TabsTrigger
       value={status}
-      className={`relative ${config.tabColor}`}
+      className={`relative px-4 py-2 rounded-lg border transition-all duration-200 ${
+        isActive
+          ? config.activeTabColor + " font-semibold shadow-sm"
+          : "text-gray-700 hover:text-black hover:bg-gray-50 border-gray-200"
+      }`}
       onClick={onClick}
     >
       <Icon size={16} className="mr-2" />
       {config.label}
       {count > 0 && (
         <span
-          className={`ml-2 px-1.5 py-0.5 rounded-full text-xs font-medium ${config.countColor}`}
+          className={`ml-2 px-1.5 py-0.5 rounded-full text-xs font-medium ${
+            isActive ? "bg-white text-black" : config.countColor
+          }`}
         >
           {count}
         </span>
@@ -427,35 +526,58 @@ export const OrderList = () => {
     }
   }, [searchParams]);
 
-  const handleAcceptOrder = async (orderId: number) => {
+  const handleUpdateOrderStatus = async (
+    orderId: number,
+    newStatus: string
+  ) => {
     try {
       setProcessingOrderId(orderId);
       const response = await apiClient(
-        `${import.meta.env.VITE_SERVER}/order/accept/${orderId}`,
+        `${import.meta.env.VITE_SERVER}/order/update-order-status`,
         {
-          method: "PUT",
+          method: "POST",
           tokenType: "jwt",
+          data: {
+            id: orderId,
+            order_status: newStatus,
+          },
         }
       );
 
       if (response.success) {
-        toast.success("Order accepted successfully!");
+        const statusMessages = {
+          CONFIRMED: "Order accepted successfully!",
+          PROCESSING: "Order marked as processing!",
+          SHIPPED: "Order shipped successfully!",
+          DELIVERED: "Order marked as delivered!",
+          CANCELLED: "Order cancelled successfully!",
+          REFUNDED: "Order refunded successfully!",
+        };
+
+        toast.success(
+          statusMessages[newStatus as keyof typeof statusMessages] ||
+            "Order status updated successfully!"
+        );
+
         // Refresh orders list
         fetchData(1);
-        // Navigate to logistics page
-        router(`/order/logistics/${orderId}`);
+
+        // Navigate to logistics page only for CONFIRMED status
+        if (newStatus === "CONFIRMED") {
+          router(`/order/logistics/${orderId}`);
+        }
       } else {
-        toast.error(response.message || "Failed to accept order");
+        toast.error(response.message || "Failed to update order status");
       }
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "Failed to accept order");
+      toast.error(err.message || "Failed to update order status");
     } finally {
       setProcessingOrderId(null);
     }
   };
 
-  const getOrderStatusBadge = (status: string): JSX.Element => {
+  const getOrderStatusBadge = (status: string) => {
     const validStatus = (Object.keys(statusConfigs) as OrderStatusTab[]).find(
       (key) => key === status
     );
@@ -475,7 +597,7 @@ export const OrderList = () => {
     );
   };
 
-  const getPaymentStatusBadge = (status: string): JSX.Element => {
+  const getPaymentStatusBadge = (status: string) => {
     const config = {
       UNPAID: { color: "bg-red-100 text-red-800", label: "Unpaid" },
       PAID: { color: "bg-green-100 text-green-800", label: "Paid" },
@@ -504,16 +626,108 @@ export const OrderList = () => {
     });
   };
 
-  const formatCurrency = (amount: string): string => {
-    return new Intl.NumberFormat("en-US", {
+  const formatCurrency = (value: number, currency: string = "BDT"): string => {
+    if (value === undefined || value === null || isNaN(value)) return "-";
+    return new Intl.NumberFormat("en-BD", {
       style: "currency",
-      currency: "USD",
-    }).format(parseFloat(amount));
+      currency,
+      minimumFractionDigits: 2,
+    }).format(value);
   };
 
   const handleQuickView = (order: Order) => {
     setSelectedOrder(order);
     setShowQuickView(true);
+  };
+
+  // Get status-specific actions for Quick View Dialog
+  const getQuickViewActions = (order: Order) => {
+    switch (order.order_status) {
+      case "PENDING":
+        return (
+          <Button
+            onClick={() => {
+              setShowQuickView(false);
+              handleUpdateOrderStatus(order.id, "CONFIRMED");
+            }}
+            className="w-full sm:w-auto bg-yellow-600 hover:bg-yellow-700 text-white"
+          >
+            <Check size={16} className="mr-2" />
+            Accept Order
+          </Button>
+        );
+
+      case "CONFIRMED":
+        return (
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              onClick={() => {
+                setShowQuickView(false);
+                handleUpdateOrderStatus(order.id, "PROCESSING");
+              }}
+              className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              <Package size={16} className="mr-2" />
+              Start Processing
+            </Button>
+            <Button
+              onClick={() => {
+                setShowQuickView(false);
+                handleUpdateOrderStatus(order.id, "SHIPPED");
+              }}
+              className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              <Send size={16} className="mr-2" />
+              Ship Order
+            </Button>
+          </div>
+        );
+
+      case "PROCESSING":
+        return (
+          <Button
+            onClick={() => {
+              setShowQuickView(false);
+              handleUpdateOrderStatus(order.id, "SHIPPED");
+            }}
+            className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            <Send size={16} className="mr-2" />
+            Ship Order
+          </Button>
+        );
+
+      case "SHIPPED":
+        return (
+          <Button
+            onClick={() => {
+              setShowQuickView(false);
+              handleUpdateOrderStatus(order.id, "DELIVERED");
+            }}
+            className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
+          >
+            <CheckCircle size={16} className="mr-2" />
+            Mark as Delivered
+          </Button>
+        );
+
+      case "DELIVERED":
+        return (
+          <Button
+            onClick={() => {
+              setShowQuickView(false);
+              handleUpdateOrderStatus(order.id, "REFUNDED");
+            }}
+            className="w-full sm:w-auto bg-gray-600 hover:bg-gray-700 text-white"
+          >
+            <AlertCircle size={16} className="mr-2" />
+            Refund Order
+          </Button>
+        );
+
+      default:
+        return null;
+    }
   };
 
   return (
@@ -531,7 +745,7 @@ export const OrderList = () => {
             value={activeTab}
             onValueChange={(value) => handleTabChange(value as OrderStatusTab)}
           >
-            <TabsList className="flex flex-wrap h-auto p-1 gap-1 bg-gray-100">
+            <TabsList className="flex flex-wrap h-auto p-1 gap-2 bg-white">
               {(Object.keys(statusConfigs) as OrderStatusTab[]).map(
                 (status) => (
                   <StatusTabTrigger
@@ -539,6 +753,7 @@ export const OrderList = () => {
                     status={status}
                     config={statusConfigs[status]}
                     count={statusCounts[status]}
+                    isActive={activeTab === status}
                     onClick={() => handleTabChange(status)}
                   />
                 )
@@ -551,7 +766,7 @@ export const OrderList = () => {
                   orders={orders}
                   loader={loader}
                   handleQuickView={handleQuickView}
-                  handleAcceptOrder={handleAcceptOrder}
+                  handleUpdateOrderStatus={handleUpdateOrderStatus}
                   processingOrderId={processingOrderId}
                   router={router}
                   getOrderStatusBadge={getOrderStatusBadge}
@@ -580,7 +795,7 @@ export const OrderList = () => {
                     )}
                     loader={loader}
                     handleQuickView={handleQuickView}
-                    handleAcceptOrder={handleAcceptOrder}
+                    handleUpdateOrderStatus={handleUpdateOrderStatus}
                     processingOrderId={processingOrderId}
                     router={router}
                     getOrderStatusBadge={getOrderStatusBadge}
@@ -708,10 +923,10 @@ export const OrderList = () => {
                               {item.quantity}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm">
-                              {formatCurrency(item.unit_price.toString())}
+                              {formatCurrency(item.unit_price)}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                              {formatCurrency(item.subtotal.toString())}
+                              {formatCurrency(item.subtotal)}
                             </td>
                           </tr>
                         ))}
@@ -729,19 +944,26 @@ export const OrderList = () => {
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal:</span>
-                    <span>{formatCurrency(selectedOrder.total_amount)}</span>
+                    <span>
+                      {formatCurrency(parseFloat(selectedOrder.total_amount))}
+                    </span>
                   </div>
                   {parseFloat(selectedOrder.discount_amount) > 0 && (
                     <div className="flex justify-between text-sm text-red-600">
                       <span>Discount:</span>
                       <span>
-                        -{formatCurrency(selectedOrder.discount_amount)}
+                        -
+                        {formatCurrency(
+                          parseFloat(selectedOrder.discount_amount)
+                        )}
                       </span>
                     </div>
                   )}
                   <div className="flex justify-between text-base font-bold pt-2 border-t">
                     <span>Net Amount:</span>
-                    <span>{formatCurrency(selectedOrder.net_amount)}</span>
+                    <span>
+                      {formatCurrency(parseFloat(selectedOrder.net_amount))}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -765,19 +987,7 @@ export const OrderList = () => {
                 >
                   View Full Details
                 </Button>
-                {selectedOrder.order_status === "PENDING" && (
-                  <Button
-                    onClick={() => {
-                      setShowQuickView(false);
-                      handleAcceptOrder(selectedOrder.id);
-                    }}
-                    loading={processingOrderId === selectedOrder.id}
-                    className="w-full sm:w-auto bg-yellow-600 hover:bg-yellow-700 text-white"
-                  >
-                    <Check size={16} className="mr-2" />
-                    Accept Order
-                  </Button>
-                )}
+                {getQuickViewActions(selectedOrder)}
               </div>
             </div>
           )}
