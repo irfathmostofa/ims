@@ -435,7 +435,7 @@ export const OrderList = () => {
       setLoading(false);
     }
   };
-
+  console.log(orders);
   const calculateStatusCounts = (ordersList: Order[]) => {
     const counts: StatusCounts = {
       ALL: ordersList.length,
