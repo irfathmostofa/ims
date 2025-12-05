@@ -493,7 +493,6 @@ export const OrderList = () => {
     orderId: number,
     newStatus: string
   ) => {
-    console.log(orderId, newStatus);
     try {
       setProcessingOrderId(orderId);
       const response = await apiClient(
