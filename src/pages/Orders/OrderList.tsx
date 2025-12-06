@@ -286,9 +286,6 @@ const OrderTable = ({
           { key: "created_at", label: "Order Date" },
         ]}
         columnFormats={{
-          order_status: (row: Order) => getOrderStatusBadge(row.order_status),
-          payment_status: (row: Order) =>
-            getPaymentStatusBadge(row.payment_status),
           created_at: (val: string) => formatDate(val),
           customer_name: (val: string, row: Order) => (
             <div>
@@ -335,8 +332,8 @@ const StatusTabTrigger = ({
       value={status}
       className={`relative px-4 py-2 rounded-lg border transition-all duration-200 ${
         isActive
-          ? config.activeTabColor + " font-semibold shadow-sm"
-          : "text-gray-700 hover:text-black hover:bg-gray-50 border-gray-200"
+          ? config.activeTabColor + "shadow-sm"
+          : "text-black hover:text-black hover:bg-gray-50 border-gray-400"
       }`}
       onClick={onClick}
     >
@@ -408,10 +405,8 @@ export const OrderList = () => {
         const fetchedOrders = response.data || [];
 
         if (status) {
-          // Filter for specific tab
           setOrders(fetchedOrders);
         } else {
-          // Get all orders for counting
           setAllOrders(fetchedOrders);
           setOrders(fetchedOrders);
           calculateStatusCounts(fetchedOrders);
@@ -481,7 +476,6 @@ export const OrderList = () => {
   useEffect(() => {
     fetchData(1);
   }, []);
-
   useEffect(() => {
     const status = searchParams.get("status")?.toUpperCase();
     if (status && status in statusConfigs) {
@@ -691,7 +685,7 @@ export const OrderList = () => {
             value={activeTab}
             onValueChange={(value) => handleTabChange(value as OrderStatusTab)}
           >
-            <TabsList className="flex flex-wrap h-auto p-1 gap-2 bg-white">
+            <TabsList className="flex flex-wrap h-auto p-1 gap-2 ">
               {(Object.keys(statusConfigs) as OrderStatusTab[]).map(
                 (status) => (
                   <StatusTabTrigger
@@ -762,7 +756,6 @@ export const OrderList = () => {
         <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Eye size={20} />
               Order Quick View: #{selectedOrder?.code}
             </DialogTitle>
           </DialogHeader>
@@ -772,22 +765,22 @@ export const OrderList = () => {
               {/* Order Summary */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-sm text-gray-500">
+                  <h4 className="font-semibold text-sm text-black">
                     Customer Information
                   </h4>
                   <div className="space-y-1">
                     <p className="font-medium">{selectedOrder.customer_name}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-black">
                       {selectedOrder.customer_email}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-black">
                       {selectedOrder.customer_phone}
                     </p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-sm text-gray-500">
+                  <h4 className="font-semibold text-sm text-black">
                     Order Details
                   </h4>
                   <div className="space-y-1">
@@ -811,13 +804,13 @@ export const OrderList = () => {
               {/* Order Status */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-sm text-gray-500">
+                  <h4 className="font-semibold text-sm text-black">
                     Order Status
                   </h4>
                   <div>{getOrderStatusBadge(selectedOrder.order_status)}</div>
                 </div>
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-sm text-gray-500">
+                  <h4 className="font-semibold text-sm text-black">
                     Payment Status
                   </h4>
                   <div>
@@ -828,7 +821,7 @@ export const OrderList = () => {
 
               {/* Order Items */}
               <div className="space-y-2">
-                <h4 className="font-semibold text-sm text-gray-500">
+                <h4 className="font-semibold text-sm text-black">
                   Order Items ({selectedOrder.items.length})
                 </h4>
                 <div className="border rounded-lg overflow-hidden">
@@ -836,16 +829,16 @@ export const OrderList = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                             Product
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                             Qty
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                             Price
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                             Subtotal
                           </th>
                         </tr>
@@ -859,7 +852,7 @@ export const OrderList = () => {
                                   {item.product_name}
                                 </p>
                                 {item.variant_name && (
-                                  <p className="text-xs text-gray-500">
+                                  <p className="text-xs text-black">
                                     Variant: {item.variant_name}
                                   </p>
                                 )}
@@ -883,8 +876,8 @@ export const OrderList = () => {
               </div>
 
               {/* Order Totals */}
-              <div className="space-y-2 border-t pt-4">
-                <h4 className="font-semibold text-sm text-gray-500">
+              <div className="space-y-2 ">
+                <h4 className="font-semibold text-sm text-black">
                   Order Summary
                 </h4>
                 <div className="space-y-1">
@@ -915,7 +908,7 @@ export const OrderList = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-2 justify-end pt-4 border-t">
+              <div className="flex flex-col sm:flex-row gap-2 justify-end pt-4">
                 <Button
                   variant="outline"
                   onClick={() => setShowQuickView(false)}

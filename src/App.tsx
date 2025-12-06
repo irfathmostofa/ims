@@ -125,7 +125,7 @@ export default function App() {
               <Route path="/order/tracking" element={<OrderTracking />} />
               <Route path="/order/return" element={<OrderReturn />} />
               <Route path="/order/coupon" element={<CouponMgmt />} />
-              <Route path="/order/logistics/:id" element={<Logistics />} />
+              <Route path="/order/logistics" element={<Logistics />} />
               {/* Customers */}
               <Route
                 path="/customers/customer-list"
