@@ -121,14 +121,23 @@ export default function AllProductsPage() {
         label="Products List"
         selectable
         showColumns={[
-          "code",
-          "name",
-          "uom_name",
-          "cost_price",
-          "selling_price",
-          "total_stock",
-          "status",
+          { key: "code", label: "ID" },
+          { key: "name", label: "Product Name" },
+          { key: "uom_name", label: "Unit of Measurement" },
+          { key: "cost_price", label: "Cost Amount" },
+          { key: "selling_price", label: "Selling Price" },
+          { key: "total_stock", label: "Total Stock" },
+          { key: "status", label: "Status" },
         ]}
+        columnFormats={{
+          status: (value: string) => {
+            const statusMap: Record<string, string> = {
+              A: "Active",
+              I: "Inactive",
+            };
+            return statusMap[value];
+          },
+        }}
         rowsPerPage={10}
         loading={loader}
         printHead={[

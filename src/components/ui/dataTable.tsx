@@ -7,6 +7,7 @@ import autoTable from "jspdf-autotable";
 import { FileDown, FileSpreadsheet, Printer, X } from "lucide-react";
 import { printView } from "../utils/print";
 import { CustomPagination } from "./custom/customPagination";
+import { formatDate } from "../utils/formatter";
 
 type Action<T> = {
   label: React.ReactNode;
@@ -288,19 +289,25 @@ export function DataTable<T extends Record<string, any>>({
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((row, rowIndex) => (
+                {filteredData.map((row: any, rowIndex: number) => (
                   <tr key={rowIndex}>
                     {(printHead && printHead.length > 0
                       ? printHead
-                      : columnConfigs.map((col) => ({
+                      : columnConfigs.map((col: any) => ({
                           label: col.label,
                           value: col.key,
                         }))
-                    ).map((col, colIndex) => (
-                      <td key={colIndex} className="border p-2">
-                        {row[col.value]}
-                      </td>
-                    ))}
+                    ).map((col: any, colIndex: number) => {
+                      const value = row[col.value];
+                      const date = new Date(value);
+                      const isValidDate = !isNaN(date.getTime());
+
+                      return (
+                        <td key={colIndex} className="border p-2">
+                          {isValidDate ? formatDate(date) : value}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
