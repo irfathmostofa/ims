@@ -8,13 +8,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -40,7 +34,7 @@ import {
   Clock,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState, type JSX } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { formatDate } from "@/components/utils/formatter";
 import { Badge } from "@/components/ui/badge";
@@ -378,38 +372,6 @@ export const CouponMgmt = () => {
     }
   };
 
-  // Toggle coupon status
-  const handleToggleStatus = async (
-    couponId: number,
-    currentStatus: boolean
-  ) => {
-    try {
-      setProcessingCouponId(couponId);
-      const response = await apiClient(
-        `${import.meta.env.VITE_SERVER}/coupon/toggle-status/${couponId}`,
-        {
-          method: "PUT",
-          tokenType: "jwt",
-          data: { is_active: !currentStatus },
-        }
-      );
-
-      if (response.success) {
-        toast.success(
-          `Coupon ${!currentStatus ? "activated" : "deactivated"} successfully!`
-        );
-        fetchCoupons();
-      } else {
-        toast.error(response.message || "Failed to update coupon status");
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Failed to update coupon status");
-    } finally {
-      setProcessingCouponId(null);
-    }
-  };
-
   // Copy coupon code
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -570,7 +532,6 @@ export const CouponMgmt = () => {
 
   // Status tab trigger component
   const StatusTabTrigger = ({
-    status,
     config,
     count,
     isActive,
@@ -777,7 +738,7 @@ export const CouponMgmt = () => {
             ),
             start_date: (val: string) => formatDate(val),
             end_date: (val: string) => formatDate(val),
-            is_active: (val: boolean, row: Coupon) => getCouponStatusBadge(row),
+            is_active: (row: Coupon) => getCouponStatusBadge(row),
             code: (val: string) => (
               <div className="font-mono font-bold text-blue-600">{val}</div>
             ),

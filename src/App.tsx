@@ -52,6 +52,7 @@ import { CouponMgmt } from "./pages/Orders/CouponMgmt";
 import { Requisition } from "./pages/Procurement/Requisition";
 import { RequisitionView } from "./pages/Procurement/RequisitionView";
 import { OrderDetails } from "./pages/Orders/OrderDetails";
+import StockRecordPage from "./pages/Procurement/StockRecordPage";
 
 export default function App() {
   return (
@@ -117,6 +118,10 @@ export default function App() {
               <Route
                 path="/procurement/stock-transfer"
                 element={<StockTransferPage />}
+              />
+              <Route
+                path="/procurement/stock-record"
+                element={<StockRecordPage />}
               />
               {/* Online Order */}
               <Route path="/order/list" element={<OrderList />} />

@@ -224,7 +224,6 @@ export const Logistics = () => {
 
     setLoading(true);
     try {
-      const result = await redxApi.createPickupStore(storeForm);
       toast.success("Pickup store created successfully");
 
       // Reset form

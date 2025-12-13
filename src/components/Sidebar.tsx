@@ -56,6 +56,7 @@ const navItems: NavItem[] = [
       { name: "Goods Received Notes", path: "/procurement/grn" },
       { name: "Requisition", path: "/procurement/requisition" },
       { name: "Stock Transfer", path: "/procurement/stock-transfer" },
+      { name: "Stock Record", path: "/procurement/stock-record" },
     ],
   },
 

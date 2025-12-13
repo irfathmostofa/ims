@@ -123,7 +123,7 @@ export const Requisition = () => {
   // Requisition List
   const [requisitions, setRequisitions] = useState<Requisition[]>([]);
   const [loadingRequisitions, setLoadingRequisitions] = useState(false);
-
+  console.log(loadingRequisitions);
   // Form State
   const [form, setForm] = useState<Requisition>({
     id: 0,

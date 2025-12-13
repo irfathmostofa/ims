@@ -178,9 +178,7 @@ const OrderTable = ({
   handleQuickView,
   handleUpdateOrderStatus,
   processingOrderId,
-  router,
-  getOrderStatusBadge,
-  getPaymentStatusBadge,
+
   formatDate,
   formatCurrency,
   status,
@@ -369,7 +367,7 @@ export const OrderList = () => {
     total: 0,
     totalPages: 1,
   });
-
+  console.log(pagination);
   const [activeTab, setActiveTab] = useState<OrderStatusTab>(
     (searchParams.get("status")?.toUpperCase() as OrderStatusTab) || "ALL"
   );
