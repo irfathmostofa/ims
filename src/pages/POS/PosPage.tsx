@@ -4,27 +4,36 @@ import Cart from "@/components/POS/Cart";
 import CustomerInfo from "@/components/POS/CustomerInfo";
 import InvoiceModal from "@/components/POS/InvoiceModal";
 import ProductCategory from "@/components/POS/ProductCategory";
-
 import ProductList from "@/components/POS/ProductList";
 import { apiClient } from "@/hook/apiClient";
 import { useAuthStore } from "@/store/authStore";
 import { useState } from "react";
 import { toast } from "sonner";
 
+// Define cart item type
+type CartItem = {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
 export default function POSPage() {
-  const [cart, setCart] = useState<
-    { id: number; name: string; price: number; quantity: number }[]
-  >([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All");
-  const [customerId, setCustomerId] = useState(0);
+  const [category, setCategory] = useState("All"); // Changed to "All" to match ProductCategory
+  const [customerId, setCustomerId] = useState<number | null>(null);
   const [invoiceId, setInvoiceId] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentType, setPaymentType] = useState<"paid" | "partial" | "due">(
+    "paid"
+  );
+  const [partialAmount, setPartialAmount] = useState<string>("");
   const [invoiceOpen, setInvoiceOpen] = useState(false);
-  const [Loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { user } = useAuthStore();
 
   // Cart operations
@@ -61,41 +70,46 @@ export default function POSPage() {
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   // Actions
-  // Confirmed clear (used by "Clear / New" buttons)
   const handleClear = () => {
-    if (confirm("Are you sure you want to clear the cart?")) {
-      setCart([]);
-      setCustomerName("");
-      setCustomerPhone("");
-      setCustomerAddress("");
-      setSearch("");
-      setCategory("All");
+    if (
+      cart.length > 0 &&
+      confirm("Are you sure you want to clear the cart?")
+    ) {
+      clearNoConfirm();
     }
   };
 
-  // Clear without confirmation (used by Cart after a successful save)
   const clearNoConfirm = () => {
     setCart([]);
     setCustomerName("");
     setCustomerPhone("");
     setCustomerAddress("");
+    setCustomerId(null);
     setSearch("");
     setCategory("All");
+    setPaymentMethod("cash");
+    setPaymentType("paid");
+    setPartialAmount("");
   };
+
   const cartClear = () => {
     setCart([]);
-    setSearch("");
-    setCategory("All");
   };
 
   const addCustomer = async (): Promise<number | null> => {
+    if (!customerName.trim()) {
+      toast.error("Customer name is required");
+      return null;
+    }
+
     const formData = {
-      name: customerName,
-      branch_id: user?.branch_id,
-      phone: customerPhone,
-      address: customerAddress,
+      name: customerName.trim(),
+      branch_id: user?.branch?.id,
+      phone: customerPhone.trim(),
+      address: customerAddress.trim(),
       type: "CUSTOMER",
     };
+
     try {
       setLoading(true);
       const data = await apiClient(
@@ -107,11 +121,10 @@ export default function POSPage() {
         }
       );
 
-      toast.success(data.message);
-      // Return the newly created party/customer ID
-      return data.data?.id;
+      toast.success(data.message || "Customer created successfully");
+      return data.data?.id || null;
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err.message || "Failed to create customer");
       return null;
     } finally {
       setLoading(false);
@@ -124,8 +137,13 @@ export default function POSPage() {
       return;
     }
 
-    if (!user?.branch_id) {
+    if (!user?.branch?.id) {
       toast.error("Branch information is missing");
+      return;
+    }
+
+    if (!customerName.trim()) {
+      toast.error("Customer name is required");
       return;
     }
 
@@ -133,20 +151,32 @@ export default function POSPage() {
       setLoading(true);
 
       let finalCustomerId = customerId;
+      let finalPaymentAmount = total;
 
-      // If party_id doesn't exist (is 0 or null), create customer first
-      if (!customerId || customerId === 0) {
-        const newCustomerId = await addCustomer();
-
-        if (!newCustomerId) {
-          toast.error("Failed to create customer");
+      // Calculate payment amount based on payment type
+      if (paymentType === "partial") {
+        const partial = parseFloat(partialAmount);
+        if (isNaN(partial) || partial <= 0 || partial > total) {
+          toast.error("Invalid partial amount");
+          setLoading(false);
           return;
         }
+        finalPaymentAmount = partial;
+      } else if (paymentType === "due") {
+        finalPaymentAmount = 0;
+      }
 
+      // If no customer ID, create customer first
+      if (!finalCustomerId) {
+        const newCustomerId = await addCustomer();
+        if (!newCustomerId) {
+          setLoading(false);
+          return;
+        }
         finalCustomerId = newCustomerId;
       }
 
-      // Now create the invoice with the party_id
+      // Create invoice
       const invoiceItems = cart.map((item) => ({
         product_variant_id: item.id,
         quantity: item.quantity,
@@ -155,15 +185,15 @@ export default function POSPage() {
       }));
 
       const formData = {
-        branch_id: user.branch_id,
+        branch_id: user?.branch?.id,
         party_id: finalCustomerId,
         type: "SALE" as const,
         invoice_date: new Date().toISOString().split("T")[0],
         items: invoiceItems,
         payments: [
           {
-            method: paymentMethod.toUpperCase() as "CASH" | "BANK" | "ONLINE",
-            amount: total,
+            method: paymentMethod.toUpperCase() as "CASH" | "CARD" | "ONLINE",
+            amount: finalPaymentAmount,
             reference_no: null,
           },
         ],
@@ -177,10 +207,10 @@ export default function POSPage() {
           data: formData,
         }
       );
-      setInvoiceId(data.data.code);
+      setInvoiceId(data.data?.code || data.data?.id || `INV-${Date.now()}`);
       toast.success(data.message || "Invoice created successfully");
       setInvoiceOpen(true);
-      // clearNoConfirm();
+      // Don't clear cart automatically - let user decide
     } catch (err: any) {
       console.error("Invoice creation error:", err);
       toast.error(err.message || "Failed to create invoice");
@@ -190,16 +220,15 @@ export default function POSPage() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 h-full w-full">
+    <div className="flex flex-col md:flex-row gap-4 h-full w-full ">
       {/* Left: Category column */}
-      <div className="w-full md:w-30 flex flex-col gap-1">
+      <div className="w-full md:w-48 flex flex-col gap-2">
         <ProductCategory category={category} setCategory={setCategory} />
       </div>
-
       {/* Center: Customer + Products */}
-      <div className="flex-1 flex flex-col gap-4">
+      <div className="flex-1 flex flex-col gap-2">
         <CustomerInfo
-          customerId={customerId}
+          customerId={customerId || 0}
           setCustomerId={setCustomerId}
           customerName={customerName}
           setCustomerName={setCustomerName}
@@ -213,23 +242,22 @@ export default function POSPage() {
           search={search}
           setSearch={setSearch}
           category={category}
+          setCategory={setCategory}
           addToCart={addToCart}
         />
       </div>
 
-      {/* Right: Cart (now manages saved carts locally) */}
       <Cart
+        loading={loading}
         cart={cart}
-        loading={Loading}
         setCart={setCart}
         adjustQuantity={adjustQuantity}
         removeFromCart={removeFromCart}
         total={total}
-        handleClear={handleClear} // confirmed clear
-        clearAfterSave={clearNoConfirm} // clear without confirm after save
+        handleClear={handleClear}
+        clearAfterSave={clearNoConfirm}
         handlePay={handlePay}
         cartClear={cartClear}
-        // pass customer info/setters so restore can fill them
         customerName={customerName}
         customerPhone={customerPhone}
         customerAddress={customerAddress}
@@ -237,9 +265,12 @@ export default function POSPage() {
         setCustomerPhone={setCustomerPhone}
         setCustomerAddress={setCustomerAddress}
         setPaymentMethod={setPaymentMethod}
+        setPaymentType={setPaymentType} // Make sure this exists in POSPage
+        setPartialAmount={setPartialAmount} // Make sure this exists in POSPage
         paymentMethod={paymentMethod}
+        paymentType={paymentType} // Make sure this exists in POSPage
+        partialAmount={partialAmount} // Make sure this exists in POSPage
       />
-
       {/* Invoice Modal */}
       <InvoiceModal
         isOpen={invoiceOpen}

@@ -254,7 +254,7 @@ export default function StockRecordPage() {
 
         <Button
           onClick={handleOpenAdd}
-          className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+          className="btn-bw-primary text-white flex items-center gap-2"
         >
           <Plus size={16} /> Add Stock
         </Button>

@@ -75,7 +75,6 @@ export default function StockLedgerPage() {
   const [loading, setLoading] = useState(false);
   const [ledgerData, setLedgerData] = useState<StockAdjustment[]>([]);
 
-
   const { branches, products, fetchBranches, fetchProducts } = useQuickStore();
 
   const [filters, setFilters] = useState({
@@ -243,6 +242,7 @@ export default function StockLedgerPage() {
           { key: "branch_name", label: "Branch" },
           { key: "product_name", label: "Product" },
           { key: "quantity", label: "Quantity" },
+          { key: "type", label: "Type" },
           { key: "direction", label: "Direction" },
         ]}
         columnFormats={{

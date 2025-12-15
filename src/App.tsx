@@ -53,11 +53,13 @@ import { Requisition } from "./pages/Procurement/Requisition";
 import { RequisitionView } from "./pages/Procurement/RequisitionView";
 import { OrderDetails } from "./pages/Orders/OrderDetails";
 import StockRecordPage from "./pages/Procurement/StockRecordPage";
+import { SimpleNetworkStatusToast } from "./components/ui/NetworkStatusToast";
 
 export default function App() {
   return (
     <>
       <Toaster richColors position="top-center" expand={true} />
+      <SimpleNetworkStatusToast />
       <Router>
         <div className="print_section"></div>
         <Routes>
