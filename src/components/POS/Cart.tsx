@@ -31,6 +31,32 @@ type SavedCart = {
 };
 
 type PaymentType = "paid" | "partial" | "due";
+type PaymentMethod = "cash" | "card" | "online" | "";
+
+interface CartProps {
+  loading: boolean;
+  cart: CartItem[];
+  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
+  adjustQuantity: (id: number, delta: number) => void;
+  removeFromCart: (id: number) => void;
+  total: number;
+  handleClear: () => void;
+  clearAfterSave: () => void;
+  handlePay: () => void;
+  cartClear: () => void;
+  customerName: string;
+  customerPhone: string;
+  customerAddress: string;
+  setCustomerName: (name: string) => void;
+  setCustomerPhone: (phone: string) => void;
+  setCustomerAddress: (address: string) => void;
+  paymentMethod: PaymentMethod;
+  setPaymentMethod: (method: PaymentMethod) => void;
+  paymentType: PaymentType;
+  setPaymentType: (type: PaymentType) => void;
+  partialAmount: string;
+  setPartialAmount: (amount: string) => void;
+}
 
 export default function Cart({
   loading,
@@ -49,36 +75,13 @@ export default function Cart({
   setCustomerName,
   setCustomerPhone,
   setCustomerAddress,
-  setPaymentMethod,
-  setPaymentType,
-  setPartialAmount,
   paymentMethod,
+  setPaymentMethod,
   paymentType,
+  setPaymentType,
   partialAmount,
-}: {
-  loading: boolean;
-  cart: CartItem[];
-  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
-  adjustQuantity: (id: number, delta: number) => void;
-  removeFromCart: (id: number) => void;
-  total: number;
-  handleClear: () => void;
-  clearAfterSave: () => void;
-  handlePay: () => void;
-  cartClear: () => void;
-  customerName: string;
-  customerPhone: string;
-  customerAddress: string;
-  setCustomerName: (s: string) => void;
-  setCustomerPhone: (s: string) => void;
-  setCustomerAddress: (s: string) => void;
-  setPaymentMethod: (s: string) => void;
-  setPaymentType: (s: PaymentType) => void;
-  setPartialAmount: (s: string) => void;
-  paymentMethod: string;
-  paymentType: PaymentType;
-  partialAmount: string;
-}) {
+  setPartialAmount,
+}: CartProps) {
   const [savedCarts, setSavedCarts] = useState<SavedCart[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -93,7 +96,11 @@ export default function Cart({
           (cart: any) =>
             Array.isArray(cart.items) &&
             cart.items.every(
-              (item: any) => item.id && item.name && item.price && item.quantity
+              (item: any) =>
+                item.id &&
+                item.name &&
+                typeof item.price === "number" &&
+                typeof item.quantity === "number"
             )
         );
         setSavedCarts(validCarts);
@@ -175,6 +182,23 @@ export default function Cart({
   };
 
   const displayTotal = calculateDisplayTotal();
+
+  // Handle payment type change
+  const handlePaymentTypeChange = (type: PaymentType) => {
+    setPaymentType(type);
+    if (type === "due") {
+      setPaymentMethod(""); // Clear payment method for due payments
+    } else if (type === "partial") {
+      setPartialAmount("");
+    }
+  };
+
+  // Handle payment method change
+  const handlePaymentMethodChange = (method: PaymentMethod) => {
+    if (paymentType !== "due") {
+      setPaymentMethod(method);
+    }
+  };
 
   return (
     <div className="w-full md:w-96 bg-white p-4 rounded-lg shadow-md flex flex-col border border-bw-200 h-full">
@@ -328,7 +352,7 @@ export default function Cart({
 
       {/* Summary */}
       {cart.length > 0 && (
-        <div className="border-t border-bw-200 pt-4 mb-4">
+        <div className="border-t border-bw-200 pt-2 mb-2">
           <div className="flex justify-between items-center mb-2">
             <span className="text-bw-700 font-medium">Subtotal:</span>
             <span className="text-bw-900 font-semibold">
@@ -353,16 +377,11 @@ export default function Cart({
               </span>
             </div>
           )}
-
-          <div className="flex justify-between items-center text-lg font-bold">
-            <span>Total to Pay:</span>
-            <span className="text-bw-900">৳{displayTotal.toFixed(2)}</span>
-          </div>
         </div>
       )}
 
-      {/* Payment Settings */}
-      {cart.length > 0 && (
+      {/* Payment Settings - Hide payment method when payment type is "due" */}
+      {cart.length > 0 && paymentType !== "due" && (
         <div className="space-y-3 mb-4">
           {/* Payment Method */}
           <div>
@@ -370,7 +389,7 @@ export default function Cart({
               Payment Method
             </label>
             <div className="flex gap-3">
-              {["cash", "card", "online"].map((method) => (
+              {(["cash", "card", "online"] as PaymentMethod[]).map((method) => (
                 <label
                   key={method}
                   className="flex items-center gap-1.5 cursor-pointer"
@@ -379,7 +398,7 @@ export default function Cart({
                     type="radio"
                     name="paymentMethod"
                     checked={paymentMethod === method}
-                    onChange={() => setPaymentMethod(method)}
+                    onChange={() => handlePaymentMethodChange(method)}
                     className="h-4 w-4 accent-bw-700"
                   />
                   <span className="text-sm capitalize">{method}</span>
@@ -387,8 +406,12 @@ export default function Cart({
               ))}
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Payment Type */}
+      {/* Payment Type Selection */}
+      {cart.length > 0 && (
+        <div className="space-y-3 mb-4">
           <div>
             <label className="block text-bw-700 text-sm font-medium mb-1">
               Payment Type
@@ -403,10 +426,7 @@ export default function Cart({
                     type="radio"
                     name="paymentType"
                     checked={paymentType === type}
-                    onChange={() => {
-                      setPaymentType(type);
-                      if (type !== "partial") setPartialAmount("");
-                    }}
+                    onChange={() => handlePaymentTypeChange(type)}
                     className="h-4 w-4 accent-bw-700"
                   />
                   <span className="text-sm capitalize">{type}</span>
@@ -436,6 +456,7 @@ export default function Cart({
                   }}
                   min="0"
                   max={total}
+                  step="0.01"
                   className="w-full"
                 />
                 <p className="text-xs text-bw-500 mt-1">

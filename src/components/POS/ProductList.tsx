@@ -30,8 +30,12 @@ export default function ProductList({
   category,
   setCategory,
   addToCart,
+  update,
+  setUpdate,
 }: {
   search: string;
+  update: number;
+  setUpdate: (u: number) => void;
   setSearch: (s: string) => void;
   category: string;
   setCategory: (cat: string) => void;
@@ -74,10 +78,11 @@ export default function ProductList({
 
   useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]);
+  }, [fetchProducts, update]);
 
   const handleClearCategory = () => {
     setCategory("All");
+    setUpdate(update + 1);
   };
 
   return (

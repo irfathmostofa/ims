@@ -6,18 +6,10 @@ import {
   Package,
   ShoppingCart,
   Users,
-  // Building,
-  // UserCog,
   Settings,
-  // Receipt,
   BarChart,
   Truck,
-  // Layers,
-  // RefreshCw,
-  // ClipboardCheck,
-  // CreditCard,
   DollarSign,
-  // FileText,
   ChevronDown,
   ChevronRight,
   X,
@@ -36,7 +28,6 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-
   {
     name: "Inventory",
     icon: Package,
@@ -59,7 +50,6 @@ const navItems: NavItem[] = [
       { name: "Stock Record", path: "/procurement/stock-record" },
     ],
   },
-
   {
     name: "Sales",
     icon: ShoppingCart,
@@ -82,7 +72,6 @@ const navItems: NavItem[] = [
       { name: "Logistics", path: "/order/logistics" },
     ],
   },
-
   {
     name: "Customers",
     icon: Users,
@@ -91,7 +80,6 @@ const navItems: NavItem[] = [
       { name: "Receivables", path: "/customers/receivables" },
     ],
   },
-
   {
     name: "Suppliers",
     icon: Truck,
@@ -100,7 +88,6 @@ const navItems: NavItem[] = [
       { name: "Payables", path: "/suppliers/payables" },
     ],
   },
-
   {
     name: "Accounts",
     icon: DollarSign,
@@ -110,7 +97,6 @@ const navItems: NavItem[] = [
       { name: "Transactions", path: "/accounts/transactions" },
     ],
   },
-
   {
     name: "Reports",
     icon: BarChart,
@@ -121,7 +107,6 @@ const navItems: NavItem[] = [
       { name: "Profitability Reports", path: "/reports/profitability" },
     ],
   },
-
   {
     name: "Setup",
     icon: Settings,
@@ -174,7 +159,7 @@ export default function Sidebar({
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         {/* Brand */}
-        <div className="h-16 flex items-center justify-between border-b border-bw-200 px-4">
+        <div className="h-16 flex-shrink-0 flex items-center justify-between border-b border-bw-200 px-4">
           <h1 className="text-xl font-bold text-bw-50">InventorySys</h1>
           {/* Close button (mobile only) */}
           <button
@@ -186,79 +171,86 @@ export default function Sidebar({
         </div>
 
         {/* Nav Links */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const hasChildren = item.children && item.children.length > 0;
-            const isOpen = openMenus.includes(item.name);
+        <nav className="flex-1 overflow-y-auto pr-0">
+          <div className="p-4 space-y-2 h-full">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const hasChildren = item.children && item.children.length > 0;
+              const isOpen = openMenus.includes(item.name);
 
-            return (
-              <div key={item.name}>
-                {/* Parent Link */}
-                <button
-                  onClick={() =>
-                    hasChildren ? toggleMenu(item.name) : setSidebarOpen(false)
-                  }
-                  className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg transition ${
-                    isOpen
-                      ? "bg-bw-700 text-bw-50 font-medium"
-                      : "text-bw-100 hover:bg-bw-700 hover:text-bw-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    {Icon && <Icon size={20} />}
-                    {item.path ? (
-                      <NavLink
-                        to={item.path}
-                        className="flex-1 text-left"
-                        onClick={() => setSidebarOpen(false)}
-                      >
-                        {item.name}
-                      </NavLink>
-                    ) : (
-                      <span>{item.name}</span>
-                    )}
-                  </div>
-                  {hasChildren &&
-                    (isOpen ? (
-                      <ChevronDown size={16} />
-                    ) : (
-                      <ChevronRight size={16} />
-                    ))}
-                </button>
+              return (
+                <div key={item.name}>
+                  {/* Parent Link */}
+                  <button
+                    onClick={() =>
+                      hasChildren
+                        ? toggleMenu(item.name)
+                        : setSidebarOpen(false)
+                    }
+                    className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg transition ${
+                      isOpen
+                        ? "bg-bw-700 text-bw-50 font-medium"
+                        : "text-bw-100 hover:bg-bw-700 hover:text-bw-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {Icon && <Icon size={20} />}
+                      {item.path ? (
+                        <NavLink
+                          to={item.path}
+                          className="flex-1 text-left"
+                          onClick={() => setSidebarOpen(false)}
+                        >
+                          {item.name}
+                        </NavLink>
+                      ) : (
+                        <span>{item.name}</span>
+                      )}
+                    </div>
+                    {hasChildren &&
+                      (isOpen ? (
+                        <ChevronDown size={16} />
+                      ) : (
+                        <ChevronRight size={16} />
+                      ))}
+                  </button>
 
-                {/* Child Links */}
-                {hasChildren && isOpen && (
-                  <div className="ml-3 mt-1 space-y-1">
-                    {item.children!.map((child) => (
-                      <NavLink
-                        key={child.path}
-                        to={child.path!}
-                        className={({ isActive }) =>
-                          `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
-                            isActive
-                              ? "bg-bw-700 text-bw-50 font-medium"
-                              : "text-bw-100 hover:bg-bw-700 hover:text-bw-50"
-                          }`
-                        }
-                        onClick={() => setSidebarOpen(false)}
-                      >
-                        <ChevronRight size={14} className="opacity-60" />
-                        {child.name}
-                      </NavLink>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  {/* Child Links */}
+                  {hasChildren && isOpen && (
+                    <div className="ml-3 mt-1 space-y-1">
+                      {item.children!.map((child) => (
+                        <NavLink
+                          key={child.path}
+                          to={child.path!}
+                          className={({ isActive }) =>
+                            `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
+                              isActive
+                                ? "bg-bw-700 text-bw-50 font-medium"
+                                : "text-bw-100 hover:bg-bw-700 hover:text-bw-50"
+                            }`
+                          }
+                          onClick={() => setSidebarOpen(false)}
+                        >
+                          <ChevronRight size={14} className="opacity-60" />
+                          {child.name}
+                        </NavLink>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-bw-200 text-sm text-bw-200">
+        <div className="flex-shrink-0 p-4 border-t border-bw-200 text-sm text-bw-200">
           © {new Date().getFullYear()} InventorySys
         </div>
       </aside>
+
+      {/* Add these styles to your global CSS or component */}
+   
     </>
   );
 }

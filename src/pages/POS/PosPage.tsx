@@ -18,22 +18,25 @@ type CartItem = {
   quantity: number;
 };
 
+// Define types for Cart component props
+type PaymentType = "paid" | "partial" | "due";
+type PaymentMethod = "cash" | "card" | "online" | "";
+
 export default function POSPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All"); // Changed to "All" to match ProductCategory
+  const [category, setCategory] = useState("All");
   const [customerId, setCustomerId] = useState<number | null>(null);
   const [invoiceId, setInvoiceId] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("cash");
-  const [paymentType, setPaymentType] = useState<"paid" | "partial" | "due">(
-    "paid"
-  );
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
+  const [paymentType, setPaymentType] = useState<PaymentType>("paid");
   const [partialAmount, setPartialAmount] = useState<string>("");
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [update, setUpdate] = useState(0);
   const { user } = useAuthStore();
 
   // Cart operations
@@ -192,7 +195,10 @@ export default function POSPage() {
         items: invoiceItems,
         payments: [
           {
-            method: paymentMethod.toUpperCase() as "CASH" | "CARD" | "ONLINE",
+            method: (paymentMethod || "cash").toUpperCase() as
+              | "CASH"
+              | "CARD"
+              | "ONLINE",
             amount: finalPaymentAmount,
             reference_no: null,
           },
@@ -210,7 +216,7 @@ export default function POSPage() {
       setInvoiceId(data.data?.code || data.data?.id || `INV-${Date.now()}`);
       toast.success(data.message || "Invoice created successfully");
       setInvoiceOpen(true);
-      // Don't clear cart automatically - let user decide
+      setUpdate(update + 1);
     } catch (err: any) {
       console.error("Invoice creation error:", err);
       toast.error(err.message || "Failed to create invoice");
@@ -220,7 +226,7 @@ export default function POSPage() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 h-full w-full ">
+    <div className="flex flex-col md:flex-row gap-4 h-full w-full">
       {/* Left: Category column */}
       <div className="w-full md:w-48 flex flex-col gap-2">
         <ProductCategory category={category} setCategory={setCategory} />
@@ -240,6 +246,8 @@ export default function POSPage() {
 
         <ProductList
           search={search}
+          update={update}
+          setUpdate={setUpdate}
           setSearch={setSearch}
           category={category}
           setCategory={setCategory}
@@ -247,6 +255,7 @@ export default function POSPage() {
         />
       </div>
 
+      {/* Right: Cart */}
       <Cart
         loading={loading}
         cart={cart}
@@ -264,22 +273,34 @@ export default function POSPage() {
         setCustomerName={setCustomerName}
         setCustomerPhone={setCustomerPhone}
         setCustomerAddress={setCustomerAddress}
-        setPaymentMethod={setPaymentMethod}
-        setPaymentType={setPaymentType} // Make sure this exists in POSPage
-        setPartialAmount={setPartialAmount} // Make sure this exists in POSPage
         paymentMethod={paymentMethod}
-        paymentType={paymentType} // Make sure this exists in POSPage
-        partialAmount={partialAmount} // Make sure this exists in POSPage
+        setPaymentMethod={setPaymentMethod}
+        paymentType={paymentType}
+        setPaymentType={setPaymentType}
+        partialAmount={partialAmount}
+        setPartialAmount={setPartialAmount}
       />
+
       {/* Invoice Modal */}
       <InvoiceModal
         isOpen={invoiceOpen}
         setIsOpen={setInvoiceOpen}
         customerName={customerName}
+        customerPhone={customerPhone}
+        customerAddress={customerAddress}
         cart={cart}
         total={total}
         paymentMethod={paymentMethod}
+        paymentType={paymentType}
+        paidAmount={
+          paymentType === "partial"
+            ? parseFloat(partialAmount || "0")
+            : paymentType === "paid"
+            ? total
+            : 0
+        }
         invoiceNumber={invoiceId}
+        handleClear={clearNoConfirm}
       />
     </div>
   );

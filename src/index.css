@@ -218,3 +218,12 @@
     display: none !important;
   }
 }
+nav::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+nav {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
