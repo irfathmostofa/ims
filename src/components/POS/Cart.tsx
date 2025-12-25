@@ -318,7 +318,7 @@ export default function Cart({
                   {item.price * item.quantity}
                 </p>
               </div>
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-1">
                 <div className="flex items-center border border-bw-300 rounded ">
                   <button
                     className="p-1 hover:bg-bw-200 disabled:opacity-50"
@@ -338,7 +338,7 @@ export default function Cart({
                   </button>
                 </div>
                 <button
-                  className="ml-2 text-white hover:text-red-700 p-1 bg-red-500 hover:bg-red-50 rounded transition-colors "
+                  className="ml-2 text-xs text-white hover:text-red-700 p-1 bg-red-500 hover:bg-red-50 rounded transition-colors "
                   onClick={() => removeFromCart(item.id)}
                   title="Remove item"
                 >
@@ -380,69 +380,74 @@ export default function Cart({
         </div>
       )}
 
-      {/* Payment Settings - Hide payment method when payment type is "due" */}
-      {cart.length > 0 && paymentType !== "due" && (
-        <div className="space-y-3 mb-4">
-          {/* Payment Method */}
-          <div>
-            <label className="block text-bw-700 text-sm font-medium mb-1">
-              Payment Method
-            </label>
-            <div className="flex gap-3">
-              {(["cash", "card", "online"] as PaymentMethod[]).map((method) => (
-                <label
-                  key={method}
-                  className="flex items-center gap-1.5 cursor-pointer"
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    checked={paymentMethod === method}
-                    onChange={() => handlePaymentMethodChange(method)}
-                    className="h-4 w-4 accent-bw-700"
-                  />
-                  <span className="text-sm capitalize">{method}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Payment Type Selection */}
+      {/* Combined Payment Settings */}
       {cart.length > 0 && (
-        <div className="space-y-3 mb-4">
-          <div>
-            <label className="block text-bw-700 text-sm font-medium mb-1">
-              Payment Type
-            </label>
-            <div className="flex gap-3 mb-2">
-              {(["paid", "partial", "due"] as PaymentType[]).map((type) => (
-                <label
-                  key={type}
-                  className="flex items-center gap-1.5 cursor-pointer"
-                >
-                  <input
-                    type="radio"
-                    name="paymentType"
-                    checked={paymentType === type}
-                    onChange={() => handlePaymentTypeChange(type)}
-                    className="h-4 w-4 accent-bw-700"
-                  />
-                  <span className="text-sm capitalize">{type}</span>
-                </label>
-              ))}
+        <div className="">
+          {/* Payment Type & Method in Row */}
+          <div className="grid grid-cols-2 gap-1">
+            {/* Payment Type */}
+            <div className="space-y-2">
+              <label className="block text-bw-700 text-sm font-medium mb-1">
+                Payment Type
+              </label>
+              <div className="flex flex-wrap gap-1">
+                {(["paid", "partial", "due"] as PaymentType[]).map((type) => (
+                  <label
+                    key={type}
+                    className="flex items-center gap-1 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="paymentType"
+                      checked={paymentType === type}
+                      onChange={() => handlePaymentTypeChange(type)}
+                      className="h-4 w-4 accent-bw-700"
+                    />
+                    <span className="text-sm capitalize">{type}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
-            {/* Partial Amount Input */}
-            {paymentType === "partial" && (
-              <div className="mt-2">
+            {/* Payment Method - Only show when not "due" */}
+            {paymentType !== "due" && (
+              <div className="space-y-2">
                 <label className="block text-bw-700 text-sm font-medium mb-1">
-                  Partial Amount
+                  Payment Method
                 </label>
+                <div className="flex flex-wrap gap-2">
+                  {(["cash", "card", "online"] as PaymentMethod[]).map(
+                    (method) => (
+                      <label
+                        key={method}
+                        className="flex items-center gap-1 cursor-pointer "
+                      >
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          checked={paymentMethod === method}
+                          onChange={() => handlePaymentMethodChange(method)}
+                          className="h-4 w-4 accent-bw-700"
+                        />
+                        <span className="text-sm capitalize">{method}</span>
+                      </label>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Partial Amount Input - Only show when "partial" */}
+          {paymentType === "partial" && (
+            <div className="my-1">
+              <label className="block text-bw-700 text-sm font-medium mb-1">
+                Partial Amount
+              </label>
+              <div className="flex gap-2 items-center">
                 <Input
                   type="number"
-                  placeholder="Enter partial amount"
+                  placeholder="Enter amount"
                   value={partialAmount}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -457,18 +462,18 @@ export default function Cart({
                   min="0"
                   max={total}
                   step="0.01"
-                  className="w-full"
+                  className="flex-1"
                 />
-                <p className="text-xs text-bw-500 mt-1">
+                <div className="text-xs text-bw-500 whitespace-nowrap">
                   Remaining: ৳
                   {Math.max(
                     total - parseFloat(partialAmount || "0"),
                     0
                   ).toFixed(2)}
-                </p>
+                </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
