@@ -593,6 +593,7 @@ export const Requisition = () => {
         data={requisitions}
         label="Requisition List"
         rowsPerPage={10}
+        loading={loadingRequisitions}
         showColumns={[
           "code",
           "from_branch_name",

@@ -210,9 +210,7 @@ export default function ReturnPage() {
     setSearchParams((prev) => ({ ...prev, ...params }));
   };
 
-  const handleRefreshInvoices = () => {
-    fetchInvoices();
-  };
+
 
   const handleDeselectInvoice = () => {
     handleClear();

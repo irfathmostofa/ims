@@ -88,6 +88,7 @@ export default function PurchaseOrderPage() {
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const [party, order, product] = await Promise.all([
         apiClient(`${import.meta.env.VITE_SERVER}/party/get-party`, {
           method: "POST",
@@ -111,6 +112,8 @@ export default function PurchaseOrderPage() {
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Failed to fetch data");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -315,6 +318,7 @@ export default function PurchaseOrderPage() {
       <DataTable
         data={orders}
         label="Purchase Orders List"
+        loading={loading}
         rowsPerPage={10}
         showColumns={[
           "code",

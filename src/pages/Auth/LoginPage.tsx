@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +12,7 @@ import { GreetingComp } from "@/hook/greeting";
 import { useAuthStore } from "@/store/authStore";
 
 export default function LoginPage() {
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
+  const [form, setForm] = useState({ phone: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -23,60 +22,96 @@ export default function LoginPage() {
 
   const router = useNavigate();
 
-  // ✅ Check existing token on mount
-  useEffect(() => {
-    const checkToken = async () => {
-      if (!token) return;
+  // ✅ Optimized form handler
+  const handleChange = useCallback(
+    (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    },
+    []
+  );
+
+  // ✅ Combined login and profile fetch
+  const handleLogin = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (loading) return;
 
       setLoading(true);
+
       try {
-        const profile = await apiClient(
-          `${import.meta.env.VITE_SERVER}/auth/profile`,
-          { method: "GET", tokenType: "jwt" }
+        // Single API call for login with profile included
+        const loginData = await apiClient(
+          `${import.meta.env.VITE_SERVER}/auth/login`,
+          {
+            method: "POST",
+            data: { phone: form.phone, password: form.password },
+          }
         );
-        setUser(profile.data);
+
+        // Store both token and user data
+        setToken(loginData.token);
+        setUser(loginData.user);
+
+        toast.success("Login Successful!");
+
         router("/dashboard");
-      } catch (err) {
-        console.error("Auth check failed:", err);
-        useAuthStore.getState().logout(); // clear token & user
+      } catch (err: any) {
+        console.error("Login error:", err);
+        toast.error(err.message || "Login failed");
       } finally {
         setLoading(false);
       }
-    };
+    },
+    [form.phone, form.password, loading, setToken, setUser, router]
+  );
 
-    checkToken();
-  }, [token, setUser, router]);
+  // Memoized form JSX
+  const formFields = useMemo(
+    () => (
+      <div className="space-y-4">
+        {/* Phone */}
+        <div className="relative flex items-center">
+          <User className="absolute left-3 text-gray-400 w-5 h-5" />
+          <Input
+            type="text"
+            placeholder="Phone"
+            value={form.phone}
+            onChange={handleChange("phone")}
+            className="pl-10 text-black"
+            required
+            disabled={loading}
+          />
+        </div>
 
-  // ✅ Handle login
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      // 1️⃣ Login API
-      const loginData = await apiClient(
-        `${import.meta.env.VITE_SERVER}/auth/login`,
-        { method: "POST", data: { phone, password } }
-      );
-
-      setToken(loginData.token); // store token in Zustand
-
-      // 2️⃣ Fetch profile
-      const profile = await apiClient(
-        `${import.meta.env.VITE_SERVER}/auth/profile`,
-        { method: "GET", tokenType: "jwt" }
-      );
-      setUser(profile.data);
-
-      toast.success("Login Successful!");
-      router("/dashboard");
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Login failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+        {/* Password */}
+        <div className="relative flex items-center">
+          <Lock className="absolute left-3 text-gray-400 w-5 h-5" />
+          <Input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={form.password}
+            onChange={handleChange("password")}
+            className="pl-10 pr-10 text-black"
+            required
+            disabled={loading}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+            disabled={loading}
+          >
+            {showPassword ? (
+              <EyeOff className="w-5 h-5" />
+            ) : (
+              <Eye className="w-5 h-5" />
+            )}
+          </button>
+        </div>
+      </div>
+    ),
+    [form, showPassword, loading, handleChange]
+  );
 
   return (
     <Card className="w-full max-w-md shadow-2xl rounded-2xl border-0 bg-white/95 backdrop-blur">
@@ -92,42 +127,7 @@ export default function LoginPage() {
 
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-4">
-          {/* Phone */}
-          <div className="relative flex items-center">
-            <User className="absolute left-3 text-gray-400 w-5 h-5" />
-            <Input
-              type="text"
-              placeholder="Phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="pl-10 text-black"
-              required
-            />
-          </div>
-
-          {/* Password */}
-          <div className="relative flex items-center">
-            <Lock className="absolute left-3 text-gray-400 w-5 h-5" />
-            <Input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 pr-10 text-black"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 text-gray-400 hover:text-gray-600"
-            >
-              {showPassword ? (
-                <EyeOff className="w-5 h-5" />
-              ) : (
-                <Eye className="w-5 h-5" />
-              )}
-            </button>
-          </div>
+          {formFields}
 
           {/* Login Button */}
           <Button
@@ -135,7 +135,14 @@ export default function LoginPage() {
             className="w-full bg-[#111827] text-white hover:bg-gray-900 text-lg py-6 rounded-xl"
             disabled={loading}
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? (
+              <span className="flex items-center justify-center">
+                <span className="mr-2">Logging in</span>
+                <span className="animate-pulse">...</span>
+              </span>
+            ) : (
+              "Login"
+            )}
           </Button>
         </form>
       </CardContent>

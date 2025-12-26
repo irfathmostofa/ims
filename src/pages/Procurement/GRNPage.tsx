@@ -70,6 +70,7 @@ export default function GRNPage() {
   // Fetch POs and GRNs
   const fetchData = async () => {
     try {
+      setLoading(true);
       const [poRes, grnRes] = await Promise.all([
         apiClient(`${import.meta.env.VITE_SERVER}/po/purchase-orders`, {
           method: "GET",
@@ -85,6 +86,8 @@ export default function GRNPage() {
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Failed to fetch data");
+    } finally {
+      setLoading(false);
     }
   };
   useEffect(() => {
@@ -225,6 +228,7 @@ export default function GRNPage() {
         data={grns}
         label="GRN List"
         rowsPerPage={10}
+        loading={loading}
         showColumns={[
           "code",
           "received_date",
