@@ -16,6 +16,12 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Receipt,
+  Printer,
+  Download,
+  Building,
+  Phone,
+  MapPin,
 } from "lucide-react";
 import { DataTable } from "@/components/ui/dataTable";
 import { Button } from "@/components/ui/button";
@@ -360,31 +366,42 @@ export default function SaleListPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                    <FileText className="w-6 h-6" />
+                    <Receipt className="w-6 h-6" />
                   </div>
                   <div>
                     <DialogTitle className="text-2xl font-bold">
                       Invoice Details
                     </DialogTitle>
                     <p className="text-blue-100 opacity-90">
-                      Complete invoice information
+                      Invoice No: {selectedSale?.code}
                     </p>
                   </div>
                 </div>
-                {selectedSale && (
-                  <div className="text-right">
-                    <div className="text-sm font-medium opacity-90">
-                      Invoice No
-                    </div>
-                    <div className="text-xl font-bold">{selectedSale.code}</div>
-                  </div>
-                )}
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/20 hover:bg-white/30 text-white border-white/30 flex items-center gap-2"
+                    onClick={() => window.print()}
+                  >
+                    <Printer className="w-4 h-4" />
+                    Print
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/20 hover:bg-white/30 text-white border-white/30 flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    PDF
+                  </Button>
+                </div>
               </div>
             </DialogHeader>
           </div>
 
-          {/* Dialog Content */}
-          <div className="flex-1 overflow-y-auto p-6">
+          {/* Dialog Content - Invoice Format */}
+          <div className="flex-1 overflow-y-auto p-0">
             {detailsLoading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
@@ -393,117 +410,247 @@ export default function SaleListPage() {
                 </div>
               </div>
             ) : selectedSale ? (
-              <Tabs defaultValue="overview" className="space-y-6">
-                <TabsList className="grid grid-cols-3 w-full max-w-md">
-                  <TabsTrigger
-                    value="overview"
-                    className="flex items-center gap-2"
-                  >
-                    <FileText className="w-4 h-4" />
-                    Overview
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="items"
-                    className="flex items-center gap-2"
-                  >
-                    <Package className="w-4 h-4" />
-                    Items ({selectedSale.items?.length || 0})
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="payments"
-                    className="flex items-center gap-2"
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    Payments
-                  </TabsTrigger>
-                </TabsList>
-
-                {/* Overview Tab */}
-                <TabsContent value="overview" className="space-y-6">
-                  {/* Invoice Summary Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border border-blue-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="text-blue-700">
-                          <Calendar className="w-5 h-5" />
-                        </div>
-                        <StatusBadge status={selectedSale.status} />
+              <div className="bg-white p-8">
+                {/* Invoice Header */}
+                <div className="flex justify-between items-start border-b-2 border-gray-800 pb-6 mb-8">
+                  <div>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <Receipt className="w-6 h-6 text-white" />
                       </div>
-                      <div className="text-sm text-blue-600 font-medium mb-1">
-                        Invoice Date
-                      </div>
-                      <div className="text-xl font-bold text-blue-900">
-                        {formatDate(selectedSale.invoice_date)}
-                      </div>
-                      <div className="text-xs text-blue-500 mt-2">
-                        Branch: {selectedSale.branch_name}
+                      <div>
+                        <h1 className="text-3xl font-bold text-gray-900">
+                          TAX INVOICE
+                        </h1>
+                        <p className="text-gray-600">Official Sales Invoice</p>
                       </div>
                     </div>
+                    <div className="space-y-1 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <Building className="w-4 h-4" />
+                        <span>InventorySys POS</span>
+                      </div>
+                      <div>123 Business Street, Suite 100</div>
+                      <div>Dhaka 1200, Bangladesh</div>
+                      <div>Phone: +880 1234-567890</div>
+                      <div>Email: billing@inventorysys.com</div>
+                      <div>VAT Reg: 123456789</div>
+                    </div>
+                  </div>
 
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 border border-green-200">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="text-green-700">
-                          <User className="w-5 h-5" />
+                  <div className="text-right">
+                    <div className="mb-4">
+                      <div className="text-sm text-gray-500">
+                        Invoice Number
+                      </div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {selectedSale.code}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <div className="text-sm text-gray-500">
+                          Invoice Date
                         </div>
-                        <div className="text-sm font-medium text-green-800">
-                          Customer
+                        <div className="font-medium">
+                          {formatDate(selectedSale.invoice_date)}
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <div className="font-bold text-green-900 text-lg">
-                          {selectedSale.party_name}
+                      <div>
+                        <div className="text-sm text-gray-500">Due Date</div>
+                        <div className="font-medium">
+                          {formatDate(selectedSale.invoice_date)}
                         </div>
+                      </div>
+                      <div className="mt-3">
+                        <StatusBadge status={selectedSale.status} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bill To & Payment Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                      Bill To
+                    </h3>
+                    <div className="bg-gray-50 p-4 rounded-lg border">
+                      <div className="font-bold text-lg mb-2">
+                        {selectedSale.party_name}
+                      </div>
+                      <div className="space-y-2 text-gray-600">
                         {selectedSale.party_phone && (
-                          <div className="text-sm text-green-700">
-                            📞 {selectedSale.party_phone}
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-4 h-4" />
+                            {selectedSale.party_phone}
                           </div>
                         )}
                         {selectedSale.party_address && (
-                          <div className="text-sm text-green-600">
-                            📍 {selectedSale.party_address}
+                          <div className="flex items-start gap-2">
+                            <MapPin className="w-4 h-4 mt-0.5" />
+                            <span>{selectedSale.party_address}</span>
                           </div>
                         )}
                       </div>
                     </div>
+                  </div>
 
-                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-5 border border-purple-200">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="text-purple-700">
-                          <DollarSign className="w-5 h-5" />
-                        </div>
-                        <div className="text-sm font-medium text-purple-800">
-                          Financial Summary
-                        </div>
-                      </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                      Payment Summary
+                    </h3>
+                    <div className="bg-gray-50 p-4 rounded-lg border">
                       <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-purple-600">
-                            Total Amount
-                          </span>
-                          <span className="font-bold text-purple-900">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Invoice Total:</span>
+                          <span className="font-bold">
                             ৳
                             {parseFloat(
                               selectedSale.total_amount as any
                             ).toFixed(2)}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-green-600">
-                            Paid Amount
-                          </span>
-                          <span className="font-bold text-green-700">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Amount Paid:</span>
+                          <span className="font-bold text-green-600">
                             ৳
                             {parseFloat(
                               selectedSale.paid_amount as any
                             ).toFixed(2)}
                           </span>
                         </div>
-
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-red-600 font-medium">
-                            Balance Due
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Amount Due:</span>
+                          <span className="font-bold text-red-600">
+                            ৳
+                            {parseFloat(selectedSale.due_amount as any).toFixed(
+                              2
+                            )}
                           </span>
-                          <span className="font-bold text-lg text-red-700">
+                        </div>
+                        <div className="pt-3 border-t">
+                          <div className="text-sm text-gray-500">
+                            Payment Status
+                          </div>
+                          <div className="font-medium">
+                            <StatusBadge status={selectedSale.status} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Items Table */}
+                <div className="mb-8 overflow-hidden rounded-lg border">
+                  <div className="bg-gray-900 text-white p-4">
+                    <h3 className="font-semibold">Invoice Items</h3>
+                  </div>
+                  <table className="w-full">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="text-left p-4 font-medium text-gray-700">
+                          #
+                        </th>
+                        <th className="text-left p-4 font-medium text-gray-700">
+                          Product Description
+                        </th>
+                        <th className="text-center p-4 font-medium text-gray-700">
+                          Quantity
+                        </th>
+                        <th className="text-right p-4 font-medium text-gray-700">
+                          Unit Price
+                        </th>
+                        <th className="text-right p-4 font-medium text-gray-700">
+                          Amount
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedSale.items?.map((item, index) => (
+                        <tr key={item.id} className="border-t hover:bg-gray-50">
+                          <td className="p-4 text-gray-600">{index + 1}</td>
+                          <td className="p-4">
+                            <div className="font-medium text-gray-900">
+                              {item.product_name}
+                            </div>
+                            {item.variant_name && (
+                              <div className="text-sm text-gray-600 mt-1">
+                                Variant: {item.variant_name}
+                              </div>
+                            )}
+                          </td>
+                          <td className="text-center p-4">
+                            <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-md font-medium">
+                              {parseFloat(item.quantity as any)}
+                            </span>
+                          </td>
+                          <td className="text-right p-4 font-medium">
+                            ৳{parseFloat(item.unit_price as any).toFixed(2)}
+                          </td>
+                          <td className="text-right p-4 font-bold">
+                            ৳
+                            {(
+                              parseFloat(item.quantity as any) *
+                              parseFloat(item.unit_price as any)
+                            ).toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Totals Section */}
+                <div className="flex justify-end mb-8">
+                  <div className="w-full md:w-80">
+                    <div className="space-y-4 border rounded-lg p-6 bg-gray-50">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-700">Subtotal:</span>
+                        <span className="font-medium">
+                          ৳
+                          {parseFloat(selectedSale.total_amount as any).toFixed(
+                            2
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-700">Tax (VAT):</span>
+                        <span className="font-medium">৳0.00</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-700">Discount:</span>
+                        <span className="font-medium text-green-600">
+                          -৳0.00
+                        </span>
+                      </div>
+                      <div className="border-t pt-4">
+                        <div className="flex justify-between items-center text-lg font-bold">
+                          <span>Grand Total:</span>
+                          <span className="text-blue-900">
+                            ৳
+                            {parseFloat(
+                              selectedSale.total_amount as any
+                            ).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="border-t pt-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-700">Amount Paid:</span>
+                          <span className="font-bold text-green-600">
+                            ৳
+                            {parseFloat(
+                              selectedSale.paid_amount as any
+                            ).toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-gray-700 font-medium">
+                            Balance Due:
+                          </span>
+                          <span className="font-bold text-lg text-red-600">
                             ৳
                             {parseFloat(selectedSale.due_amount as any).toFixed(
                               2
@@ -513,190 +660,110 @@ export default function SaleListPage() {
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Quick Stats */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-gray-50 rounded-lg p-4 text-center">
-                      <div className="text-sm text-gray-600">Items Count</div>
-                      <div className="text-2xl font-bold text-gray-900">
-                        {selectedSale.items?.length || 0}
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-4 text-center">
-                      <div className="text-sm text-gray-600">Created On</div>
-                      <div className="font-medium text-gray-900">
-                        {formatDate(selectedSale.created_at)}
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-4 text-center">
-                      <div className="text-sm text-gray-600">Invoice Type</div>
-                      <div className="font-medium text-gray-900">
-                        {selectedSale.type}
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-4 text-center">
-                      <div className="text-sm text-gray-600">
-                        Payment Status
-                      </div>
-                      <div className="font-medium">
-                        <StatusBadge status={selectedSale.status} />
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                {/* Items Tab */}
-                <TabsContent value="items" className="space-y-4">
-                  <div className="bg-white border rounded-xl overflow-hidden">
-                    <div className="bg-gray-50 p-4 border-b">
-                      <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                        <Package className="w-5 h-5" />
-                        Invoice Items
-                      </h3>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gray-100">
-                          <tr>
-                            <th className="text-left p-4 font-medium text-gray-700">
-                              Product
-                            </th>
-                            <th className="text-center p-4 font-medium text-gray-700">
-                              Quantity
-                            </th>
-                            <th className="text-right p-4 font-medium text-gray-700">
-                              Unit Price
-                            </th>
-                            <th className="text-right p-4 font-medium text-gray-700">
-                              Total
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedSale.items?.map((item, index) => (
-                            <tr
-                              key={item.id}
-                              className={`border-t ${
-                                index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                              }`}
-                            >
-                              <td className="p-4">
-                                <div className="font-medium text-gray-900">
-                                  {item.product_name}
-                                </div>
-                                {item.variant_name && (
-                                  <div className="text-sm text-gray-600 mt-1">
-                                    Variant: {item.variant_name}
-                                  </div>
-                                )}
-                              </td>
-                              <td className="text-center p-4">
-                                <div className="inline-flex items-center justify-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                                  {parseFloat(item.quantity as any)}
-                                </div>
-                              </td>
-                              <td className="text-right p-4 font-medium text-gray-900">
-                                ৳{parseFloat(item.unit_price as any).toFixed(2)}
-                              </td>
-                              <td className="text-right p-4 font-bold text-gray-900">
-                                ৳
-                                {(
-                                  parseFloat(item.quantity as any) *
-                                  parseFloat(item.unit_price as any)
-                                ).toFixed(2)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                        <tfoot className="bg-gray-50 border-t">
-                          <tr>
-                            <td
-                              colSpan={3}
-                              className="text-right p-4 font-bold text-gray-700"
-                            >
-                              Total Amount
-                            </td>
-                            <td className="text-right p-4 font-bold text-xl text-blue-900">
-                              ৳
-                              {parseFloat(
-                                selectedSale.total_amount as any
-                              ).toFixed(2)}
-                            </td>
-                          </tr>
-                        </tfoot>
-                      </table>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                {/* Payments Tab */}
-                <TabsContent value="payments" className="space-y-4">
-                  <div className="bg-white border rounded-xl overflow-hidden">
-                    <div className="bg-gray-50 p-4 border-b">
-                      <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                        <CreditCard className="w-5 h-5" />
-                        Payment History
-                      </h3>
-                    </div>
-                    <div className="p-4">
-                      {selectedSale.payments &&
-                      selectedSale.payments.length > 0 ? (
-                        <div className="space-y-4">
-                          {selectedSale.payments.map((payment, index) => (
-                            <div
-                              key={payment.id}
-                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                    payment.method === "CASH"
-                                      ? "bg-green-100 text-green-700"
-                                      : payment.method === "CARD"
-                                      ? "bg-blue-100 text-blue-700"
-                                      : "bg-purple-100 text-purple-700"
-                                  }`}
-                                >
-                                  {payment.method === "CASH"
-                                    ? "💰"
+                {/* Payment History */}
+                {selectedSale.payments && selectedSale.payments.length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <CreditCard className="w-5 h-5" />
+                      Payment History
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {selectedSale.payments.map((payment, index) => (
+                        <div
+                          key={payment.id}
+                          className="border rounded-lg p-4 bg-white"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                  payment.method === "CASH"
+                                    ? "bg-green-100 text-green-700"
                                     : payment.method === "CARD"
-                                    ? "💳"
-                                    : "🌐"}
-                                </div>
-                                <div>
-                                  <div className="font-medium">
-                                    {payment.method}
-                                  </div>
-                                  <div className="text-sm text-gray-600">
-                                    {payment.reference_no
-                                      ? `Ref: ${payment.reference_no}`
-                                      : "No reference"}
-                                  </div>
-                                </div>
+                                    ? "bg-blue-100 text-blue-700"
+                                    : "bg-purple-100 text-purple-700"
+                                }`}
+                              >
+                                {payment.method === "CASH"
+                                  ? "💰"
+                                  : payment.method === "CARD"
+                                  ? "💳"
+                                  : "🌐"}
                               </div>
-                              <div className="text-right">
-                                <div className="font-bold text-lg">
-                                  ৳{parseFloat(payment.amount).toFixed(2)}
+                              <div>
+                                <div className="font-bold">
+                                  {payment.method}
                                 </div>
                                 <div className="text-sm text-gray-600">
-                                  {formatDate(payment.payment_date)}
+                                  {payment.reference_no
+                                    ? `Reference: ${payment.reference_no}`
+                                    : "No reference"}
                                 </div>
                               </div>
                             </div>
-                          ))}
+                            <div className="text-right">
+                              <div className="text-lg font-bold">
+                                ৳{parseFloat(payment.amount).toFixed(2)}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {formatDate(payment.payment_date)}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      ) : (
-                        <div className="text-center py-8">
-                          <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                          <p className="text-gray-600">
-                            No payment records found
-                          </p>
-                        </div>
-                      )}
+                      ))}
                     </div>
                   </div>
-                </TabsContent>
-              </Tabs>
+                )}
+
+                {/* Footer */}
+                <div className="border-t pt-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                        Terms & Conditions
+                      </h4>
+                      <ul className="text-xs text-gray-600 space-y-1">
+                        <li>• Payment due upon receipt</li>
+                        <li>• Late payment interest: 1.5% per month</li>
+                        <li>• Goods sold are non-returnable</li>
+                        <li>• Warranty as per manufacturer policy</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                        Notes
+                      </h4>
+                      <p className="text-xs text-gray-600">
+                        Thank you for your business!
+                        <br />
+                        For any queries, contact our support team.
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <div className="h-20 border-b-2 border-gray-300 mb-2 flex items-center justify-center">
+                        <span className="text-gray-400">
+                          Authorized Signature
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500">For InventorySys</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 text-center text-xs text-gray-500 border-t pt-4">
+                    <p>
+                      This is a computer-generated invoice. No signature
+                      required.
+                    </p>
+                    <p className="mt-1">
+                      www.inventorysys.com | support@inventorysys.com | +880
+                      16457
+                    </p>
+                  </div>
+                </div>
+              </div>
             ) : null}
           </div>
 
@@ -704,7 +771,8 @@ export default function SaleListPage() {
           <DialogFooter className="p-6 border-t bg-gray-50">
             <div className="flex items-center justify-between w-full">
               <div className="text-sm text-gray-600">
-                Invoice ID: #{selectedSale?.id}
+                Branch: {selectedSale?.branch_name} • Created:{" "}
+                {selectedSale && formatDate(selectedSale.created_at)}
               </div>
               <div className="flex gap-3">
                 <Button
@@ -712,8 +780,12 @@ export default function SaleListPage() {
                   onClick={() => window.print()}
                   className="flex items-center gap-2"
                 >
-                  <FileText className="w-4 h-4" />
-                  Print
+                  <Printer className="w-4 h-4" />
+                  Print Invoice
+                </Button>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Download PDF
                 </Button>
                 <Button
                   onClick={() => setDialogOpen(false)}

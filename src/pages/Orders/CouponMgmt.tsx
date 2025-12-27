@@ -1,3 +1,4 @@
+// CouponMgmt.tsx - Fixed to use POST methods everywhere
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/dataTable";
@@ -8,7 +9,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -32,7 +32,7 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  type LucideIcon,
+  Search,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -71,68 +71,6 @@ interface CouponFormData {
   applicable_to?: "all" | "specific_categories" | "specific_products";
 }
 
-type CouponStatus = "ALL" | "ACTIVE" | "INACTIVE" | "EXPIRED" | "UPCOMING";
-
-interface StatusConfig {
-  color: string;
-  icon: LucideIcon;
-  label: string;
-  tabColor: string;
-  countColor: string;
-  activeTabColor: string;
-}
-
-const statusConfigs: Record<CouponStatus, StatusConfig> = {
-  ALL: {
-    color: "bg-gray-100 text-gray-800",
-    icon: Tag,
-    label: "All Coupons",
-    tabColor: "text-gray-700 hover:text-black",
-    countColor: "bg-gray-100 text-gray-800",
-    activeTabColor: "bg-black text-white border-black",
-  },
-  ACTIVE: {
-    color: "bg-green-100 text-green-800",
-    icon: CheckCircle,
-    label: "Active",
-    tabColor: "text-gray-700 hover:text-black",
-    countColor: "bg-green-100 text-green-800",
-    activeTabColor: "bg-black text-white border-black",
-  },
-  INACTIVE: {
-    color: "bg-red-100 text-red-800",
-    icon: XCircle,
-    label: "Inactive",
-    tabColor: "text-gray-700 hover:text-black",
-    countColor: "bg-red-100 text-red-800",
-    activeTabColor: "bg-black text-white border-black",
-  },
-  EXPIRED: {
-    color: "bg-gray-100 text-gray-800",
-    icon: Clock,
-    label: "Expired",
-    tabColor: "text-gray-700 hover:text-black",
-    countColor: "bg-gray-100 text-gray-800",
-    activeTabColor: "bg-black text-white border-black",
-  },
-  UPCOMING: {
-    color: "bg-blue-100 text-blue-800",
-    icon: Calendar,
-    label: "Upcoming",
-    tabColor: "text-gray-700 hover:text-black",
-    countColor: "bg-blue-100 text-blue-800",
-    activeTabColor: "bg-black text-white border-black",
-  },
-};
-
-interface StatusCounts {
-  ALL: number;
-  ACTIVE: number;
-  INACTIVE: number;
-  EXPIRED: number;
-  UPCOMING: number;
-}
-
 export const CouponMgmt = () => {
   const [loader, setLoading] = useState(false);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -145,15 +83,8 @@ export const CouponMgmt = () => {
   const [processingCouponId, setProcessingCouponId] = useState<number | null>(
     null
   );
-
-  const [activeTab, setActiveTab] = useState<CouponStatus>("ALL");
-  const [statusCounts, setStatusCounts] = useState<StatusCounts>({
-    ALL: 0,
-    ACTIVE: 0,
-    INACTIVE: 0,
-    EXPIRED: 0,
-    UPCOMING: 0,
-  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState<string>("ALL");
 
   const [formData, setFormData] = useState<CouponFormData>({
     code: "",
@@ -171,69 +102,183 @@ export const CouponMgmt = () => {
     applicable_to: "all",
   });
 
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // Fetch coupons
+  // Fetch coupons - Using POST method
   const fetchCoupons = async () => {
     try {
       setLoading(true);
       const response = await apiClient(
         `${import.meta.env.VITE_SERVER}/coupon/get-all`,
         {
-          method: "GET",
+          method: "POST", // Using POST
           tokenType: "jwt",
+          data: {}, // Empty object as body
         }
       );
+
+      console.log("Fetch coupons response:", response);
 
       if (response.success) {
         const fetchedCoupons = response.data || [];
         setCoupons(fetchedCoupons);
         setFilteredCoupons(fetchedCoupons);
-        calculateStatusCounts(fetchedCoupons);
       } else {
         toast.error(response.message || "Failed to fetch coupons");
       }
     } catch (err: any) {
-      console.error(err);
+      console.error("Fetch error:", err);
       toast.error(err.message || "Failed to fetch coupons");
     } finally {
       setLoading(false);
     }
   };
 
-  // Calculate status counts
-  const calculateStatusCounts = (couponsList: Coupon[]) => {
-    const counts: StatusCounts = {
-      ALL: couponsList.length,
-      ACTIVE: 0,
-      INACTIVE: 0,
-      EXPIRED: 0,
-      UPCOMING: 0,
-    };
+  // Create coupon
+  const handleCreateCoupon = async () => {
+    try {
+      setProcessingCouponId(-1);
 
-    const now = new Date();
-
-    couponsList.forEach((coupon) => {
-      const startDate = new Date(coupon.start_date);
-      const endDate = new Date(coupon.end_date);
-
-      if (!coupon.is_active) {
-        counts.INACTIVE++;
-      } else if (now < startDate) {
-        counts.UPCOMING++;
-      } else if (now > endDate) {
-        counts.EXPIRED++;
-      } else {
-        counts.ACTIVE++;
+      // Basic validation
+      if (!formData.code.trim()) {
+        toast.error("Coupon code is required");
+        return;
       }
-    });
 
-    setStatusCounts(counts);
+      if (!formData.description.trim()) {
+        toast.error("Description is required");
+        return;
+      }
+
+      if (formData.discount_value <= 0) {
+        toast.error("Discount value must be greater than 0");
+        return;
+      }
+
+      // Validate dates
+      const startDate = new Date(formData.start_date);
+      const endDate = new Date(formData.end_date);
+      if (endDate <= startDate) {
+        toast.error("End date must be after start date");
+        return;
+      }
+
+      const response = await apiClient(
+        `${import.meta.env.VITE_SERVER}/coupon/create`,
+        {
+          method: "POST",
+          tokenType: "jwt",
+          data: formData,
+        }
+      );
+
+      console.log("Create response:", response);
+
+      if (response.success) {
+        toast.success("Coupon created successfully!");
+        setShowCreateModal(false);
+        resetForm();
+        fetchCoupons();
+      } else {
+        toast.error(response.message || "Failed to create coupon");
+      }
+    } catch (err: any) {
+      console.error("Create error:", err);
+      toast.error(err.message || "Failed to create coupon");
+    } finally {
+      setProcessingCouponId(null);
+    }
   };
 
-  // Filter coupons based on active tab
-  const filterCouponsByStatus = (status: CouponStatus) => {
-    if (status === "ALL") {
+  // Update coupon - Using POST method
+  const handleUpdateCoupon = async () => {
+    if (!selectedCoupon) return;
+
+    try {
+      setProcessingCouponId(selectedCoupon.id);
+
+      const response = await apiClient(
+        `${import.meta.env.VITE_SERVER}/coupon/update`,
+        {
+          method: "POST", // Using POST
+          tokenType: "jwt",
+          data: {
+            id: selectedCoupon.id,
+            ...formData,
+          },
+        }
+      );
+
+      console.log("Update response:", response);
+
+      if (response.success) {
+        toast.success("Coupon updated successfully!");
+        setShowEditModal(false);
+        resetForm();
+        fetchCoupons();
+      } else {
+        toast.error(response.message || "Failed to update coupon");
+      }
+    } catch (err: any) {
+      console.error("Update error:", err);
+      toast.error(err.message || "Failed to update coupon");
+    } finally {
+      setProcessingCouponId(null);
+    }
+  };
+
+  // Delete coupon - Using POST method
+  const handleDeleteCoupon = async () => {
+    if (!selectedCoupon) return;
+
+    try {
+      setProcessingCouponId(selectedCoupon.id);
+      const response = await apiClient(
+        `${import.meta.env.VITE_SERVER}/coupon/delete`,
+        {
+          method: "POST", // Using POST
+          tokenType: "jwt",
+          data: { id: selectedCoupon.id },
+        }
+      );
+
+      console.log("Delete response:", response);
+
+      if (response.success) {
+        toast.success(response.message || "Coupon deleted successfully!");
+        setShowDeleteModal(false);
+        setSelectedCoupon(null);
+        fetchCoupons();
+      } else {
+        toast.error(response.message || "Failed to delete coupon");
+      }
+    } catch (err: any) {
+      console.error("Delete error:", err);
+      toast.error(err.message || "Failed to delete coupon");
+    } finally {
+      setProcessingCouponId(null);
+    }
+  };
+
+  // Search functionality
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    if (!term.trim()) {
+      setFilteredCoupons(coupons);
+      return;
+    }
+
+    const filtered = coupons.filter(
+      (coupon) =>
+        coupon.code.toLowerCase().includes(term.toLowerCase()) ||
+        coupon.description.toLowerCase().includes(term.toLowerCase())
+    );
+    setFilteredCoupons(filtered);
+  };
+
+  // Tab filtering
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+
+    if (tab === "ALL") {
       setFilteredCoupons(coupons);
       return;
     }
@@ -243,7 +288,7 @@ export const CouponMgmt = () => {
       const startDate = new Date(coupon.start_date);
       const endDate = new Date(coupon.end_date);
 
-      switch (status) {
+      switch (tab) {
         case "ACTIVE":
           return coupon.is_active && now >= startDate && now <= endDate;
         case "INACTIVE":
@@ -260,115 +305,28 @@ export const CouponMgmt = () => {
     setFilteredCoupons(filtered);
   };
 
-  // Handle tab change
-  const handleTabChange = (tab: CouponStatus) => {
-    setActiveTab(tab);
-    filterCouponsByStatus(tab);
-  };
-
-  // Handle search
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
-    if (!term.trim()) {
-      filterCouponsByStatus(activeTab);
-      return;
-    }
-
-    const filtered = filteredCoupons.filter(
-      (coupon) =>
-        coupon.code.toLowerCase().includes(term.toLowerCase()) ||
-        coupon.description.toLowerCase().includes(term.toLowerCase())
-    );
-    setFilteredCoupons(filtered);
-  };
-
-  // Create coupon
-  const handleCreateCoupon = async () => {
-    try {
-      setProcessingCouponId(-1); // Use -1 for create operation
-      const response = await apiClient(
-        `${import.meta.env.VITE_SERVER}/coupon/create`,
-        {
-          method: "POST",
-          tokenType: "jwt",
-          data: formData,
-        }
-      );
-
-      if (response.success) {
-        toast.success("Coupon created successfully!");
-        setShowCreateModal(false);
-        resetForm();
-        fetchCoupons();
-      } else {
-        toast.error(response.message || "Failed to create coupon");
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Failed to create coupon");
-    } finally {
-      setProcessingCouponId(null);
-    }
-  };
-
-  // Update coupon
-  const handleUpdateCoupon = async () => {
-    if (!selectedCoupon) return;
-
-    try {
-      setProcessingCouponId(selectedCoupon.id);
-      const response = await apiClient(
-        `${import.meta.env.VITE_SERVER}/coupon/update/${selectedCoupon.id}`,
-        {
-          method: "PUT",
-          tokenType: "jwt",
-          data: formData,
-        }
-      );
-
-      if (response.success) {
-        toast.success("Coupon updated successfully!");
-        setShowEditModal(false);
-        resetForm();
-        fetchCoupons();
-      } else {
-        toast.error(response.message || "Failed to update coupon");
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Failed to update coupon");
-    } finally {
-      setProcessingCouponId(null);
-    }
-  };
-
-  // Delete coupon
-  const handleDeleteCoupon = async () => {
-    if (!selectedCoupon) return;
-
-    try {
-      setProcessingCouponId(selectedCoupon.id);
-      const response = await apiClient(
-        `${import.meta.env.VITE_SERVER}/coupon/delete/${selectedCoupon.id}`,
-        {
-          method: "DELETE",
-          tokenType: "jwt",
-        }
-      );
-
-      if (response.success) {
-        toast.success("Coupon deleted successfully!");
-        setShowDeleteModal(false);
-        setSelectedCoupon(null);
-        fetchCoupons();
-      } else {
-        toast.error(response.message || "Failed to delete coupon");
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Failed to delete coupon");
-    } finally {
-      setProcessingCouponId(null);
+  // Get status count
+  const getStatusCount = (status: string) => {
+    const now = new Date();
+    switch (status) {
+      case "ALL":
+        return coupons.length;
+      case "ACTIVE":
+        return coupons.filter(
+          (c) =>
+            c.is_active &&
+            new Date() >= new Date(c.start_date) &&
+            new Date() <= new Date(c.end_date)
+        ).length;
+      case "INACTIVE":
+        return coupons.filter((c) => !c.is_active).length;
+      case "EXPIRED":
+        return coupons.filter((c) => new Date() > new Date(c.end_date)).length;
+      case "UPCOMING":
+        return coupons.filter((c) => new Date() < new Date(c.start_date))
+          .length;
+      default:
+        return 0;
     }
   };
 
@@ -530,46 +488,6 @@ export const CouponMgmt = () => {
     fetchCoupons();
   }, []);
 
-  // Status tab trigger component
-  const StatusTabTrigger = ({
-    config,
-    count,
-    isActive,
-    onClick,
-  }: {
-    status: CouponStatus;
-    config: StatusConfig;
-    count: number;
-    isActive: boolean;
-    onClick: () => void;
-  }) => {
-    const Icon = config.icon;
-
-    return (
-      <button
-        type="button"
-        className={`flex items-center px-4 py-2 rounded-lg border transition-all duration-200 ${
-          isActive
-            ? config.activeTabColor + " font-semibold shadow-sm"
-            : "text-gray-700 hover:text-black hover:bg-gray-50 border-gray-200"
-        }`}
-        onClick={onClick}
-      >
-        <Icon size={16} className="mr-2" />
-        {config.label}
-        {count > 0 && (
-          <span
-            className={`ml-2 px-1.5 py-0.5 rounded-full text-xs font-medium ${
-              isActive ? "bg-white text-black" : config.countColor
-            }`}
-          >
-            {count}
-          </span>
-        )}
-      </button>
-    );
-  };
-
   return (
     <div className="p-6">
       <Breadcrumbs
@@ -585,112 +503,51 @@ export const CouponMgmt = () => {
             <h1 className="text-2xl font-bold">Coupon Management</h1>
             <p className="text-gray-600">Create and manage discount coupons</p>
           </div>
-          <Button
-            onClick={() => {
-              resetForm();
-              setShowCreateModal(true);
-            }}
-            className="flex items-center gap-2"
-          >
-            <Plus size={16} />
-            Create Coupon
-          </Button>
-        </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
-                Total Coupons
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statusCounts.ALL}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
-                Active
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {statusCounts.ACTIVE}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
-                Inactive
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {statusCounts.INACTIVE}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
-                Upcoming
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {statusCounts.UPCOMING}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
-                Expired
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-600">
-                {statusCounts.EXPIRED}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters and Search */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Search */}
-              <div className="flex-1">
-                <Input
-                  placeholder="Search coupons by code or description..."
-                  value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-
-              {/* Status Tabs */}
-              <div className="flex flex-wrap gap-2">
-                {(Object.keys(statusConfigs) as CouponStatus[]).map(
-                  (status) => (
-                    <StatusTabTrigger
-                      key={status}
-                      status={status}
-                      config={statusConfigs[status]}
-                      count={statusCounts[status]}
-                      isActive={activeTab === status}
-                      onClick={() => handleTabChange(status)}
-                    />
-                  )
-                )}
-              </div>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={18}
+              />
+              <Input
+                placeholder="Search coupons..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="pl-10 w-48"
+              />
             </div>
-          </CardContent>
-        </Card>
+            <Button
+              onClick={() => {
+                resetForm();
+                setShowCreateModal(true);
+              }}
+              className="flex items-center gap-2 btn-bw-primary"
+            >
+              <Plus size={16} />
+              Create Coupon
+            </Button>
+          </div>
+        </div>
+
+        {/* Status Tabs */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {["ALL", "ACTIVE", "INACTIVE", "EXPIRED", "UPCOMING"].map((tab) => (
+            <Button
+              key={tab}
+              variant={activeTab === tab ? "default" : "outline"}
+              onClick={() => handleTabChange(tab)}
+              className={`text-sm  ${
+                activeTab === tab ? "btn-bw-primary" : ""
+              }`}
+            >
+              {tab}
+              <span className="ml-2 bg-gray-50 text-gray-800 text-xs px-2 py-1 rounded-full">
+                {getStatusCount(tab)}
+              </span>
+            </Button>
+          ))}
+        </div>
 
         {/* Coupons Table */}
         <DataTable<Coupon>
@@ -759,7 +616,7 @@ export const CouponMgmt = () => {
 
       {/* Create Coupon Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg bg-amber-50">
           <DialogHeader>
             <DialogTitle>Create New Coupon</DialogTitle>
           </DialogHeader>
@@ -780,7 +637,7 @@ export const CouponMgmt = () => {
               onClick={handleCreateCoupon}
               disabled={processingCouponId === -1}
             >
-              Create Coupon
+              {processingCouponId === -1 ? "Creating..." : "Create Coupon"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -788,7 +645,7 @@ export const CouponMgmt = () => {
 
       {/* Edit Coupon Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg bg-amber-50">
           <DialogHeader>
             <DialogTitle>Edit Coupon</DialogTitle>
           </DialogHeader>
@@ -810,7 +667,7 @@ export const CouponMgmt = () => {
               onClick={handleUpdateCoupon}
               disabled={!!processingCouponId}
             >
-              Update Coupon
+              {processingCouponId ? "Updating..." : "Update Coupon"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -818,7 +675,7 @@ export const CouponMgmt = () => {
 
       {/* Delete Confirmation Modal */}
       <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-amber-50">
           <DialogHeader>
             <DialogTitle>Delete Coupon</DialogTitle>
           </DialogHeader>
@@ -842,7 +699,7 @@ export const CouponMgmt = () => {
               onClick={handleDeleteCoupon}
               disabled={!!processingCouponId}
             >
-              Delete Coupon
+              {processingCouponId ? "Deleting..." : "Delete Coupon"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -850,7 +707,7 @@ export const CouponMgmt = () => {
 
       {/* Quick View Modal */}
       <Dialog open={showQuickView} onOpenChange={setShowQuickView}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg bg-amber-50">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Tag size={20} />
@@ -1187,38 +1044,48 @@ const CouponForm = ({
             min={formData.start_date}
           />
         </div>
-      </div>
+        {/* Applicable To */}
+        <div className="space-y-2">
+          <Label htmlFor="applicable_to">Applicable To</Label>
+          <Select
+            value={formData.applicable_to}
+            onValueChange={(
+              value: "all" | "specific_categories" | "specific_products"
+            ) => handleChange("applicable_to", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select applicable scope" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              <SelectItem value="all">All Products</SelectItem>
+              <SelectItem value="specific_categories">
+                Specific Categories
+              </SelectItem>
+              <SelectItem value="specific_products">
+                Specific Products
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-      {/* Applicable To */}
-      <div className="space-y-2">
-        <Label htmlFor="applicable_to">Applicable To</Label>
-        <Select
-          value={formData.applicable_to}
-          onValueChange={(
-            value: "all" | "specific_categories" | "specific_products"
-          ) => handleChange("applicable_to", value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select applicable scope" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Products</SelectItem>
-            <SelectItem value="specific_categories">
-              Specific Categories
-            </SelectItem>
-            <SelectItem value="specific_products">Specific Products</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Active Status */}
-      <div className="flex items-center justify-between">
-        <Label htmlFor="is_active">Active Status</Label>
-        <Switch
-          id="is_active"
-          checked={formData.is_active}
-          onCheckedChange={(checked) => handleChange("is_active", checked)}
-        />
+        {/* Active Status */}
+        <div className="space-y-2">
+          <Label htmlFor="is_active">Active Status</Label>
+          <Select
+            value={formData.is_active ? "active" : "inactive"}
+            onValueChange={(value) =>
+              handleChange("is_active", value === "active")
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </div>
   );
