@@ -109,9 +109,10 @@ export default function StockRecordPage() {
   useEffect(() => {
     fetchBranches();
     fetchProducts();
-    fetchStock();
   }, [fetchBranches, fetchProducts]);
-
+  useEffect(() => {
+    fetchStock();
+  }, [filters]);
   // Fetch stock when filters change
   useEffect(() => {
     fetchStock();

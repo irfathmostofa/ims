@@ -5,6 +5,9 @@ import { create } from "zustand";
 export interface Branch {
   id: number;
   name: string;
+  code?: string;
+  address?: string;
+  status?: string;
 }
 
 export interface Category {
@@ -44,6 +47,7 @@ interface StoreState {
   categories: Category[];
   products: Product[];
   loading: boolean;
+  activeBranch: Branch | null; // Add active branch
 
   fetchBranches: () => Promise<void>;
   fetchCategories: () => Promise<void>;
@@ -53,6 +57,8 @@ interface StoreState {
   setCategories: (data: Category[]) => void;
   setProducts: (data: Product[]) => void;
   setLoading: (value: boolean) => void;
+  setActiveBranch: (branch: Branch | null) => void; // Add setter
+  switchBranch: (branchId: number) => void; // Method to switch branch
 }
 
 export const useQuickStore = create<StoreState>((set) => ({
@@ -60,12 +66,21 @@ export const useQuickStore = create<StoreState>((set) => ({
   categories: [],
   products: [],
   loading: false,
+  activeBranch: null,
 
   // Setters
   setBranches: (data) => set({ branches: data }),
   setCategories: (data) => set({ categories: data }),
   setProducts: (data) => set({ products: data }),
   setLoading: (value) => set({ loading: value }),
+  setActiveBranch: (branch) => set({ activeBranch: branch }),
+
+  // Switch branch
+  switchBranch: (branchId: number) => {
+    set((state) => ({
+      activeBranch: state.branches.find((b) => b.id === branchId) || null,
+    }));
+  },
 
   // Fetch Branches
   fetchBranches: async () => {
@@ -82,6 +97,22 @@ export const useQuickStore = create<StoreState>((set) => ({
 
       if (result.success) {
         set({ branches: result.data });
+
+        // Try to get active branch from localStorage
+        const savedBranchId = localStorage.getItem("activeBranchId");
+        if (savedBranchId && result.data.length > 0) {
+          const savedBranch = result.data.find(
+            (b: Branch) => b.id === parseInt(savedBranchId)
+          );
+          if (savedBranch) {
+            set({ activeBranch: savedBranch });
+          }
+        }
+        // If no saved branch, set first one as active
+        else if (result.data.length > 0) {
+          set({ activeBranch: result.data[0] });
+          localStorage.setItem("activeBranchId", result.data[0].id.toString());
+        }
       } else {
         console.error("Failed to fetch branches:", result.message);
       }

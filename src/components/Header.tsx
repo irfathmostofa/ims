@@ -8,12 +8,15 @@ import {
   LogOut,
   Settings,
   SquareArrowOutUpLeft,
+  ChevronDown,
+  Building,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useAuthStore } from "@/store/authStore";
 import { useClockWithDate } from "@/hook/useClockwithDate";
+import { useQuickStore } from "@/store/quickStore";
 
 export default function Header({
   setSidebarOpen,
@@ -25,9 +28,26 @@ export default function Header({
   const navigate = useNavigate();
   const time = useClockWithDate();
 
+  const [branchOpen, setBranchOpen] = useState(false);
   // 🔹 Get logged-in user from store
   const { user } = useAuthStore();
+  const { branches, activeBranch, fetchBranches, switchBranch } =
+    useQuickStore();
 
+  // Fetch branches on mount
+  useEffect(() => {
+    if (branches.length === 0) {
+      fetchBranches();
+    }
+  }, []);
+  const handleBranchSelect = (branchId: number) => {
+    switchBranch(branchId);
+    localStorage.setItem("activeBranchId", branchId.toString());
+    setBranchOpen(false);
+
+    // Refresh data based on new branch
+    // You might want to fetch products or other branch-specific data here
+  };
   return (
     <header className="h-16 bg-bw-900 border-b border-bw-200 flex items-center justify-between pr-4 shadow-sm relative">
       {/* Left - Menu */}
@@ -42,6 +62,62 @@ export default function Header({
         <p className="flex gap-2 text-amber-50 border-l-1 sm:border-l-none p-5 ">
           {time}
         </p>
+        <div className="relative">
+          <button
+            className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-bw-700 text-white"
+            onClick={() => setBranchOpen(!branchOpen)}
+          >
+            <Building size={18} className="text-bw-50" />
+            <div className="text-left">
+              <div className="text-sm font-medium">
+                {activeBranch?.name || "Select Branch"}
+              </div>
+              <div className="text-xs text-bw-300">
+                {activeBranch?.code || "No branch selected"}
+              </div>
+            </div>
+            <ChevronDown
+              size={16}
+              className={`transition-transform ${
+                branchOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          {branchOpen && branches.length > 0 && (
+            <div className="absolute left-0 mt-2 w-64 bg-white shadow-xl rounded-lg overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="px-4 py-3 font-semibold text-gray-700 border-b bg-gray-50">
+                Switch Branch
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                {branches.map((branch) => (
+                  <button
+                    key={branch.id}
+                    className={`w-full text-left px-4 py-3 hover:bg-gray-100 flex justify-between items-center ${
+                      activeBranch?.id === branch.id
+                        ? "bg-blue-50 text-blue-600"
+                        : ""
+                    }`}
+                    onClick={() => handleBranchSelect(branch.id)}
+                  >
+                    <div>
+                      <div className="font-medium">{branch.name}</div>
+                      <div className="text-xs text-gray-500">{branch.code}</div>
+                      {branch.address && (
+                        <div className="text-xs text-gray-400">
+                          {branch.address}
+                        </div>
+                      )}
+                    </div>
+                    {activeBranch?.id === branch.id && (
+                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Right - User Actions */}
