@@ -55,8 +55,8 @@ const navItems: NavItem[] = [
     icon: ShoppingCart,
     children: [
       { name: "Sale List", path: "/sales/sale-list" },
-      { name: "Returns / Refunds", path: "/sales/returns-list" },
-      { name: "Hold & Resume", path: "/sales/hold" },
+      // { name: "Returns / Refunds", path: "/sales/returns-list" },
+      // { name: "Hold & Resume", path: "/sales/hold" },
       { name: "Discounts & Promotions", path: "/sales/discounts" },
     ],
   },
@@ -250,7 +250,6 @@ export default function Sidebar({
       </aside>
 
       {/* Add these styles to your global CSS or component */}
-   
     </>
   );
 }
