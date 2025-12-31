@@ -18,6 +18,7 @@ import {
   formatDate,
   formatDateForInput,
 } from "@/components/utils/formatter";
+import { printView } from "@/components/utils/print";
 
 type PurchaseOrderItem = {
   id?: number;
@@ -36,6 +37,8 @@ type PurchaseOrder = {
   branch_id: number;
   supplier_id: number;
   supplier_name?: string;
+  supplier_email?: string;
+  supplier_address?: string;
   order_date: string;
   expected_date?: string;
   delivery_date?: string;
@@ -48,6 +51,7 @@ type PurchaseOrder = {
   total_quantity?: number;
   total_received?: number;
   notes?: string;
+  date?: string;
 };
 
 type Supplier = {
@@ -73,11 +77,13 @@ export default function PurchaseOrderPage() {
   const [products, setProducts] = useState<ProductVariant[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<PurchaseOrder | null>(null);
+  const [openDetails, setOpenDetails] = useState(false);
   const [searchTerms, setSearchTerms] = useState<{ [key: number]: string }>({});
   const [showDropdown, setShowDropdown] = useState<{ [key: number]: boolean }>(
     {}
   );
-
+  console.log(user);
   const [form, setForm] = useState<PurchaseOrder>({
     branch_id: 1,
     supplier_id: 0,
@@ -135,6 +141,7 @@ export default function PurchaseOrderPage() {
   };
 
   const handleOpen = (po?: PurchaseOrder) => {
+    console.log(po);
     if (po) {
       setForm(po);
     } else {
@@ -150,7 +157,10 @@ export default function PurchaseOrderPage() {
     setShowDropdown({});
     setOpen(true);
   };
-
+  const handleOpenDetails = (po: PurchaseOrder) => {
+    setSelectedRow(po);
+    setOpenDetails(true);
+  };
   const handleAddItem = () => {
     setForm((prev) => ({
       ...prev,
@@ -346,12 +356,7 @@ export default function PurchaseOrderPage() {
         actions={[
           {
             label: <Eye size={16} />,
-            onClick: (row) =>
-              alert(
-                `PO: ${row.code}\nSupplier: ${row.supplier_name}\nItems: ${
-                  row.total_items || 0
-                }\nTotal: $${formatCurrency(row.total_amount)}`
-              ),
+            onClick: (row) => handleOpenDetails(row),
           },
           {
             label: <Pen size={16} />,
@@ -670,6 +675,308 @@ export default function PurchaseOrderPage() {
                 {loading ? "Saving..." : form.id ? "Update" : "Create"}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openDetails} onOpenChange={setOpenDetails}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
+          <div className="p-6" id="printDetails">
+            <div className="flex justify-between items-start mb-8">
+              <div>
+                <h2 className="text-2xl font-bold">PURCHASE ORDER</h2>
+                <p className="text-gray-600 mt-1">
+                  PO Number:{" "}
+                  <span className="font-semibold">
+                    {selectedRow?.code || selectedRow?.id}
+                  </span>
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-sm text-gray-500">Status</div>
+                <div className="text-lg font-bold">{selectedRow?.status}</div>
+              </div>
+            </div>
+
+            {selectedRow && (
+              <div className="space-y-8">
+                {/* Supplier and Order Info */}
+                <div className="grid grid-cols-2 gap-8">
+                  <div>
+                    <h3 className="font-bold text-lg mb-3 border-b pb-2">
+                      SUPPLIER
+                    </h3>
+                    <div className="space-y-2">
+                      <div>
+                        <div className="text-gray-600 text-sm">
+                          Supplier Name
+                        </div>
+                        <div className="font-semibold">
+                          {selectedRow.supplier_name || "N/A"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600 text-sm">
+                          PO Reference
+                        </div>
+                        <div className="font-semibold">
+                          {selectedRow.code || `#${selectedRow.id}`}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold text-lg mb-3 border-b pb-2">
+                      ORDER DATES
+                    </h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Order Date:</span>
+                        <span className="font-semibold">
+                          {formatDate(selectedRow.order_date)}
+                        </span>
+                      </div>
+                      {selectedRow.expected_date && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Expected Date:</span>
+                          <span className="font-semibold">
+                            {formatDate(selectedRow.expected_date)}
+                          </span>
+                        </div>
+                      )}
+                      {selectedRow.delivery_date && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Delivery Date:</span>
+                          <span className="font-semibold">
+                            {formatDate(selectedRow.delivery_date)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Summary */}
+                <div className="border rounded-lg">
+                  <div className="border-b bg-gray-50 p-4">
+                    <h3 className="font-bold">ORDER ITEMS</h3>
+                    <div className="text-sm text-gray-600 mt-1">
+                      Total Items: {selectedRow.items?.length || 0} | Total
+                      Quantity:{" "}
+                      {selectedRow.total_quantity ||
+                        selectedRow.items?.reduce(
+                          (sum, item) => sum + item.quantity,
+                          0
+                        ) ||
+                        0}
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b bg-gray-50">
+                          <th className="text-left p-3 font-semibold">
+                            Product
+                          </th>
+                          <th className="text-center p-3 font-semibold">
+                            Quantity
+                          </th>
+                          <th className="text-right p-3 font-semibold">
+                            Unit Price
+                          </th>
+                          <th className="text-right p-3 font-semibold">
+                            Discount
+                          </th>
+                          <th className="text-center p-3 font-semibold">
+                            Tax %
+                          </th>
+                          <th className="text-right p-3 font-semibold">
+                            Total
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedRow.items && selectedRow.items.length > 0 ? (
+                          selectedRow.items.map((item, index) => {
+                            const itemTotal = calculateItemTotal(item);
+                            const product = products.find(
+                              (p) => p.variant_id === item.product_variant_id
+                            );
+                            const productName = product
+                              ? product.display_name
+                              : item.product_name
+                              ? item.product_name
+                              : `Product #${item.product_variant_id}`;
+
+                            return (
+                              <tr
+                                key={index}
+                                className="border-b hover:bg-gray-50"
+                              >
+                                <td className="p-3">
+                                  <div className="font-medium">
+                                    {productName}
+                                  </div>
+                                  {item.notes && (
+                                    <div className="text-sm text-gray-500 italic mt-1">
+                                      Note: {item.notes}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="p-3 text-center">
+                                  {item.quantity}
+                                </td>
+                                <td className="p-3 text-right">
+                                  {formatCurrency(item.unit_price)}
+                                </td>
+                                <td className="p-3 text-right">
+                                  {item.discount > 0
+                                    ? `-${formatCurrency(item.discount)}`
+                                    : "-"}
+                                </td>
+                                <td className="p-3 text-center">
+                                  {item.tax_rate}%
+                                </td>
+                                <td className="p-3 text-right font-semibold">
+                                  {formatCurrency(itemTotal)}
+                                </td>
+                              </tr>
+                            );
+                          })
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan={6}
+                              className="p-6 text-center text-gray-500"
+                            >
+                              No items in this order
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+
+                      {selectedRow.items && selectedRow.items.length > 0 && (
+                        <tfoot className="bg-gray-50">
+                          {/* Subtotal */}
+                          <tr>
+                            <td
+                              colSpan={4}
+                              className="p-3 text-right font-medium"
+                            >
+                              Subtotal:
+                            </td>
+                            <td
+                              colSpan={2}
+                              className="p-3 text-right font-semibold"
+                            >
+                              {formatCurrency(
+                                selectedRow.items.reduce(
+                                  (total, item) =>
+                                    total +
+                                    (item.quantity * item.unit_price -
+                                      item.discount),
+                                  0
+                                )
+                              )}
+                            </td>
+                          </tr>
+
+                          {/* Tax */}
+                          {selectedRow.tax_amount &&
+                            selectedRow.tax_amount > 0 && (
+                              <tr>
+                                <td
+                                  colSpan={4}
+                                  className="p-3 text-right font-medium"
+                                >
+                                  Tax:
+                                </td>
+                                <td
+                                  colSpan={2}
+                                  className="p-3 text-right font-semibold"
+                                >
+                                  {formatCurrency(selectedRow.tax_amount)}
+                                </td>
+                              </tr>
+                            )}
+
+                          {/* Discount */}
+                          {selectedRow.discount_amount &&
+                            selectedRow.discount_amount > 0 && (
+                              <tr>
+                                <td
+                                  colSpan={4}
+                                  className="p-3 text-right font-medium"
+                                >
+                                  Discount:
+                                </td>
+                                <td
+                                  colSpan={2}
+                                  className="p-3 text-right font-semibold"
+                                >
+                                  -{formatCurrency(selectedRow.discount_amount)}
+                                </td>
+                              </tr>
+                            )}
+
+                          {/* Grand Total */}
+                          <tr className="border-t-2 border-black">
+                            <td
+                              colSpan={4}
+                              className="p-3 text-right text-lg font-bold"
+                            >
+                              GRAND TOTAL:
+                            </td>
+                            <td colSpan={2} className="p-3 text-right">
+                              <div className="text-xl font-bold">
+                                {formatCurrency(
+                                  selectedRow.total_amount ||
+                                    selectedRow.items.reduce(
+                                      (total, item) =>
+                                        total + calculateItemTotal(item),
+                                      0
+                                    )
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        </tfoot>
+                      )}
+                    </table>
+                  </div>
+                </div>
+
+                {/* Order Notes */}
+                {selectedRow.notes && (
+                  <div className="border rounded-lg p-4">
+                    <h3 className="font-bold mb-2">ORDER NOTES</h3>
+                    <p className="text-gray-700">{selectedRow.notes}</p>
+                  </div>
+                )}
+
+                {/* Footer Actions */}
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setOpenDetails(false)}
+                    className="h-9"
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => printView("printDetails")}
+                    className="h-9 border-gray-300"
+                  >
+                    Print
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

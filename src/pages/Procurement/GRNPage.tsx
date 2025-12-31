@@ -21,6 +21,7 @@ type GRNItem = {
   orderedQty: number;
   receivedQty: number;
   leftToReceive: number;
+  unit_price?: number;
   notes?: string | null;
 };
 
@@ -43,6 +44,7 @@ type PurchaseOrderItem = {
   quantity: number;
   received_quantity: number;
   product_name?: string;
+  unit_price: number;
 };
 
 type PurchaseOrder = {
@@ -119,13 +121,13 @@ export default function GRNPage() {
   const handlePOChange = (poId: number) => {
     const po = purchaseOrders.find((p) => p.id === poId);
     if (!po) return setForm({ ...form, poNumber: 0, items: [] });
-
     const items: GRNItem[] = po.items.map((i) => ({
       po_item_id: i.id,
       product: i.product_name || `Variant #${i.product_variant_id}`,
       orderedQty: i.quantity,
       receivedQty: 0, // user input now
       leftToReceive: i.quantity - (i.received_quantity || 0),
+      unit_price: i.unit_price,
       notes: null,
     }));
 
@@ -149,6 +151,7 @@ export default function GRNPage() {
     if (!form.poNumber || !form.grnDate || !form.items.length) {
       return toast.error("Please fill all required fields");
     }
+    console.log(form);
     setLoading(true);
 
     try {
@@ -161,6 +164,7 @@ export default function GRNPage() {
           .map((i) => ({
             po_item_id: i.po_item_id,
             received_quantity: i.receivedQty,
+            unit_price: i.unit_price,
             notes: i.notes || null,
           })),
       };
@@ -271,7 +275,7 @@ export default function GRNPage() {
                 <option value={0}>Select Purchase Order</option>
                 {purchaseOrders.map((po) => (
                   <option key={po.id} value={po.id}>
-                    #{po.id} - {po.supplier_name}
+                    # {po.code} - {po.supplier_name}
                   </option>
                 ))}
               </select>
