@@ -62,22 +62,24 @@ export default function Header({
         <p className="flex gap-2 text-amber-50 border-l-1 sm:border-l-none p-5 ">
           {time}
         </p>
-        <div className="relative">
+      </div>
+
+      {/* Right - User Actions */}
+      <div className="flex items-center gap-4 relative">
+        {/* POS Shortcut */}
+        <div className="relative border border-amber-50 rounded">
           <button
-            className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-bw-700 text-white"
+            className="flex items-center gap-2 px-3 py-3 rounded-md hover:bg-bw-700 text-white"
             onClick={() => setBranchOpen(!branchOpen)}
           >
-            <Building size={18} className="text-bw-50" />
             <div className="text-left">
               <div className="text-sm font-medium">
                 {activeBranch?.name || "Select Branch"}
-              </div>
-              <div className="text-xs text-bw-300">
-                {activeBranch?.code || "No branch selected"}
+                {/* ({activeBranch?.code}) */}
               </div>
             </div>
             <ChevronDown
-              size={16}
+              size={15}
               className={`transition-transform ${
                 branchOpen ? "rotate-180" : ""
               }`}
@@ -118,11 +120,6 @@ export default function Header({
             </div>
           )}
         </div>
-      </div>
-
-      {/* Right - User Actions */}
-      <div className="flex items-center gap-4 relative">
-        {/* POS Shortcut */}
         <Link
           to={"/pos"}
           className="p-2 rounded-md hover:bg-bw-700 flex gap-1 items-center text-amber-50 border border-amber-50"

@@ -145,11 +145,6 @@ export default function AccountPage() {
       return;
     }
 
-    if (!form.account_no) {
-      toast.error("Account number is required");
-      return;
-    }
-
     if (!form.branch_id) {
       toast.error("Branch is required");
       return;
