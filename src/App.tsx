@@ -30,7 +30,6 @@ import SuppliersPayPage from "./pages/Suppliers/SuppliersPayPage";
 import RolesPage from "./pages/Setup/RolesPage";
 import CompanyPage from "./pages/Setup/CompanyPage";
 import UsersPage from "./pages/Setup/UsersPage";
-import CoaPage from "./pages/Accounts/CoaPage";
 import JournalsPage from "./pages/Accounts/JournalsPage";
 import TransactionsPage from "./pages/Accounts/TransactionsPage";
 import SalesReportPage from "./pages/Reports/SalesReportPage";
@@ -54,6 +53,9 @@ import { RequisitionView } from "./pages/Procurement/RequisitionView";
 import { OrderDetails } from "./pages/Orders/OrderDetails";
 import StockRecordPage from "./pages/Procurement/StockRecordPage";
 import { SimpleNetworkStatusToast } from "./components/ui/NetworkStatusToast";
+import AccountHeadpage from "./pages/Accounts/AccountHeadpage";
+import AccountPage from "./pages/Accounts/AccountPage";
+import AccountingPeriodPage from "./pages/Accounts/AccountingPeriodPage";
 
 export default function App() {
   return (
@@ -151,7 +153,12 @@ export default function App() {
               />
 
               {/* Accounts */}
-              <Route path="/accounts/coa" element={<CoaPage />} />
+              <Route
+                path="/accounts/account-head"
+                element={<AccountHeadpage />}
+              />
+              <Route path="/accounts/accounts" element={<AccountPage />} />
+              <Route path="/accounts/accounting-period" element={<AccountingPeriodPage />} />
               <Route path="/accounts/journals" element={<JournalsPage />} />
               <Route
                 path="/accounts/transactions"

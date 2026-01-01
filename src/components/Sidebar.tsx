@@ -92,7 +92,9 @@ const navItems: NavItem[] = [
     name: "Accounts",
     icon: DollarSign,
     children: [
-      { name: "Chart of Accounts", path: "/accounts/coa" },
+      { name: "Accounts Head", path: "/accounts/account-head" },
+      { name: "Accounts", path: "/accounts/accounts" },
+      { name: "Accounting Period", path: "/accounts/accounting-period" },
       { name: "Journal Entries", path: "/accounts/journals" },
       { name: "Transactions", path: "/accounts/transactions" },
     ],

@@ -29,7 +29,6 @@ type Category = {
   updated_at: string | null;
 };
 
-// ✅ Helper: flatten nested categories for table & select
 function flattenCategories(
   categories: Category[],
   parentPath = ""
