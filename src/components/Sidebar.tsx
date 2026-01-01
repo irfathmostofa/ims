@@ -162,7 +162,15 @@ export default function Sidebar({
       >
         {/* Brand */}
         <div className="h-16 flex-shrink-0 flex items-center justify-between border-b border-bw-200 px-4">
-          <h1 className="text-xl font-bold text-bw-50">InventorySys</h1>
+          <h1
+            className="text-4xl font-bold text-bw-50  tracking-tight"
+            style={{ fontFamily: "'Montserrat', sans-serif" }}
+          >
+            UniStock
+            <span className="text-2xl font-semibold text-[#a1c5c5] ml-1">
+              Pro
+            </span>
+          </h1>
           {/* Close button (mobile only) */}
           <button
             className="md:hidden p-2 rounded-md hover:bg-bw-700"
