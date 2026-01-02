@@ -254,8 +254,12 @@ export default function Sidebar({
         </nav>
 
         {/* Footer */}
-        <div className="flex-shrink-0 p-4 border-t border-bw-200 text-sm text-bw-200">
-          © {new Date().getFullYear()} InventorySys
+        <div
+          className="flex-shrink-0 p-4 border-t border-bw-200 text-sm text-bw-200"
+          style={{ fontFamily: "'Montserrat', sans-serif" }}
+        >
+          © {new Date().getFullYear()} UniStock
+          <span className="text-xs font-semibold text-[#a1c5c5] ml-1">Pro</span>
         </div>
       </aside>
 

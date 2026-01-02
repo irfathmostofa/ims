@@ -94,7 +94,7 @@ export default function AuthLayout() {
                         <div className="text-teal-400">{feature.icon}</div>
                       </div>
 
-                      <h4 className="font-medium text-white mb-1">
+                      <h4 className="font-medium text-white ">
                         {feature.title}
                       </h4>
                       {/* <p className="text-sm text-gray-400">

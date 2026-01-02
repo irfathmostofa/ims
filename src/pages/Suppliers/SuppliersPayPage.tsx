@@ -122,24 +122,17 @@ export default function SuppliersPayPage() {
     if (!selectedInvoice) return;
 
     try {
-      const newPaidAmount = selectedInvoice.paid_amount + paymentAmount;
-      const newStatus =
-        newPaidAmount >= selectedInvoice.total_amount ? "PAID" : "PARTIAL";
-
       const response = await apiClient(
-        `${import.meta.env.VITE_SERVER}/sales/update-invoices/${
+        `${import.meta.env.VITE_SERVER}/sales/create-invoices/${
           selectedInvoice.id
         }`,
         {
           method: "POST",
           tokenType: "jwt",
           data: {
-            branch_id: selectedInvoice.branch_id,
-            party_id: selectedInvoice.party_id,
-            invoice_date: selectedInvoice.invoice_date,
-            items: selectedInvoice.items || [],
-            paid_amount: newPaidAmount,
-            status: newStatus,
+            method: "CASH",
+            amount: paymentAmount,
+            reference_no: selectedInvoice.code,
           },
         }
       );
@@ -638,10 +631,7 @@ export default function SuppliersPayPage() {
                 Make Payment
               </Button>
             )}
-            <Button
-              variant="outline"
-              onClick={() => setOpenViewDialog(false)}
-            >
+            <Button variant="outline" onClick={() => setOpenViewDialog(false)}>
               Close
             </Button>
           </DialogFooter>
@@ -719,9 +709,7 @@ export default function SuppliersPayPage() {
                   <div className="space-y-2 text-blue-700">
                     <div className="flex justify-between">
                       <span>Current Paid:</span>
-                      <span>
-                        {formatCurrency(selectedInvoice.paid_amount)}
-                      </span>
+                      <span>{formatCurrency(selectedInvoice.paid_amount)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>This Payment:</span>

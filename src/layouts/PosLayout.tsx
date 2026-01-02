@@ -1,33 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { useClockWithDate } from "@/hook/useClockwithDate";
 
 export default function PosLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [time, setTime] = useState(new Date());
 
+  const time = useClockWithDate();
   // Update running time every second
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formattedTime = time.toLocaleTimeString("en-US", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-
-  const formattedDate = time.toLocaleDateString("en-US", {
-    weekday: "short",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
 
   // Check if current path is for returns
   const isReturnPage = location.pathname.includes("return");
@@ -60,9 +42,7 @@ export default function PosLayout() {
           </button>
 
           <div className="text-bw-100 text-right">
-            <div>
-              {formattedDate} {formattedTime}
-            </div>
+            <div>{time}</div>
           </div>
         </div>
       </div>
