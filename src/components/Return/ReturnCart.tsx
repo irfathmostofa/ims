@@ -26,7 +26,7 @@ export default function ReturnCart({
 }) {
   const getMaxRefundAmount = () => {
     if (!invoiceDetails) return 0;
-    const totalAmount = parseFloat(invoiceDetails.total_amount) || 0;
+    // const totalAmount = parseFloat(invoiceDetails.total_amount) || 0;
     const paidAmount = parseFloat(invoiceDetails.paid_amount) || 0;
     const returnedAmount =
       parseFloat(invoiceDetails.total_returned_amount) || 0;

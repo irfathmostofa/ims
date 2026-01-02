@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { apiClient } from "@/hook/apiClient";
 import {
   Eye,
@@ -307,7 +306,7 @@ export const CouponMgmt = () => {
 
   // Get status count
   const getStatusCount = (status: string) => {
-    const now = new Date();
+   
     switch (status) {
       case "ALL":
         return coupons.length;

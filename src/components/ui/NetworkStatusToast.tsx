@@ -3,7 +3,7 @@
 
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { Wifi, WifiOff, Check } from "lucide-react";
+import { WifiOff, Check } from "lucide-react";
 
 interface NetworkStatusToastProps {
   /** Custom message for offline state */
