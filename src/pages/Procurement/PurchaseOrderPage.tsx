@@ -83,7 +83,14 @@ export default function PurchaseOrderPage() {
   const [showDropdown, setShowDropdown] = useState<{ [key: number]: boolean }>(
     {}
   );
-  console.log(user);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    total_pages: 1,
+    has_next: false,
+    has_prev: false,
+  });
   const [form, setForm] = useState<PurchaseOrder>({
     branch_id: 1,
     supplier_id: 0,
@@ -95,16 +102,13 @@ export default function PurchaseOrderPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [party, order, product] = await Promise.all([
+      const [party, product] = await Promise.all([
         apiClient(`${import.meta.env.VITE_SERVER}/party/get-party`, {
           method: "POST",
           tokenType: "jwt",
           data: { type: "SUPPLIER" },
         }),
-        apiClient(`${import.meta.env.VITE_SERVER}/po/purchase-orders`, {
-          method: "GET",
-          tokenType: "jwt",
-        }),
+
         apiClient(`${import.meta.env.VITE_SERVER}/product/get-pos-products`, {
           method: "POST",
           data: { category_id: null, search: null },
@@ -113,7 +117,7 @@ export default function PurchaseOrderPage() {
       ]);
 
       setSuppliers(party.data || []);
-      setOrders(order.data || []);
+
       setProducts(product.data || []);
     } catch (err: any) {
       console.error(err);
@@ -122,7 +126,46 @@ export default function PurchaseOrderPage() {
       setLoading(false);
     }
   };
+  const fetchOrdersForPage = async (page: number) => {
+    try {
+      setLoading(true);
+      const result = await apiClient(
+        `${import.meta.env.VITE_SERVER}/po/get-purchase-orders`,
+        {
+          method: "POST",
+          tokenType: "jwt",
+          data: { limit: pagination.limit, page },
+        }
+      );
+      const order = result as any;
+      setOrders(order.data.data || []);
+      setPagination(
+        order.data.pagination || {
+          page: 1,
+          limit: 10,
+          total: 0,
+          total_pages: 1,
+          has_next: false,
+          has_prev: false,
+        }
+      );
 
+      if (result.pagination) {
+        setPagination(result.pagination);
+      }
+    } catch (error) {
+      console.error("Error fetching orders for page:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrdersForPage(1);
+  }, []);
+  const handlePageChange = (newPage: number) => {
+    fetchOrdersForPage(newPage);
+  };
   useEffect(() => {
     fetchData();
   }, []);
@@ -329,7 +372,11 @@ export default function PurchaseOrderPage() {
         data={orders}
         label="Purchase Orders List"
         loading={loading}
-        rowsPerPage={10}
+        pagination={true}
+        page={pagination.page}
+        totalPages={pagination.total_pages}
+        onPageChange={handlePageChange}
+        rowsPerPage={pagination.limit}
         showColumns={[
           "code",
           "supplier_name",

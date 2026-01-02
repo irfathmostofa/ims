@@ -72,13 +72,6 @@ export function DataTable<T extends Record<string, any>>({
   const [internalPage, setInternalPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  console.log("DataTable received data:", data);
-  console.log("Pagination props:", {
-    pagination,
-    externalPage,
-    externalTotalPages,
-    rowsPerPage,
-  });
 
   // Use external page when pagination is true, otherwise use internal
   const currentPage = pagination ? externalPage || 1 : internalPage;
@@ -162,15 +155,6 @@ export function DataTable<T extends Record<string, any>>({
         (currentPage - 1) * rowsPerPage,
         currentPage * rowsPerPage
       );
-
-  console.log("Display data:", {
-    pagination,
-    currentPage,
-    totalPages,
-    filteredDataLength: filteredData.length,
-    displayDataLength: displayData.length,
-    rowsPerPage,
-  });
 
   const requestSort = (key: string) => {
     let direction: "asc" | "desc" = "asc";
