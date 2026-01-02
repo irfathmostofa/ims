@@ -36,22 +36,19 @@ interface Payment {
   items: PaymentItem[];
 }
 
-interface PaymentFilters {
-  status?: string;
-  method?: string;
-  date_from?: string;
-  date_to?: string;
-  search?: string;
-}
+// interface PaymentFilters {
+//   status?: string;
+//   method?: string;
+//   date_from?: string;
+//   date_to?: string;
+//   search?: string;
+// }
 
 export const OrderPayment = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(1000);
 
-  // Filters
-  const [filters, setFilters] = useState<PaymentFilters>({});
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   // Fetch payments
@@ -59,28 +56,14 @@ export const OrderPayment = () => {
     try {
       setLoading(true);
 
-      const params = {
-        page,
-        limit,
-        filters: {
-          ...filters,
-          // Convert empty strings to undefined
-          ...Object.fromEntries(
-            Object.entries(filters).filter(([_, v]) => v !== "")
-          ),
-        },
-      };
-
       const result = await apiClient(
         `${import.meta.env.VITE_SERVER}/sales/get-payments`,
         {
           method: "POST",
           tokenType: "jwt",
-          data: params,
+          data: { page },
         }
       );
-
-      console.log("API Response:", result); // Debug log
 
       if (result.success) {
         // Check if data is nested or direct
@@ -99,7 +82,7 @@ export const OrderPayment = () => {
   // Initial fetch
   useEffect(() => {
     fetchPayments();
-  }, [page, limit, filters]);
+  }, [page]);
 
   // View payment details
   const handleViewDetails = (payment: Payment) => {
@@ -142,6 +125,10 @@ export const OrderPayment = () => {
         <DataTable
           data={payments}
           label="Payments List"
+          pagination={true}
+          page={page}
+          totalPages={payments.length}
+          onPageChange={setPage}
           rowsPerPage={10}
           loading={loading}
           showColumns={[

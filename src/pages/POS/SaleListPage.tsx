@@ -662,7 +662,7 @@ export default function SaleListPage() {
                       Payment History
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {selectedSale.payments.map((payment, index) => (
+                      {selectedSale.payments.map((payment) => (
                         <div
                           key={payment.id}
                           className="border rounded-lg p-4 bg-white"
