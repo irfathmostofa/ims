@@ -52,13 +52,8 @@ export const OrderPayment = () => {
 
   // Filters
   const [filters, setFilters] = useState<PaymentFilters>({});
-  const [filterOpen, setFilterOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
-
-  // Filter form state
-  const [filterForm, setFilterForm] = useState<PaymentFilters>({});
-
   // Fetch payments
   const fetchPayments = async () => {
     try {

@@ -35,7 +35,7 @@ type ColumnConfig<T> = {
 type DataTableProps<T> = {
   data: T[];
   label?: string;
-  showColumns?: (keyof T)[] | ColumnConfig<T>[]; // Updated: Can be array of keys or column configs
+  showColumns?: (keyof T)[] | ColumnConfig<T>[];
   actions?: Action<T>[];
   selectable?: boolean;
   rowsPerPage?: number;
@@ -44,6 +44,11 @@ type DataTableProps<T> = {
   columnFormats?: Partial<
     Record<keyof T, (value: any, row: T) => React.ReactNode>
   >;
+  // Pagination control props (all optional)
+  pagination?: boolean;
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 };
 
 export function DataTable<T extends Record<string, any>>({
@@ -56,12 +61,30 @@ export function DataTable<T extends Record<string, any>>({
   printHead = [],
   loading = false,
   columnFormats = {},
+  // Pagination props
+  pagination = false,
+  page: externalPage,
+  totalPages: externalTotalPages,
+  onPageChange,
 }: DataTableProps<T>) {
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+  const [internalPage, setInternalPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  console.log("DataTable received data:", data);
+  console.log("Pagination props:", {
+    pagination,
+    externalPage,
+    externalTotalPages,
+    rowsPerPage,
+  });
+
+  // Use external page when pagination is true, otherwise use internal
+  const currentPage = pagination ? externalPage || 1 : internalPage;
+  const handlePageChange = pagination
+    ? onPageChange || (() => {})
+    : setInternalPage;
 
   // Process showColumns to extract keys and labels
   const columnConfigs = useMemo((): ColumnConfig<T>[] => {
@@ -126,11 +149,28 @@ export function DataTable<T extends Record<string, any>>({
     );
   }, [sortedData, headers, search]);
 
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-  const paginatedData = filteredData.slice(
-    (page - 1) * rowsPerPage,
-    page * rowsPerPage
-  );
+  // Calculate total pages
+  const totalPages = pagination
+    ? externalTotalPages || Math.ceil(filteredData.length / rowsPerPage)
+    : Math.ceil(filteredData.length / rowsPerPage);
+
+  // FIXED: When pagination=true, show ALL filtered data (API already paginated)
+  // When pagination=false, do client-side pagination
+  const displayData = pagination
+    ? filteredData
+    : filteredData.slice(
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+      );
+
+  console.log("Display data:", {
+    pagination,
+    currentPage,
+    totalPages,
+    filteredDataLength: filteredData.length,
+    displayDataLength: displayData.length,
+    rowsPerPage,
+  });
 
   const requestSort = (key: string) => {
     let direction: "asc" | "desc" = "asc";
@@ -144,8 +184,8 @@ export function DataTable<T extends Record<string, any>>({
   };
 
   const toggleSelectAll = () => {
-    if (selectedRows.length === paginatedData.length) setSelectedRows([]);
-    else setSelectedRows(paginatedData.map((_, i) => i));
+    if (selectedRows.length === displayData.length) setSelectedRows([]);
+    else setSelectedRows(displayData.map((_, i) => i));
   };
 
   const toggleRow = (index: number) => {
@@ -240,7 +280,7 @@ export function DataTable<T extends Record<string, any>>({
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
-                  setPage(1);
+                  handlePageChange(1);
                 }}
               />
               <div className="flex gap-2">
@@ -323,7 +363,7 @@ export function DataTable<T extends Record<string, any>>({
                     <th className="px-3 py-2 border-b whitespace-nowrap">
                       <input
                         type="checkbox"
-                        checked={selectedRows.length === paginatedData.length}
+                        checked={selectedRows.length === displayData.length}
                         onChange={toggleSelectAll}
                       />
                     </th>
@@ -345,7 +385,7 @@ export function DataTable<T extends Record<string, any>>({
                 </tr>
               </thead>
               <tbody>
-                {paginatedData.length === 0 ? (
+                {displayData.length === 0 ? (
                   <tr>
                     <td
                       colSpan={
@@ -359,7 +399,7 @@ export function DataTable<T extends Record<string, any>>({
                     </td>
                   </tr>
                 ) : (
-                  paginatedData.map((row, rowIndex) => {
+                  displayData.map((row, rowIndex) => {
                     const visibleActions = getVisibleActions(row);
 
                     return (
@@ -471,12 +511,14 @@ export function DataTable<T extends Record<string, any>>({
             </table>
           </div>
 
-          {/* Pagination */}
-          <CustomPagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
+          {/* Pagination - Only show when pagination is enabled */}
+          {pagination && (
+            <CustomPagination
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          )}
         </>
       )}
 

@@ -1,18 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   Trash,
   Eye,
   RefreshCw,
-  Search,
   FileText,
-  User,
-  Calendar,
-  DollarSign,
   CreditCard,
   Clock,
-  Package,
   CheckCircle,
   XCircle,
   AlertCircle,
@@ -25,7 +20,6 @@ import {
 } from "lucide-react";
 import { DataTable } from "@/components/ui/dataTable";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +31,7 @@ import { apiClient } from "@/hook/apiClient";
 import { toast } from "sonner";
 import { formatDate } from "@/components/utils/formatter";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CustomInput from "@/components/ui/custom/customInput";
 
 export type InvoiceItem = {
   id: number;
@@ -79,6 +73,12 @@ export default function SaleListPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [paginationInfo, setPaginationInfo] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+  });
   const [searchParams, setSearchParams] = useState({
     page: "1",
     limit: "10",
@@ -88,9 +88,8 @@ export default function SaleListPage() {
     type: "SALE",
     status: "",
   });
-
   // Fetch sales with useCallback to prevent unnecessary re-renders
-  const fetchInvoices = useCallback(async () => {
+  const fetchInvoices = async () => {
     try {
       setLoading(true);
       const response = await apiClient(
@@ -104,31 +103,43 @@ export default function SaleListPage() {
 
       if (response.success) {
         setSales(response.data || []);
+        // Update pagination info from API response
+        if (response.pagination) {
+          setPaginationInfo({
+            page: response.pagination.page,
+            limit: response.pagination.limit,
+            total: response.pagination.total,
+            totalPages: response.pagination.totalPages,
+          });
+        }
       } else {
         toast.error("Failed to fetch sales data");
         setSales([]);
+        setPaginationInfo({
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 1,
+        });
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to fetch sales");
       setSales([]);
+      setPaginationInfo({
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 1,
+      });
     } finally {
       setLoading(false);
     }
-  }, [searchParams]);
+  };
 
   // Initial fetch with debounce
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchInvoices();
-    }, 300); // 300ms debounce
-
-    return () => clearTimeout(timer);
-  }, [fetchInvoices]);
-
-  // Handle search with debounce
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchParams((prev) => ({ ...prev, search: e.target.value, page: "1" }));
-  };
+    fetchInvoices();
+  }, [searchParams]);
 
   // Handle delete with confirmation
   const handleDelete = async (sale: Invoice) => {
@@ -234,36 +245,6 @@ export default function SaleListPage() {
     );
   };
 
-  // Table columns with proper formatting
-  const tableColumns = [
-    {
-      label: "Invoice No",
-      value: "code",
-      className: "font-medium",
-    },
-    {
-      label: "Customer",
-      value: "party_name",
-      className: "truncate max-w-[180px]",
-    },
-    {
-      label: "Date",
-      value: (sale: Invoice) => formatDate(sale.invoice_date),
-      className: "text-gray-600",
-    },
-    {
-      label: "Total Amount",
-      value: (sale: Invoice) =>
-        `৳${parseFloat(sale.total_amount as any).toFixed(2)}`,
-      className: "font-semibold",
-    },
-    {
-      label: "Status",
-      value: (sale: Invoice) => <StatusBadge status={sale.status} />,
-      className: "",
-    },
-  ];
-
   // Table actions
   const tableActions = [
     {
@@ -281,26 +262,6 @@ export default function SaleListPage() {
       className: "hover:bg-red-50 hover:text-red-600",
     },
   ];
-
-  // Calculate totals for invoice
-  const calculateInvoiceTotals = (sale: Invoice) => {
-    const itemsTotal =
-      sale.items?.reduce(
-        (sum, item) =>
-          sum +
-          parseFloat(item.quantity as any) * parseFloat(item.unit_price as any),
-        0
-      ) || 0;
-
-    return {
-      itemsTotal,
-      tax: 0,
-      discount: 0,
-      grandTotal: parseFloat(sale.total_amount as any),
-      paid: parseFloat(sale.paid_amount as any),
-      due: parseFloat(sale.due_amount as any),
-    };
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -330,11 +291,42 @@ export default function SaleListPage() {
             </Button>
           </div>
         </div>
-
+        <div className="flex gap-2 border p-2 rounded">
+          <CustomInput
+            label="From"
+            value={searchParams.from_date}
+            onChange={(e) =>
+              setSearchParams({ ...searchParams, from_date: e.target.value })
+            }
+            type="date"
+          />
+          <CustomInput
+            label="To"
+            value={searchParams.to_date}
+            onChange={(e) =>
+              setSearchParams({ ...searchParams, to_date: e.target.value })
+            }
+            type="date"
+          />
+          <CustomInput
+            label="Search"
+            value={searchParams.search}
+            onChange={(e) =>
+              setSearchParams({ ...searchParams, search: e.target.value })
+            }
+            type="text"
+          />
+        </div>
         <DataTable
           data={sales}
           label="Sales"
-          rowsPerPage={10}
+          pagination={true}
+          page={parseInt(searchParams.page)}
+          onPageChange={(page) =>
+            setSearchParams({ ...searchParams, page: String(page) })
+          }
+          totalPages={paginationInfo.totalPages}
+          rowsPerPage={parseInt(searchParams.limit)}
           printHead={[
             { label: "Invoice No", value: "code" },
             { label: "Customer", value: "party_name" },
