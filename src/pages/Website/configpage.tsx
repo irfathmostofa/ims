@@ -150,6 +150,13 @@ export default function ConfigPage() {
         label="Setup Data"
         selectable
         rowsPerPage={10}
+        showColumns={[
+          { key: "code", label: "Code" },
+          { key: "key_name", label: "Name" },
+          { key: "value", label: "Data" },
+          { key: "group_name", label: "Group" },
+          { key: "status", label: "Status" },
+        ]}
         loading={loading}
         actions={[
           { label: <Pen size={16} />, onClick: handleEdit },
