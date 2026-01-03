@@ -68,7 +68,7 @@ export default function ProductEditPage() {
   const [regularPrice, setRegularPrice] = useState<number | "">("");
   const [variations, setVariations] = useState<Variation[]>([]);
 
-  // ✅ Fetch data
+  // Fetch data
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -136,7 +136,7 @@ export default function ProductEditPage() {
   const removeVariation = (index: number) =>
     setVariations((prev) => prev.filter((_, i) => i !== index));
 
-  // ✅ Image handlers for specific variant
+  // Image handlers for specific variant
   const handleAddImageToVariant = (varIndex: number, url: string) => {
     setVariations((prev) =>
       prev.map((v, i) =>
@@ -186,7 +186,7 @@ export default function ProductEditPage() {
     );
   };
 
-  // ✅ Validation
+  // Validation
   const validateForm = () => {
     if (!name.trim()) {
       toast.error("Please enter a product name");
@@ -207,7 +207,7 @@ export default function ProductEditPage() {
     return true;
   };
 
-  // ✅ Update product
+  // Update product
   const handleUpdate = async () => {
     if (!validateForm()) return;
 

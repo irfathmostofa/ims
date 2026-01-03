@@ -50,7 +50,7 @@ export default function CustomerPage() {
   const [form, setForm] = useState<Partial<Customer>>({});
   const [update, setUpdate] = useState(0);
 
-  // ✅ Load branches
+  // Load branches
   const fetchBranches = async () => {
     try {
       const branch = await apiClient(
@@ -97,13 +97,13 @@ export default function CustomerPage() {
     setUpdate((prev) => prev + 1);
   };
 
-  // ✅ Edit
+  // Edit
   const handleEdit = (s: Customer) => {
     setForm(s);
     setOpen(true);
   };
 
-  // ✅ Delete
+  // Delete
   const handleDelete = async (s: Customer) => {
     if (!confirm(`Delete Customer "${s.name}"?`)) return;
     await remove(s.id!);
@@ -184,7 +184,7 @@ export default function CustomerPage() {
         </Dialog>
       </div>
 
-      {/* ✅ Customer Table */}
+      {/* Customer Table */}
       <DataTable
         data={customer}
         label="Customer List"

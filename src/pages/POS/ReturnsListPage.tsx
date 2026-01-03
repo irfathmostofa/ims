@@ -44,13 +44,13 @@ export default function ReturnsListPage() {
   const [selectedReturn, setSelectedReturn] = useState<ReturnItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // ✅ Delete
+  // Delete
   const handleDelete = (item: ReturnItem) => {
     if (!confirm(`Delete return ${item.returnNo}?`)) return;
     setReturns((prev) => prev.filter((x) => x.id !== item.id));
   };
 
-  // ✅ View
+  // View
   const handleView = (item: ReturnItem) => {
     setSelectedReturn(item);
     setDialogOpen(true);
@@ -64,7 +64,6 @@ export default function ReturnsListPage() {
       <DataTable
         data={returns}
         label="Returns"
-     
         rowsPerPage={10}
         printHead={[
           { label: "Return No", value: "returnNo" },

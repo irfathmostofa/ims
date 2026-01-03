@@ -44,7 +44,7 @@ export default function ReceivablesPage() {
   const [form, setForm] = useState<Partial<Receivable>>({});
   const [open, setOpen] = useState(false);
 
-  // ✅ Add / Update
+  // Add / Update
   const handleSave = () => {
     if (!form.customerId || !form.amount || !form.description) {
       alert("Customer, amount, and description are required");
@@ -80,13 +80,13 @@ export default function ReceivablesPage() {
     setOpen(false);
   };
 
-  // ✅ Edit
+  // Edit
   const handleEdit = (r: Receivable) => {
     setForm(r);
     setOpen(true);
   };
 
-  // ✅ Delete
+  // Delete
   const handleDelete = (r: Receivable) => {
     if (!confirm(`Delete receivable for ${r.customerName}?`)) return;
     setReceivables((prev) => prev.filter((item) => item.id !== r.id));
@@ -172,11 +172,10 @@ export default function ReceivablesPage() {
         </Dialog>
       </div>
 
-      {/* ✅ Data Table */}
+      {/* Data Table */}
       <DataTable
         data={receivables}
         label="Receivables List"
-    
         selectable
         rowsPerPage={10}
         actions={[

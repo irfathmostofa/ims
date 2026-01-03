@@ -11,6 +11,8 @@ import SimpleImageUploader from "@/hook/imageUploader";
 import CategoryTree from "@/components/ui/CategoryTree";
 import { useNavigate } from "react-router-dom";
 import { Info, Image as ImageIcon, Package } from "lucide-react";
+import CustomInput from "@/components/ui/custom/customInput";
+import CustomSelect from "@/components/ui/custom/customSelect";
 
 type Category = {
   id: number;
@@ -37,6 +39,10 @@ type Variation = {
   id: number;
   name?: string;
   additional_price?: number;
+  weight?: number;
+  weight_unit?: string;
+  is_replaceable?: boolean;
+  sku?: string;
   images?: ProductImage[];
 };
 
@@ -62,7 +68,7 @@ export default function ProductAddPage() {
   const [variations, setVariations] = useState<Variation[]>([]);
   const router = useNavigate();
 
-  // ✅ Fetch categories & uoms
+  // Fetch categories & uoms
   const fetchData = async () => {
     try {
       const datauom = await apiClient(
@@ -84,25 +90,31 @@ export default function ProductAddPage() {
   useEffect(() => {
     fetchData();
   }, []);
-
-  // ✅ toggle categories
   const toggleCategory = (catId: number) => {
     setSelectedCategories((prev) =>
       prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId]
     );
   };
 
-  // ✅ variations
   const addVariation = () =>
     setVariations((prev) => [
       ...prev,
-      { id: Date.now(), name: "", additional_price: 0, images: [] },
+      {
+        id: Date.now(),
+        name: "",
+        additional_price: 0,
+        weight: 0,
+        weight_unit: "kg",
+        is_replaceable: false,
+        sku: "",
+        images: [],
+      },
     ]);
 
   const removeVariation = (id: number) =>
     setVariations((prev) => prev.filter((v) => v.id !== id));
 
-  // ✅ Handle image upload for specific variation
+  // Handle image upload for specific variation
   const handleAddImageToVariation = (varId: number, url: string) => {
     setVariations((prev) =>
       prev.map((v) =>
@@ -125,7 +137,7 @@ export default function ProductAddPage() {
     );
   };
 
-  // ✅ Remove image from variation
+  // Remove image from variation
   const handleRemoveImage = (varId: number, imgIndex: number) => {
     setVariations((prev) =>
       prev.map((v) =>
@@ -139,7 +151,7 @@ export default function ProductAddPage() {
     );
   };
 
-  // ✅ Make image primary for variation
+  // Make image primary for variation
   const handleMakePrimary = (varId: number, imgIndex: number) => {
     setVariations((prev) =>
       prev.map((v) =>
@@ -156,7 +168,7 @@ export default function ProductAddPage() {
     );
   };
 
-  // ✅ Validation
+  // Validation
   const validateForm = () => {
     if (!name.trim()) {
       toast.error("Please enter a product name");
@@ -181,7 +193,7 @@ export default function ProductAddPage() {
     return true;
   };
 
-  // ✅ publish
+  // publish
   const handlePublish = async () => {
     if (!validateForm()) return;
 
@@ -191,6 +203,10 @@ export default function ProductAddPage() {
       const variantsData = variations.map((v) => ({
         name: v.name || name, // Use product name if variant name is empty
         additional_price: v.additional_price ?? 0,
+        weight: v.weight ?? 0,
+        weight_unit: v.weight_unit || "kg",
+        is_replaceable: v.is_replaceable || false,
+        sku: v.sku || "",
         images: (v.images || []).map((img) => ({
           url: img.url,
           alt_text: img.alt_text || "Product Image",
@@ -261,12 +277,12 @@ export default function ProductAddPage() {
               placeholder="Write a detailed product description..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full border rounded-md p-3 h-32 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border rounded-md p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           {/* Tabs */}
-          <Tabs defaultValue="general" className="mt-6">
+          <Tabs defaultValue="general" className="mt-2">
             <TabsList className="rounded-lg p-1 bg-gray-100">
               <TabsTrigger value="general" className="gap-2">
                 <Package className="w-4 h-4" />
@@ -346,27 +362,15 @@ export default function ProductAddPage() {
                   </select>
                 </div>
               </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
-                <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-1">Pricing Guidelines</p>
-                  <p>
-                    Cost price is your purchase cost. Selling price is what
-                    customers pay. Regular price can be higher to show
-                    discounts.
-                  </p>
-                </div>
-              </div>
             </TabsContent>
 
             {/* Variations */}
-            <TabsContent value="variations" className="space-y-4 mt-6">
+            <TabsContent value="variations" className="space-y-4 mt-2">
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex gap-3 mb-4">
                 <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-amber-800">
                   <p className="font-medium mb-1">About Variations</p>
-                  <p>
+                  <p className="text-xs">
                     If you don't add variations, a default variant will be
                     created automatically. Each variation can have its own
                     images and additional price.
@@ -378,10 +382,7 @@ export default function ProductAddPage() {
                 <div className="text-center py-12 border-2 border-dashed rounded-lg">
                   <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-600 mb-4">No variations yet</p>
-                  <Button
-                    onClick={addVariation}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
+                  <Button onClick={addVariation} className="btn-bw-primary">
                     Add First Variation
                   </Button>
                 </div>
@@ -405,7 +406,7 @@ export default function ProductAddPage() {
                         </Button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-3 gap-3 items-center">
                         <div>
                           <Label>Variation Name</Label>
                           <Input
@@ -445,6 +446,85 @@ export default function ProductAddPage() {
                             }
                             className="mt-1"
                           />
+                        </div>
+                        <div>
+                          <CustomInput
+                            label="Weight"
+                            type="number"
+                            placeholder="0.00"
+                            value={v.weight ?? ""}
+                            onChange={(e) =>
+                              setVariations((prev) =>
+                                prev.map((x) =>
+                                  x.id === v.id
+                                    ? {
+                                        ...x,
+                                        weight: Number(e.target.value),
+                                      }
+                                    : x
+                                )
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <CustomSelect
+                            label="Weight Unit"
+                            options={[
+                              { value: "kg", label: "Kilogram (kg)" },
+                              { value: "g", label: "Gram (g)" },
+                              { value: "lb", label: "Pound (lb)" },
+                              { value: "oz", label: "Ounce (oz)" },
+                            ]}
+                            value={v.weight_unit ?? ""}
+                            onChange={(value) =>
+                              setVariations((prev) =>
+                                prev.map((x) =>
+                                  x.id === v.id
+                                    ? { ...x, weight_unit: String(value) }
+                                    : x
+                                )
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <CustomInput
+                            label="SKU"
+                            placeholder="Enter SKU"
+                            value={v.sku ?? ""}
+                            onChange={(e) =>
+                              setVariations((prev) =>
+                                prev.map((x) =>
+                                  x.id === v.id
+                                    ? { ...x, sku: e.target.value }
+                                    : x
+                                )
+                              )
+                            }
+                          />
+                        </div>
+                        <div>
+                          <div className="mt-1">
+                            <input
+                              type="checkbox"
+                              checked={v.is_replaceable || false}
+                              onChange={(e) =>
+                                setVariations((prev) =>
+                                  prev.map((x) =>
+                                    x.id === v.id
+                                      ? {
+                                          ...x,
+                                          is_replaceable: e.target.checked,
+                                        }
+                                      : x
+                                  )
+                                )
+                              }
+                              className="mr-2"
+                            />
+                            <span>Allow this variation to be replaceable</span>
+                          </div>
                         </div>
                       </div>
 

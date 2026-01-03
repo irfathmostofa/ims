@@ -48,7 +48,7 @@ export default function TransactionsPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Partial<Transaction>>({});
 
-  // ✅ Save transaction
+  // Save transaction
   const handleSave = () => {
     if (!form.date || !form.type || !form.amount || !form.accountId) {
       alert("Date, Type, Amount, and Account are required");
@@ -85,13 +85,13 @@ export default function TransactionsPage() {
     setOpen(false);
   };
 
-  // ✅ Edit
+  // Edit
   const handleEdit = (t: Transaction) => {
     setForm(t);
     setOpen(true);
   };
 
-  // ✅ Delete
+  // Delete
   const handleDelete = (t: Transaction) => {
     if (!confirm(`Delete transaction "${t.reference || t.id}"?`)) return;
     setTransactions((prev) => prev.filter((tr) => tr.id !== t.id));
@@ -207,11 +207,10 @@ export default function TransactionsPage() {
         </Dialog>
       </div>
 
-      {/* ✅ Transactions Table */}
+      {/* Transactions Table */}
       <DataTable
         data={transactions}
         label="Transactions"
-     
         selectable
         rowsPerPage={10}
         actions={[

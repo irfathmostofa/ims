@@ -60,8 +60,8 @@ export default function SetupWizard() {
 
       {currentStep === 3 && (
         <UserForm
-          branches={setupData.branches || []} // ✅ Pass saved branches
-          roles={setupData.roles || []} // ✅ Pass saved roles
+          branches={setupData.branches || []} // Pass saved branches
+          roles={setupData.roles || []} // Pass saved roles
           onNext={(data) => saveStepData("users", data)}
           onBack={back}
           defaultValues={setupData.users}

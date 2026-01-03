@@ -69,7 +69,7 @@ export default function BranchesPage() {
       let data;
 
       if (form.id) {
-        // ✅ Update
+        // Update
         const updatePayload = {
           code: form.code,
           name: form.name,
@@ -88,7 +88,7 @@ export default function BranchesPage() {
           }
         );
       } else {
-        // ✅ Create
+        // Create
         const createPayload = {
           name: form.name,
           type: form.type,
@@ -153,7 +153,6 @@ export default function BranchesPage() {
     fetchBranches();
   }, [update]);
 
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -210,7 +209,6 @@ export default function BranchesPage() {
       <DataTable
         data={branches}
         label="Branches List"
-
         selectable
         rowsPerPage={10}
         loading={loading}

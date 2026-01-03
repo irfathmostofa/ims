@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 type Role = {
-  id?: number; // ✅ server-generated ID
+  id?: number; // server-generated ID
   name: string;
   description: string;
 };
@@ -24,7 +24,7 @@ export default function RoleForm({ onNext, onBack, defaultValues }: Props) {
     if (defaultValues?.length) setRoles(defaultValues);
   }, [defaultValues]);
 
-  // ✅ Fix for TS 'never' error
+  // Fix for TS 'never' error
   const updateRole = (
     index: number,
     field: "name" | "description",

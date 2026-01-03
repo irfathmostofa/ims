@@ -36,7 +36,7 @@ export default function DiscountPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // ✅ Save / Update
+  // Save / Update
   const handleSave = () => {
     if (!form.name || !form.value) return alert("Please fill all fields");
 
@@ -55,13 +55,13 @@ export default function DiscountPage() {
     setDialogOpen(false);
   };
 
-  // ✅ Edit
+  // Edit
   const handleEdit = (d: Discount) => {
     setForm(d);
     setDialogOpen(true);
   };
 
-  // ✅ Delete
+  // Delete
   const handleDelete = (d: Discount) => {
     if (!confirm(`Delete discount ${d.name}?`)) return;
     setDiscounts((prev) => prev.filter((x) => x.id !== d.id));
@@ -93,7 +93,6 @@ export default function DiscountPage() {
       <DataTable
         data={discounts}
         label="Discount List"
-      
         rowsPerPage={10}
         printHead={[
           { label: "Name", value: "name" },

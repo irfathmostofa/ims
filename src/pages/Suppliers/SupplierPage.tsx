@@ -50,7 +50,7 @@ export default function SupplierPage() {
   const [form, setForm] = useState<Partial<Supplier>>({});
   const [update, setUpdate] = useState(0);
 
-  // ✅ Load branches
+  // Load branches
   const fetchBranches = async () => {
     try {
       const branch = await apiClient(
@@ -97,13 +97,13 @@ export default function SupplierPage() {
     setUpdate((prev) => prev + 1);
   };
 
-  // ✅ Edit
+  // Edit
   const handleEdit = (s: Supplier) => {
     setForm(s);
     setOpen(true);
   };
 
-  // ✅ Delete
+  // Delete
   const handleDelete = async (s: Supplier) => {
     if (!confirm(`Delete supplier "${s.name}"?`)) return;
     await remove(s.id!);
@@ -184,7 +184,7 @@ export default function SupplierPage() {
         </Dialog>
       </div>
 
-      {/* ✅ Supplier Table */}
+      {/* Supplier Table */}
       <DataTable
         data={suppliers}
         label="Supplier List"

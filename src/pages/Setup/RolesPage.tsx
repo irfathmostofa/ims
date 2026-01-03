@@ -59,19 +59,19 @@ export default function RolesPage() {
       return;
     }
 
-    await save(form, form.id); 
+    await save(form, form.id);
     setForm({});
     setOpen(false);
-    setUpdate((prev) => prev + 1); 
+    setUpdate((prev) => prev + 1);
   };
 
-  // ✅ Edit role
+  // Edit role
   const handleEdit = (r: Role) => {
     setForm(r);
     setOpen(true);
   };
 
-  // ✅ Delete role
+  // Delete role
   const handleDelete = async (r: Role) => {
     if (!confirm(`Delete role "${r.name}"?`)) return;
     await remove(r.id!);
@@ -129,7 +129,6 @@ export default function RolesPage() {
       <DataTable
         data={roles}
         label="Roles List"
-    
         selectable
         rowsPerPage={10}
         loading={loading}

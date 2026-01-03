@@ -22,7 +22,7 @@ const CategoryTree: React.FC<Props> = ({
   toggleCategory,
 }) => {
   const renderTree = (cat: Category, level = 0) => {
-    if (!cat || !cat.id) return null; // ✅ prevent null read
+    if (!cat || !cat.id) return null; // prevent null read
 
     return (
       <div key={cat.id} className="pl-3">

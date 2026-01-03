@@ -52,7 +52,7 @@ export default function AccountingPeriodPage() {
     }),
   });
 
-  // ✅ Fetch accounting periods
+  // Fetch accounting periods
   useEffect(() => {
     fetchAll(setPeriods, setLoading);
   }, [update]);
@@ -64,7 +64,7 @@ export default function AccountingPeriodPage() {
     return date.toISOString().split("T")[0];
   };
 
-  // ✅ Save (Create / Update)
+  // Save (Create / Update)
   const handleSave = async () => {
     if (!form.start_date) {
       toast.error("Start date is required");
@@ -96,7 +96,7 @@ export default function AccountingPeriodPage() {
     setUpdate(update + 1);
   };
 
-  // ✅ Edit period
+  // Edit period
   const handleEdit = (period: AccountingPeriod) => {
     setForm({
       ...period,
@@ -107,7 +107,7 @@ export default function AccountingPeriodPage() {
     setOpen(true);
   };
 
-  // ✅ Delete period
+  // Delete period
   const handleDelete = async (period: AccountingPeriod) => {
     const periodName = `${formatDate(period.start_date)} to ${formatDate(
       period.end_date

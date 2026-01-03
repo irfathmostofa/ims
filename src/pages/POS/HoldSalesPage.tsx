@@ -44,13 +44,13 @@ export default function HoldSalesPage() {
   const [selectedHold, setSelectedHold] = useState<HoldSale | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // ✅ Delete
+  // Delete
   const handleDelete = (hold: HoldSale) => {
     if (!confirm(`Delete hold ${hold.holdNo}?`)) return;
     setHolds((prev) => prev.filter((x) => x.id !== hold.id));
   };
 
-  // ✅ View / Resume
+  // View / Resume
   const handleView = (hold: HoldSale) => {
     setSelectedHold(hold);
     setDialogOpen(true);
@@ -69,7 +69,6 @@ export default function HoldSalesPage() {
       <DataTable
         data={holds}
         label="Hold Sales"
-      
         rowsPerPage={10}
         printHead={[
           { label: "Hold No", value: "holdNo" },

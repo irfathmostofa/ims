@@ -33,7 +33,7 @@ export default function UnitPage() {
   const [form, setForm] = useState<Partial<UOM>>({});
   const [loading, setLoading] = useState(false);
   const [update, setUpdate] = useState(0);
-  // ✅ Reusable CRUD hook
+  // Reusable CRUD hook
   const { fetchAll, save, remove } = useCrud<UOM>({
     listUrl: `${import.meta.env.VITE_SERVER}/product/get-uom`,
     createUrl: `${import.meta.env.VITE_SERVER}/product/create-uom`,
@@ -53,12 +53,12 @@ export default function UnitPage() {
       description: data.description,
     }),
   });
-  // ✅ Fetch roles
+  // Fetch roles
   useEffect(() => {
     fetchAll(setUnits, setLoading);
   }, [update]);
 
-  // ✅ Save Role (Create / Update)
+  // Save Role (Create / Update)
   const handleSave = async () => {
     if (!form.name) {
       toast.error("Unit name is required");
@@ -71,13 +71,13 @@ export default function UnitPage() {
     setUpdate((prev) => prev + 1);
   };
 
-  // ✅ Edit role
+  // Edit role
   const handleEdit = (r: UOM) => {
     setForm(r);
     setOpen(true);
   };
 
-  // ✅ Delete role
+  // Delete role
   const handleDelete = async (r: UOM) => {
     if (!confirm(`Delete Unit "${r.name}"?`)) return;
     await remove(r.id!);
@@ -88,7 +88,7 @@ export default function UnitPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Unit of Measurement (UOM)</h1>
-        {/* ✅ Add/Edit Dialog */}
+        {/* Add/Edit Dialog */}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2 btn-bw-primary">
@@ -135,7 +135,7 @@ export default function UnitPage() {
         </Dialog>
       </div>
 
-      {/* ✅ Data Table */}
+      {/* Data Table */}
       <DataTable
         data={units}
         label="Unit List"

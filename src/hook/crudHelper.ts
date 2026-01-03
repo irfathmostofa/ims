@@ -3,8 +3,8 @@ import { apiClient } from "./apiClient";
 
 type CrudOptions<T> = {
   listUrl: string;
-  listMethod?: "GET" | "POST"; // ✅ new
-  listPayload?: any; // ✅ default payload
+  listMethod?: "GET" | "POST"; // new
+  listPayload?: any; // default payload
   createUrl: string;
   updateUrl: string;
   deleteUrl: string;
@@ -25,7 +25,7 @@ export function useCrud<T>({
   const fetchAll = async (
     setData: (data: T[]) => void,
     setLoading?: (val: boolean) => void,
-    payload?: any // ✅ override default payload if needed
+    payload?: any // override default payload if needed
   ) => {
     try {
       setLoading?.(true);

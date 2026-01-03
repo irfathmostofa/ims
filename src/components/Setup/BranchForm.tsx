@@ -14,7 +14,7 @@ type Branch = {
 };
 
 type Props = {
-  company_id: number; // ✅ number, not string
+  company_id: number; // number, not string
   onNext?: (data: Branch[]) => void;
   onBack?: () => void;
   defaultValues?: Branch[];
@@ -33,7 +33,7 @@ export default function BranchForm({
 
   useEffect(() => {
     if (defaultValues?.length) {
-      // ✅ inject companyId
+      // inject companyId
       setBranches(defaultValues.map((b) => ({ ...b, company_id })));
     }
   }, [defaultValues, company_id]);

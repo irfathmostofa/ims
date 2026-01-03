@@ -28,14 +28,14 @@ export default function CompanyForm({ onNext, defaultValues }: Props) {
   }, [defaultValues, reset]);
 
   // Upload logo to Cloudinary
-    const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      try {
-        toast.loading("Uploading logo...");
-        const uploadedUrl = await uploadImageToCloudinary(file);
-        toast.dismiss();
+    try {
+      toast.loading("Uploading logo...");
+      const uploadedUrl = await uploadImageToCloudinary(file);
+      toast.dismiss();
 
       if (uploadedUrl) {
         setValue("logo", uploadedUrl);
@@ -54,7 +54,7 @@ export default function CompanyForm({ onNext, defaultValues }: Props) {
     setLogoPreview(null);
   };
 
-  // ✅ Submit company and save ID into setupData
+  // Submit company and save ID into setupData
   const onSubmit = async (formDataValues: any) => {
     setLoading(true);
 
@@ -75,7 +75,7 @@ export default function CompanyForm({ onNext, defaultValues }: Props) {
 
       toast.success("Company saved successfully!");
 
-      // ✅ Pass only company record into saveData
+      // Pass only company record into saveData
       onNext(company);
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");

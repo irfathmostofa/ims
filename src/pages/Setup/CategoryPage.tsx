@@ -53,7 +53,7 @@ export default function CategoryPage() {
   const [form, setForm] = useState<Partial<Category>>({});
   const [loading, setLoading] = useState(false);
   const [update, setUpdate] = useState(0);
-  // ✅ Reusable CRUD hook
+  // Reusable CRUD hook
   const { fetchAll, save, remove } = useCrud<Category>({
     listUrl: `${import.meta.env.VITE_SERVER}/product/get-product-cat`,
     createUrl: `${import.meta.env.VITE_SERVER}/product/create-product-cat`,
@@ -72,12 +72,12 @@ export default function CategoryPage() {
     }),
   });
 
-  // ✅ Fetch categories
+  // Fetch categories
   useEffect(() => {
     fetchAll(setCategories, setLoading);
   }, [update]);
 
-  // ✅ Save (Create / Update)
+  // Save (Create / Update)
   const handleSave = async () => {
     if (!form.name) {
       toast.error("Category name is required");
@@ -90,20 +90,20 @@ export default function CategoryPage() {
     setUpdate((prev) => prev + 1);
   };
 
-  // ✅ Edit category
+  // Edit category
   const handleEdit = (c: Category) => {
     setForm(c);
     setOpen(true);
   };
 
-  // ✅ Delete category
+  // Delete category
   const handleDelete = async (c: Category) => {
     if (!confirm(`Delete Category "${c.name}"?`)) return;
     await remove(c.id!);
     setUpdate((prev) => prev + 1);
   };
 
-  // ✅ Flattened categories for table & parent select
+  // Flattened categories for table & parent select
   const flattened = flattenCategories(categories);
 
   return (
@@ -111,7 +111,7 @@ export default function CategoryPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Category Management</h1>
 
-        {/* ✅ Add/Edit Dialog */}
+        {/* Add/Edit Dialog */}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger>
             <Button className="btn-bw-primary flex gap-1">
@@ -175,7 +175,7 @@ export default function CategoryPage() {
         </Dialog>
       </div>
 
-      {/* ✅ Data Table */}
+      {/* Data Table */}
       <DataTable
         data={flattened}
         label="Category List"

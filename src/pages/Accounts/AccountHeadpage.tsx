@@ -49,7 +49,7 @@ export default function AccountHeadpage() {
     }),
   });
 
-  // ✅ Fetch categories
+  // Fetch categories
   useEffect(() => {
     fetchAll(setAccounts, setLoading);
   }, [update]);
