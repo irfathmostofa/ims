@@ -56,6 +56,7 @@ import { SimpleNetworkStatusToast } from "./components/ui/NetworkStatusToast";
 import AccountHeadpage from "./pages/Accounts/AccountHeadpage";
 import AccountPage from "./pages/Accounts/AccountPage";
 import AccountingPeriodPage from "./pages/Accounts/AccountingPeriodPage";
+import BulkProductUpload from "./pages/Inventory/BulkProductUpload";
 
 export default function App() {
   return (
@@ -73,6 +74,10 @@ export default function App() {
               <Route
                 path="/inventory/products/add"
                 element={<ProductAddPage />}
+              />
+              <Route
+                path="/inventory/products/bulk"
+                element={<BulkProductUpload />}
               />
               <Route
                 path="/inventory/products/:id"
@@ -158,7 +163,10 @@ export default function App() {
                 element={<AccountHeadpage />}
               />
               <Route path="/accounts/accounts" element={<AccountPage />} />
-              <Route path="/accounts/accounting-period" element={<AccountingPeriodPage />} />
+              <Route
+                path="/accounts/accounting-period"
+                element={<AccountingPeriodPage />}
+              />
               <Route path="/accounts/journals" element={<JournalsPage />} />
               <Route
                 path="/accounts/transactions"
