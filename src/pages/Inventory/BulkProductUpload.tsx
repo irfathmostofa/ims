@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { apiClient } from "@/hook/apiClient";
 
 type Variant = {
@@ -15,10 +15,11 @@ type Variant = {
 };
 
 type ProductPreview = {
+  row: number;
   product_name: string;
-  uom_id: number;
-  cost_price: number;
-  selling_price: number;
+  uom_id: number | null;
+  cost_price: number | string | null;
+  selling_price: number | string | null;
   category: string;
   variant: Variant;
 };
@@ -30,19 +31,73 @@ type PreviewResponse = {
   valid: number;
 };
 
+type ConfirmResponse = {
+  success: boolean;
+  created_count: number;
+  failed_count: number;
+  createdProducts: Array<{ id: number; code: string; name: string }>;
+  failedProducts: Array<{ product: string; error: string; row?: number }>;
+};
+
 export default function BulkProductUpload() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ProductPreview[]>([]);
   const [errors, setErrors] = useState<{ row: number; error: string }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFile(e.target.files?.[0] || null);
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      // Validate file type
+      const validTypes = [
+        ".csv",
+        ".xlsx",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      ];
+      const fileExtension = selectedFile.name.split(".").pop()?.toLowerCase();
+
+      if (
+        !validTypes.some(
+          (type) =>
+            selectedFile.name.toLowerCase().endsWith(type) ||
+            selectedFile.type.includes(type)
+        )
+      ) {
+        alert("Invalid file type. Please upload a CSV or Excel file.");
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        setFile(null);
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        alert("File size too large. Maximum size is 5MB.");
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        setFile(null);
+        return;
+      }
+
+      setFile(selectedFile);
+      setPreview([]);
+      setErrors([]);
+      setSuccessMessage(null);
+    }
   };
 
   const handlePreview = async () => {
-    if (!file) return alert("Please select a file");
+    if (!file) {
+      alert("Please select a file");
+      return;
+    }
+
     setLoading(true);
     setSuccessMessage(null);
 
@@ -52,110 +107,204 @@ export default function BulkProductUpload() {
     try {
       const res = (await apiClient(
         `${import.meta.env.VITE_SERVER}/product/bulk/preview`,
-        { method: "POST", tokenType: "jwt", data: formData }
+        {
+          method: "POST",
+          tokenType: "jwt",
+          data: formData,
+          headers: {}, // Let apiClient handle Content-Type for FormData
+        }
       )) as PreviewResponse;
 
-      setPreview(res.preview);
-      setErrors(res.errors);
+      setPreview(res.preview || []);
+      setErrors(res.errors || []);
+
+      if (res.errors && res.errors.length > 0) {
+        alert(
+          `Found ${res.errors.length} errors in the file. Please fix them before confirming.`
+        );
+      }
     } catch (err: any) {
-      alert(err.message || "Something went wrong");
+      console.error("Preview error:", err);
+      alert(
+        err.message ||
+          "Failed to preview file. Please check the format and try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleConfirm = async () => {
-    if (preview.length === 0) return alert("No products to save");
+    if (preview.length === 0) {
+      alert("No products to save");
+      return;
+    }
 
-    setLoading(true);
+    if (errors.length > 0) {
+      alert("Please fix all errors before confirming.");
+      return;
+    }
+
+    setConfirmLoading(true);
     setSuccessMessage(null);
 
+    // Group products by product_name to combine variants
     const groupedProducts: Record<string, any> = {};
 
     preview.forEach((p) => {
       if (!groupedProducts[p.product_name]) {
         groupedProducts[p.product_name] = {
           name: p.product_name,
-          uom_id: p.uom_id || 1, // add product-level fields
-          cost_price: p.cost_price || 0,
-          selling_price: p.selling_price || 0,
-          categories: [{ name: p.category }],
+          uom_id: p.uom_id,
+          cost_price: p.cost_price,
+          selling_price: p.selling_price,
+          categories: p.category
+            ? [{ name: p.category, is_primary: true }]
+            : [],
           variants: [p.variant],
         };
       } else {
-        groupedProducts[p.product_name].variants.push(p.variant);
+        // Check if variant already exists (by name)
+        const existingVariant = groupedProducts[p.product_name].variants.find(
+          (v: Variant) => v.name === p.variant.name
+        );
+
+        if (!existingVariant) {
+          groupedProducts[p.product_name].variants.push(p.variant);
+        }
       }
     });
 
+    const productsToSave = Object.values(groupedProducts);
+
     try {
-      const res = await fetch(
+      const res = await apiClient(
         `${import.meta.env.VITE_SERVER}/product/bulk/confirm`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({ products: Object.values(groupedProducts) }),
+          tokenType: "jwt",
+          data: { products: productsToSave },
         }
       );
 
-      const data = await res.json();
-      console.log(data);
-      if (data.success) {
+      console.log("Confirm response:", res);
+
+      if (res.success) {
         setSuccessMessage(
-          `Created: ${data.created_count}, Failed: ${data.failed_count}`
+          `✅ Successfully created ${res.created_count} product(s). ${
+            res.failed_count > 0
+              ? `Failed to create ${res.failed_count} product(s). Check console for details.`
+              : ""
+          }`
         );
+
+        // Show failed products if any
+        if (res.failedProducts && res.failedProducts.length > 0) {
+          console.error("Failed products:", res.failedProducts);
+        }
+
+        // Reset form
         setPreview([]);
         setErrors([]);
         setFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
       } else {
-        alert("Failed to save products");
+        alert("Failed to save products. Please try again.");
       }
     } catch (err: any) {
-      alert(err.message || "Something went wrong");
+      console.error("Confirm error:", err);
+      alert(err.message || "Failed to save products. Please try again.");
     } finally {
-      setLoading(false);
+      setConfirmLoading(false);
+    }
+  };
+
+  const handleReset = () => {
+    setFile(null);
+    setPreview([]);
+    setErrors([]);
+    setSuccessMessage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Bulk Product Upload</h1>
+    <div className="p-6 max-w-7xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6 text-gray-800">
+        Bulk Product Upload
+      </h1>
 
-      <input
-        type="file"
-        accept=".csv,.xlsx"
-        onChange={handleFileChange}
-        className="mb-4"
-      />
+      <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+        <h2 className="font-semibold mb-2">Instructions:</h2>
+        <ul className="list-disc list-inside text-sm text-gray-600">
+          <li>Upload a CSV or Excel file with product data</li>
+          <li>
+            Required columns: product_name, uom_id, cost_price, selling_price,
+            variant_name
+          </li>
+          <li>
+            Optional columns: category, additional_price, SKU, weight,
+            weight_unit, images
+          </li>
+          <li>Max file size: 5MB</li>
+        </ul>
+      </div>
 
-      <div className="space-x-2 mb-4">
+      <div className="mb-6">
+        <label className="block mb-2 text-sm font-medium text-gray-700">
+          Select File
+        </label>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv,.xlsx"
+          onChange={handleFileChange}
+          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+        />
+        {file && (
+          <p className="mt-2 text-sm text-gray-600">
+            Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
+          </p>
+        )}
+      </div>
+
+      <div className="space-x-3 mb-6">
         <button
           onClick={handlePreview}
           disabled={loading || !file}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          Preview
+          {loading ? "Processing..." : "Preview"}
         </button>
+
         <button
           onClick={handleConfirm}
-          disabled={loading || preview.length === 0 || errors.length > 0}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+          disabled={confirmLoading || preview.length === 0 || errors.length > 0}
+          className="px-5 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          Confirm & Save
+          {confirmLoading ? "Saving..." : "Confirm & Save"}
+        </button>
+
+        <button
+          onClick={handleReset}
+          className="px-5 py-2.5 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors"
+        >
+          Reset
         </button>
       </div>
 
-      {loading && <p>Processing...</p>}
-
       {errors.length > 0 && (
-        <div className="mb-4 p-2 bg-red-100 rounded">
-          <h2 className="font-semibold">Errors:</h2>
-          <ul className="list-disc list-inside">
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <h2 className="font-semibold text-red-800 mb-2">
+            Errors ({errors.length}):
+          </h2>
+          <ul className="space-y-1 max-h-60 overflow-y-auto">
             {errors.map((e, i) => (
-              <li key={i}>
-                Row {e.row}: {e.error}
+              <li key={i} className="text-sm text-red-700">
+                <span className="font-medium">Row {e.row}:</span> {e.error}
               </li>
             ))}
           </ul>
@@ -163,55 +312,108 @@ export default function BulkProductUpload() {
       )}
 
       {successMessage && (
-        <div className="mb-4 p-2 bg-green-100 rounded">{successMessage}</div>
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-green-800 font-medium">{successMessage}</p>
+        </div>
       )}
 
       {preview.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full border border-gray-300">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="border px-2 py-1">Product Name</th>
-                <th className="border px-2 py-1">Category</th>
-                <th className="border px-2 py-1">Variant Name</th>
-                <th className="border px-2 py-1">Additional Price</th>
-                <th className="border px-2 py-1">SKU</th>
-                <th className="border px-2 py-1">Weight</th>
-                <th className="border px-2 py-1">Weight Unit</th>
-                <th className="border px-2 py-1">Replaceable</th>
-                <th className="border px-2 py-1">Status</th>
-                <th className="border px-2 py-1">Images</th>
-              </tr>
-            </thead>
-            <tbody>
-              {preview.map((p, i) => (
-                <tr key={i}>
-                  <td className="border px-2 py-1">{p.product_name}</td>
-                  <td className="border px-2 py-1">{p.category}</td>
-                  <td className="border px-2 py-1">{p.variant.name}</td>
-                  <td className="border px-2 py-1">
-                    {p.variant.additional_price}
-                  </td>
-                  <td className="border px-2 py-1">{p.variant.SKU || "-"}</td>
-                  <td className="border px-2 py-1">
-                    {p.variant.weight || "-"}
-                  </td>
-                  <td className="border px-2 py-1">
-                    {p.variant.weight_unit || "-"}
-                  </td>
-                  <td className="border px-2 py-1">
-                    {p.variant.is_replaceable ? "Yes" : "No"}
-                  </td>
-                  <td className="border px-2 py-1">
-                    {p.variant.status || "A"}
-                  </td>
-                  <td className="border px-2 py-1">
-                    {p.variant.images?.map((img) => img.url).join(", ") || "-"}
-                  </td>
+        <div className="mt-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">
+              Preview ({preview.length} rows)
+            </h2>
+            <span className="text-sm text-gray-600">
+              Showing {preview.length} of {preview.length} valid rows
+            </span>
+          </div>
+
+          <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
+                    Row
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
+                    Product Name
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
+                    Category
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
+                    UOM ID
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
+                    Cost Price
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
+                    Selling Price
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
+                    Variant
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
+                    +Price
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
+                    SKU
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
+                    Weight
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Images
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {preview.map((p, i) => (
+                  <tr key={i} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
+                      {p.row}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 border-r">
+                      {p.product_name}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
+                      {p.category || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
+                      {p.uom_id || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
+                      {p.cost_price || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
+                      {p.selling_price || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
+                      {p.variant.name}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
+                      {p.variant.additional_price || 0}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
+                      {p.variant.SKU || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
+                      {p.variant.weight
+                        ? `${p.variant.weight} ${
+                            p.variant.weight_unit || ""
+                          }`.trim()
+                        : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500">
+                      {p.variant.images && p.variant.images.length > 0
+                        ? `${p.variant.images.length} image(s)`
+                        : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
