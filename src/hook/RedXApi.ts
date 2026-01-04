@@ -24,19 +24,29 @@ class RedXApi {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${BASE_URL}${endpoint}`;
-    const headers = {
+
+    // Default headers - most endpoints use these
+    const defaultHeaders = {
       "API-ACCESS-TOKEN": `Bearer ${TOKEN}`,
-      "Content-Type": "application/json",
-      ...options.headers,
+      ...(options.method !== "GET" && options.method !== "DELETE"
+        ? { "Content-Type": "application/json" }
+        : {}),
     };
 
-    console.log("RedX API Request:", { url, method: options.method, headers });
+    console.log("RedX API Request:", {
+      url,
+      method: options.method,
+      headers: defaultHeaders,
+      body: options.body ? JSON.parse(options.body as string) : undefined,
+    });
 
     try {
       const response = await fetch(url, {
         ...options,
-        headers,
-        mode: "cors", // Important for CORS requests
+        headers: {
+          ...defaultHeaders,
+          ...options.headers,
+        },
         cache: "no-cache",
       });
 
@@ -46,32 +56,43 @@ class RedXApi {
         response.statusText
       );
 
-      // First, get the response as text
+      // Get the response as text first
       const responseText = await response.text();
       console.log(
         "RedX API Raw Response:",
-        responseText.substring(0, 200) + "..."
+        responseText.substring(0, 500) +
+          (responseText.length > 500 ? "..." : "")
       );
 
       let data: any;
 
-      // Try to parse as JSON if it looks like JSON
-      if (
-        responseText.trim().startsWith("{") ||
-        responseText.trim().startsWith("[")
-      ) {
+      // Try to parse as JSON if there's content
+      if (responseText && responseText.trim()) {
         try {
           data = JSON.parse(responseText);
         } catch (jsonError) {
           console.error("JSON Parse Error:", jsonError);
-          console.error("Problematic JSON string:", responseText);
+          console.error("Response text:", responseText);
 
-          // If it's not valid JSON, return the text
-          data = { message: responseText, raw: responseText };
+          // If it's not JSON but we got a successful response, treat as string message
+          if (response.ok) {
+            data = { message: responseText };
+          } else {
+            data = {
+              error:
+                responseText ||
+                `HTTP ${response.status}: ${response.statusText}`,
+            };
+          }
         }
+      } else if (response.ok) {
+        // Empty successful response
+        data = {};
       } else {
-        // If it's not JSON, return as text
-        data = { message: responseText, raw: responseText };
+        // Empty error response
+        data = {
+          error: `HTTP ${response.status}: ${response.statusText}`,
+        };
       }
 
       if (!response.ok) {
@@ -81,18 +102,26 @@ class RedXApi {
           data: data,
         };
 
-        // Try to extract error message from various response formats
+        // Extract error message from various possible response formats
         if (data.message) {
           error.message = data.message;
         } else if (data.error) {
           error.message = data.error;
         } else if (typeof data === "string") {
           error.message = data;
-        } else if (data.raw && typeof data.raw === "string") {
-          error.message = data.raw.substring(0, 100); // Limit error message length
+        } else if (data.errors && Array.isArray(data.errors)) {
+          error.message = data.errors.join(", ");
+        } else if (data.detail) {
+          error.message = data.detail;
         }
 
-        console.error("RedX API Error:", error);
+        console.error("RedX API Error Details:", {
+          error,
+          url,
+          status: response.status,
+          responseData: data,
+        });
+
         throw error;
       }
 
@@ -101,15 +130,21 @@ class RedXApi {
     } catch (error) {
       console.error("RedX API Request Failed:", error);
 
-      if (error instanceof Error) {
+      if (error instanceof TypeError && error.message.includes("fetch")) {
         throw {
-          message: error.message,
-          name: error.name,
+          message: "Network error. Please check your connection.",
+          status: 0,
+          name: "NetworkError",
         } as ApiError;
+      }
+
+      if (error && typeof error === "object" && "message" in error) {
+        throw error as ApiError;
       }
 
       throw {
         message: "Unknown API error occurred",
+        status: 500,
       } as ApiError;
     }
   }
@@ -126,37 +161,16 @@ class RedXApi {
       console.log("Token exists:", !!TOKEN);
       console.log("Token first 20 chars:", TOKEN.substring(0, 20) + "...");
 
-      // First try a simple HEAD request to check connectivity
-      const testUrl = `${BASE_URL}/areas`;
-      console.log("Testing URL:", testUrl);
+      // Test with the simplest endpoint
+      const data = await this.request<{ areas: Area[] }>("/areas");
 
-      const response = await fetch(testUrl, {
-        method: "HEAD",
-        headers: {
-          "API-ACCESS-TOKEN": `Bearer ${TOKEN}`,
-        },
-      });
-
-      console.log(
-        "Connection Test Status:",
-        response.status,
-        response.statusText
-      );
-
-      if (response.ok) {
-        // Then make actual API call
-        const data = await this.request<{ areas: Area[] }>("/areas");
-        return {
-          success: true,
-          message: "API connection successful",
-          data: data,
-        };
-      } else {
-        return {
-          success: false,
-          message: `Connection failed: ${response.status} ${response.statusText}`,
-        };
-      }
+      return {
+        success: true,
+        message: `API connection successful. Found ${
+          data.areas?.length || 0
+        } areas.`,
+        data: data,
+      };
     } catch (error: any) {
       console.error("Connection Test Error:", error);
       return {
@@ -166,24 +180,37 @@ class RedXApi {
     }
   }
 
-  // Parcel Endpoints
+  // Parcel Endpoints - FIXED based on documentation
   async trackParcel(
     trackingId: string
   ): Promise<{ tracking: TrackingUpdate[] }> {
     console.log("Tracking parcel:", trackingId);
+    // Documentation shows endpoint: /parcel/track/<:parcel_id>
     return this.request(`/parcel/track/${trackingId}`);
   }
 
   async getParcelInfo(trackingId: string): Promise<{ parcel: ParcelInfo }> {
     console.log("Getting parcel info:", trackingId);
+    // Documentation shows endpoint: /parcel/info/<:tracking_id>
     return this.request(`/parcel/info/${trackingId}`);
   }
 
   async createParcel(data: CreateParcelData): Promise<{ tracking_id: string }> {
     console.log("Creating parcel:", data);
+
+    // According to documentation, all fields except merchant_invoice_id, instruction, type, and parcel_details_json are required
+    // Also note: cash_collection_amount and parcel_weight are strings in docs
+    const payload = {
+      ...data,
+      // Ensure required string fields
+      cash_collection_amount: data.cash_collection_amount.toString(),
+      parcel_weight: data.parcel_weight.toString(),
+      value: data.value?.toString() || "0",
+    };
+
     return this.request("/parcel", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
   }
 
@@ -191,6 +218,7 @@ class RedXApi {
     data: UpdateParcelData
   ): Promise<{ success: boolean; message: string }> {
     console.log("Updating parcel:", data);
+    // Documentation shows endpoint: /parcels (not /parcel)
     return this.request("/parcels", {
       method: "PATCH",
       body: JSON.stringify(data),
@@ -198,9 +226,26 @@ class RedXApi {
   }
 
   // Area Endpoints
-  async getAreas(): Promise<{ areas: Area[] }> {
-    console.log("Getting areas...");
-    return this.request("/areas");
+  async getAreas(params?: {
+    post_code?: number;
+    district_name?: string;
+  }): Promise<{ areas: Area[] }> {
+    console.log("Getting areas...", params);
+
+    let endpoint = "/areas";
+    if (params) {
+      const queryParams = new URLSearchParams();
+      if (params.post_code)
+        queryParams.append("post_code", params.post_code.toString());
+      if (params.district_name)
+        queryParams.append("district_name", params.district_name);
+
+      if (queryParams.toString()) {
+        endpoint += `?${queryParams.toString()}`;
+      }
+    }
+
+    return this.request(endpoint);
   }
 
   async getAreasByPostCode(postCode: number): Promise<{ areas: Area[] }> {
@@ -210,12 +255,17 @@ class RedXApi {
 
   async getAreasByDistrict(districtName: string): Promise<{ areas: Area[] }> {
     console.log("Getting areas by district:", districtName);
-    return this.request(`/areas?district_name=${districtName}`);
+    return this.request(
+      `/areas?district_name=${encodeURIComponent(districtName)}`
+    );
   }
 
-  // Pickup Store Endpoints
+  // Pickup Store Endpoints - NOTE: Some might need form data
   async createPickupStore(data: CreateStoreData): Promise<PickupStore> {
     console.log("Creating pickup store:", data);
+
+    // According to sample request in docs, this might need form data
+    // The sample uses --data instead of --data-raw
     return this.request("/pickup/store", {
       method: "POST",
       body: JSON.stringify(data),
@@ -237,6 +287,8 @@ class RedXApi {
   // Charge Calculation
   async calculateCharge(params: ChargeParams): Promise<ChargeResponse> {
     console.log("Calculating charge:", params);
+
+    // Documentation shows all parameters are required
     const query = new URLSearchParams({
       delivery_area_id: params.delivery_area_id.toString(),
       pickup_area_id: params.pickup_area_id.toString(),
@@ -245,6 +297,30 @@ class RedXApi {
     });
 
     return this.request(`/charge/charge_calculator?${query}`);
+  }
+
+  // Utility method to format error messages for display
+  formatErrorMessage(error: ApiError): string {
+    if (error.status === 401) {
+      return "Authentication failed. Please check your API token.";
+    } else if (error.status === 403) {
+      return "Access denied. You don't have permission to perform this action.";
+    } else if (error.status === 404) {
+      return "The requested resource was not found.";
+    } else if (error.status === 422) {
+      return (
+        "Validation error: " +
+        (error.message || "Please check your input data.")
+      );
+    } else if (error.status === 429) {
+      return "Too many requests. Please try again later.";
+    } else if (error.status && error.status >= 500) {
+      return "Server error. Please try again later.";
+    } else if (error.message) {
+      return error.message;
+    }
+
+    return "An unexpected error occurred.";
   }
 }
 

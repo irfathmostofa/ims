@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { apiClient } from "@/hook/apiClient";
+import { useAuthStore } from "@/store/authStore";
 
 type Variant = {
   name: string;
@@ -31,14 +32,6 @@ type PreviewResponse = {
   valid: number;
 };
 
-type ConfirmResponse = {
-  success: boolean;
-  created_count: number;
-  failed_count: number;
-  createdProducts: Array<{ id: number; code: string; name: string }>;
-  failedProducts: Array<{ product: string; error: string; row?: number }>;
-};
-
 export default function BulkProductUpload() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ProductPreview[]>([]);
@@ -47,6 +40,7 @@ export default function BulkProductUpload() {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuthStore();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -58,7 +52,6 @@ export default function BulkProductUpload() {
         "application/vnd.ms-excel",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       ];
-      const fileExtension = selectedFile.name.split(".").pop()?.toLowerCase();
 
       if (
         !validTypes.some(
@@ -111,7 +104,7 @@ export default function BulkProductUpload() {
           method: "POST",
           tokenType: "jwt",
           data: formData,
-          headers: {}, // Let apiClient handle Content-Type for FormData
+          headers: {},
         }
       )) as PreviewResponse;
 
@@ -148,34 +141,70 @@ export default function BulkProductUpload() {
     setConfirmLoading(true);
     setSuccessMessage(null);
 
-    // Group products by product_name to combine variants
+    // Group products by product_name AND uom_id (products can have same name but different UOM)
     const groupedProducts: Record<string, any> = {};
 
     preview.forEach((p) => {
-      if (!groupedProducts[p.product_name]) {
-        groupedProducts[p.product_name] = {
+      if (!p.uom_id) {
+        alert(`Row ${p.row}: UOM ID is required`);
+        return;
+      }
+
+      const key = `${p.product_name}-${p.uom_id}`;
+
+      if (!groupedProducts[key]) {
+        groupedProducts[key] = {
           name: p.product_name,
           uom_id: p.uom_id,
           cost_price: p.cost_price,
           selling_price: p.selling_price,
-          categories: p.category
-            ? [{ name: p.category, is_primary: true }]
-            : [],
-          variants: [p.variant],
+          category: p.category || "",
+          userId: user?.id,
+          status: "A",
+          variants: [
+            {
+              name: p.variant.name,
+              additional_price: p.variant.additional_price || 0,
+              SKU: p.variant.SKU,
+              weight: p.variant.weight,
+              weight_unit: p.variant.weight_unit,
+              images: p.variant.images || [],
+              status: "A",
+            },
+          ],
         };
       } else {
         // Check if variant already exists (by name)
-        const existingVariant = groupedProducts[p.product_name].variants.find(
+        const existingVariant = groupedProducts[key].variants.find(
           (v: Variant) => v.name === p.variant.name
         );
 
         if (!existingVariant) {
-          groupedProducts[p.product_name].variants.push(p.variant);
+          groupedProducts[key].variants.push({
+            name: p.variant.name,
+            additional_price: p.variant.additional_price || 0,
+            SKU: p.variant.SKU,
+            weight: p.variant.weight,
+            weight_unit: p.variant.weight_unit,
+            images: p.variant.images || [],
+            status: "A",
+          });
         }
       }
     });
 
     const productsToSave = Object.values(groupedProducts);
+
+    // Add categories to products that have them
+    const productsWithCategories = productsToSave.map((product: any) => {
+      if (product.category && product.category.trim() !== "") {
+        return {
+          ...product,
+          categories: [{ name: product.category, is_primary: true }],
+        };
+      }
+      return product;
+    });
 
     try {
       const res = await apiClient(
@@ -183,7 +212,7 @@ export default function BulkProductUpload() {
         {
           method: "POST",
           tokenType: "jwt",
-          data: { products: productsToSave },
+          data: { products: productsWithCategories },
         }
       );
 

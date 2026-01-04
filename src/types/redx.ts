@@ -112,3 +112,27 @@ export interface ChargeResponse {
   deliveryCharge: number;
   codCharge: number;
 }
+export interface Product {
+  id: string;
+  name: string;
+  sku: string;
+  price: number;
+  stock: number;
+  category: string;
+  brand?: string;
+  weight?: number;
+  image?: string;
+  description?: string;
+}
+export interface ParcelItem {
+  id: string; // Product ID
+  name: string; // Product name
+  category: string; // Product category
+  value: number; // Price per unit
+  quantity: number; // Quantity
+  weight: number; // Weight per unit in grams
+  sku?: string; // Product SKU
+  brand?: string; // Product brand
+  image?: string; // Product image URL
+  attributes?: Record<string, string>; // For variants
+}

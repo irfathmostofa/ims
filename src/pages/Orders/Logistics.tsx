@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
@@ -25,15 +25,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+
 import { toast } from "sonner";
 import {
   Search,
@@ -54,6 +67,20 @@ import {
   Phone,
   Calendar,
   Filter,
+  Plus,
+  Minus,
+  ShoppingCart,
+  Trash2,
+  Loader2,
+  DollarSign,
+  Weight,
+  Hash,
+  User,
+  PhoneCall,
+  MapPin as MapPinIcon,
+  MessageSquare,
+  ShoppingBag,
+  Package2,
 } from "lucide-react";
 import type {
   Area,
@@ -62,18 +89,30 @@ import type {
   PickupStore,
   ChargeParams,
   ChargeResponse,
+  Product,
+  ParcelItem,
 } from "@/types/redx";
 import { redxApi } from "@/hook/RedXApi";
+import { apiClient } from "@/hook/apiClient";
 
 export const Logistics = () => {
   const [activeTab, setActiveTab] = useState<string>("areas");
   const [loading, setLoading] = useState<boolean>(false);
+  const [productsLoading, setProductsLoading] = useState<boolean>(false);
 
   // States for different tabs
   const [areas, setAreas] = useState<Area[]>([]);
   const [pickupStores, setPickupStores] = useState<PickupStore[]>([]);
   const [filteredAreas, setFilteredAreas] = useState<Area[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Product selection states
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<ParcelItem[]>([]);
+  const [productSearch, setProductSearch] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [categories, setCategories] = useState<string[]>(["All"]);
+  const [showProductDialog, setShowProductDialog] = useState<boolean>(false);
 
   // Charge calculator states
   const [chargeParams, setChargeParams] = useState<ChargeParams>({
@@ -114,12 +153,45 @@ export const Logistics = () => {
     parcel_details_json: [],
   });
 
+  // Calculate totals
+  const parcelTotals = useMemo(() => {
+    const subtotal = selectedProducts.reduce(
+      (sum, item) => sum + item.value * item.quantity,
+      0
+    );
+    const totalWeight = selectedProducts.reduce(
+      (sum, item) => sum + item.weight * item.quantity,
+      0
+    );
+    const totalItems = selectedProducts.reduce(
+      (sum, item) => sum + item.quantity,
+      0
+    );
+
+    return {
+      subtotal,
+      totalWeight,
+      totalItems,
+    };
+  }, [selectedProducts]);
+
   // Load initial data
   useEffect(() => {
     if (activeTab === "areas") {
       loadAreas();
     } else if (activeTab === "stores") {
       loadPickupStores();
+    } else if (activeTab === "create-parcel") {
+      if (!parcelForm.delivery_area_id && areas.length > 0) {
+        const defaultArea = areas.find((a) => a.id === 1);
+        if (defaultArea) {
+          setParcelForm((prev) => ({
+            ...prev,
+            delivery_area: defaultArea.name,
+            delivery_area_id: defaultArea.id,
+          }));
+        }
+      }
     }
   }, [activeTab]);
 
@@ -131,11 +203,49 @@ export const Logistics = () => {
       const filtered = areas.filter(
         (area) =>
           area.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          area.division_name.toLowerCase().includes(searchQuery.toLowerCase())
+          area.division_name
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          area.post_code.toString().includes(searchQuery)
       );
       setFilteredAreas(filtered);
     }
   }, [searchQuery, areas]);
+
+  // Load products function
+  const loadProducts = async () => {
+    setProductsLoading(true);
+    try {
+      const data = await apiClient(
+        `${import.meta.env.VITE_SERVER}/product/get-pos-products`,
+        {
+          data: {
+            category_id:
+              selectedCategory === "All" ? undefined : selectedCategory,
+            search: productSearch.trim() || undefined,
+          },
+          method: "POST",
+          tokenType: "jwt",
+        }
+      );
+
+      if (data.success) {
+        const productsData: Product[] = data.data?.products || [];
+        setProducts(productsData);
+
+        const uniqueCategories = [
+          "All",
+          ...new Set(productsData.map((p) => p.category).filter(Boolean)),
+        ];
+        setCategories(uniqueCategories);
+      }
+    } catch (error: any) {
+      console.error("Failed to load products:", error);
+      toast.error(error.message || "Failed to load products");
+    } finally {
+      setProductsLoading(false);
+    }
+  };
 
   const loadAreas = async () => {
     setLoading(true);
@@ -224,9 +334,9 @@ export const Logistics = () => {
 
     setLoading(true);
     try {
-      toast.success("Pickup store created successfully");
+      const result = await redxApi.createPickupStore(storeForm);
+      toast.success(`Store created successfully! ID: ${result.id}`);
 
-      // Reset form
       setStoreForm({
         name: "",
         phone: "",
@@ -234,8 +344,8 @@ export const Logistics = () => {
         area_id: 0,
       });
 
-      // Refresh stores list
       loadPickupStores();
+      setActiveTab("stores");
     } catch (error: any) {
       console.error("Failed to create store:", error);
       toast.error(error.message || "Failed to create pickup store");
@@ -244,23 +354,114 @@ export const Logistics = () => {
     }
   };
 
+  // Product selection handlers
+  const handleAddProduct = (product: Product) => {
+    const existingItem = selectedProducts.find((p) => p.id === product.id);
+
+    if (existingItem) {
+      setSelectedProducts((prev) =>
+        prev.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        )
+      );
+    } else {
+      const newItem: ParcelItem = {
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        value: product.price,
+        quantity: 1,
+        weight: product.weight || 100,
+        sku: product.sku,
+        brand: product.brand,
+        image: product.image,
+      };
+      setSelectedProducts((prev) => [...prev, newItem]);
+    }
+
+    toast.success(`${product.name} added to parcel`);
+  };
+
+  const handleRemoveProduct = (productId: string) => {
+    setSelectedProducts((prev) => prev.filter((item) => item.id !== productId));
+    toast.success("Product removed");
+  };
+
+  const handleUpdateQuantity = (productId: string, quantity: number) => {
+    if (quantity < 1) {
+      handleRemoveProduct(productId);
+      return;
+    }
+
+    setSelectedProducts((prev) =>
+      prev.map((item) => (item.id === productId ? { ...item, quantity } : item))
+    );
+  };
+
+  const handleClearProducts = () => {
+    setSelectedProducts([]);
+    toast.success("All products cleared");
+  };
+
   const handleCreateParcel = async () => {
-    // Validate required fields
-    if (
-      !parcelForm.customer_name ||
-      !parcelForm.customer_phone ||
-      !parcelForm.delivery_area_id
-    ) {
+    const requiredFields = [
+      parcelForm.customer_name,
+      parcelForm.customer_phone,
+      parcelForm.delivery_area_id,
+      parcelForm.customer_address,
+    ];
+
+    if (requiredFields.some((field) => !field)) {
       toast.error("Please fill all required fields");
+      return;
+    }
+
+    if (selectedProducts.length === 0) {
+      toast.error("Please add at least one product to the parcel");
       return;
     }
 
     setLoading(true);
     try {
-      const result = await redxApi.createParcel(parcelForm);
-      toast.success(`Parcel created! Tracking ID: ${result.tracking_id}`);
+      const totalValue = parcelTotals.subtotal;
+      const totalWeight = parcelTotals.totalWeight;
 
-      // Reset form
+      const parcelDetails = selectedProducts.map((item) => ({
+        name: item.name,
+        category: item.category,
+        value: item.value,
+        quantity: item.quantity,
+        weight: item.weight,
+      }));
+
+      const payload: CreateParcelData = {
+        ...parcelForm,
+        cash_collection_amount: totalValue.toString(),
+        parcel_weight: totalWeight,
+        value: totalValue.toString(),
+        parcel_details_json: parcelDetails,
+      };
+
+      const result = await redxApi.createParcel(payload);
+
+      toast.success(
+        <div className="flex flex-col gap-1">
+          <span className="font-semibold">Parcel Created Successfully!</span>
+          <span>Tracking ID: {result.tracking_id}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={() => copyToClipboard(result.tracking_id)}
+          >
+            <Copy size={14} className="mr-2" />
+            Copy Tracking ID
+          </Button>
+        </div>
+      );
+
       setParcelForm({
         customer_name: "",
         customer_phone: "",
@@ -276,12 +477,20 @@ export const Logistics = () => {
         pickup_store_id: undefined,
         parcel_details_json: [],
       });
+      setSelectedProducts([]);
+      setTrackingId(result.tracking_id);
+      setActiveTab("tracking");
     } catch (error: any) {
       console.error("Failed to create parcel:", error);
       toast.error(error.message || "Failed to create parcel");
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
   };
 
   const getStatusBadge = (status: string) => {
@@ -321,28 +530,183 @@ export const Logistics = () => {
     };
 
     return (
-      <div className={`${config.color} flex items-center gap-1`}>
+      <div
+        className={`${config.color} px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1`}
+      >
         {config.icon}
         {status.replace("-", " ").toUpperCase()}
       </div>
     );
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard");
-  };
+  // Product Dialog Component
+  const ProductDialog = () => (
+    <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
+      <DialogContent className="max-w-6xl max-h-[80vh] overflow-hidden flex flex-col bg-white">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShoppingBag size={20} />
+            Select Products for Parcel
+          </DialogTitle>
+          <DialogDescription>
+            Search and select products to include in the parcel
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-hidden flex flex-col gap-4">
+          {/* Search and Filter */}
+          <div className="flex gap-2">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search products by name, SKU..."
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                className="pl-10 bg-white"
+              />
+            </div>
+            <Select
+              value={selectedCategory}
+              onValueChange={setSelectedCategory}
+            >
+              <SelectTrigger className="w-[180px] bg-white">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                {categories.map((category) => (
+                  <SelectItem
+                    key={category}
+                    value={category}
+                    className="bg-white hover:bg-gray-100"
+                  >
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              onClick={loadProducts}
+              disabled={productsLoading}
+              className="bg-white"
+            >
+              <RefreshCw
+                size={16}
+                className={`${productsLoading ? "animate-spin" : ""}`}
+              />
+            </Button>
+          </div>
+
+          {/* Product Grid */}
+          <div className="flex-1 overflow-auto border rounded-lg bg-white">
+            {productsLoading ? (
+              <div className="flex items-center justify-center h-48 bg-white">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              </div>
+            ) : products.length === 0 ? (
+              <div className="text-center py-12 bg-white">
+                <Package2 className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-600">No products found</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Try a different search or category
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+                {products.map((product) => (
+                  <Card
+                    key={product.id}
+                    className="overflow-hidden hover:shadow-md transition-shadow bg-white"
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex gap-3">
+                        {product.image ? (
+                          <div className="w-16 h-16 rounded-md overflow-hidden">
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-16 h-16 rounded-md bg-gray-100 flex items-center justify-center">
+                            <Package2 className="h-8 w-8 text-gray-400" />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                            <h4 className="font-semibold text-sm line-clamp-2">
+                              {product.name}
+                            </h4>
+                            <Badge
+                              variant="outline"
+                              className="text-xs bg-white"
+                            >
+                              {product.category}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            SKU: {product.sku}
+                          </p>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="font-bold text-green-600">
+                              ৳{product.price}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              Stock: {product.stock}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        className="w-full mt-3 bg-[#003333] hover:bg-[#002222] text-white"
+                        onClick={() => handleAddProduct(product)}
+                        disabled={product.stock === 0}
+                      >
+                        <Plus size={14} className="mr-2" />
+                        Add to Parcel
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter className="flex items-center justify-between bg-white">
+          <div className="text-sm text-gray-600">
+            {products.length} products found
+          </div>
+          <Button
+            onClick={() => setShowProductDialog(false)}
+            className="bg-[#003333] hover:bg-[#002222] text-white"
+          >
+            Done
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <div className="container mx-auto p-4 lg:p-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">RedX Dashboard</h1>
-          <p className="text-gray-600 mt-1">
-            Manage logistics, areas, pickup stores, and track parcels
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <Truck className="h-7 w-7 text-[#003333]" />
+            RedX Logistics Dashboard
+          </h1>
+          <p className="text-gray-600 mt-1 text-sm lg:text-base">
+            Seamless parcel management and delivery operations
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Badge variant="outline" className="gap-1">
+            <Package2 size={12} />
+            {parcelTotals.totalItems} Items
+          </Badge>
           <Button
             variant="outline"
             size="sm"
@@ -359,43 +723,54 @@ export const Logistics = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-7 w-full max-w-4xl">
-          <TabsTrigger value="areas" className="flex items-center gap-2">
+        <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 w-full overflow-x-auto bg-white">
+          <TabsTrigger
+            value="areas"
+            className="flex items-center gap-2 min-w-fit"
+          >
             <MapPin size={16} />
             Areas
           </TabsTrigger>
-          <TabsTrigger value="stores" className="flex items-center gap-2">
+          <TabsTrigger
+            value="stores"
+            className="flex items-center gap-2 min-w-fit"
+          >
             <Store size={16} />
             Pickup Stores
           </TabsTrigger>
-          <TabsTrigger value="calculator" className="flex items-center gap-2">
+          <TabsTrigger
+            value="calculator"
+            className="flex items-center gap-2 min-w-fit"
+          >
             <Calculator size={16} />
-            Charge Calculator
+            Calculator
           </TabsTrigger>
-          <TabsTrigger value="tracking" className="flex items-center gap-2">
+          <TabsTrigger
+            value="tracking"
+            className="flex items-center gap-2 min-w-fit"
+          >
             <Truck size={16} />
             Track Parcel
           </TabsTrigger>
           <TabsTrigger
             value="create-parcel"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 min-w-fit"
           >
             <Package size={16} />
             Create Parcel
           </TabsTrigger>
-          <TabsTrigger value="create-store" className="flex items-center gap-2">
+          <TabsTrigger
+            value="create-store"
+            className="flex items-center gap-2 min-w-fit"
+          >
             <Store size={16} />
             Create Store
-          </TabsTrigger>
-          <TabsTrigger value="quick-tools" className="flex items-center gap-2">
-            <AlertCircle size={16} />
-            Quick Tools
           </TabsTrigger>
         </TabsList>
 
         {/* Areas Tab */}
         <TabsContent value="areas" className="space-y-6">
-          <Card>
+          <Card className="bg-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin size={20} />
@@ -413,7 +788,7 @@ export const Logistics = () => {
                       <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         placeholder="Search areas by name, division, or postal code..."
-                        className="pl-10"
+                        className="pl-10 bg-white"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />
@@ -426,10 +801,15 @@ export const Logistics = () => {
                         setSearchQuery("");
                         loadAreas();
                       }}
+                      className="bg-white"
                     >
                       Clear
                     </Button>
-                    <Button onClick={loadAreas} disabled={loading}>
+                    <Button
+                      onClick={loadAreas}
+                      disabled={loading}
+                      className="bg-[#003333] hover:bg-[#002222] text-white"
+                    >
                       {loading ? "Loading..." : "Refresh Areas"}
                     </Button>
                   </div>
@@ -437,12 +817,12 @@ export const Logistics = () => {
               </div>
 
               {loading ? (
-                <div className="text-center py-8">
+                <div className="text-center py-8 bg-white">
                   <RefreshCw className="h-8 w-8 animate-spin mx-auto text-gray-400" />
                   <p className="mt-2 text-gray-600">Loading areas...</p>
                 </div>
               ) : filteredAreas.length === 0 ? (
-                <div className="text-center py-8 border rounded-lg">
+                <div className="text-center py-8 border rounded-lg bg-white">
                   <MapPin className="h-12 w-12 mx-auto text-gray-400" />
                   <p className="mt-2 text-gray-600">No areas found</p>
                   {searchQuery && (
@@ -452,11 +832,11 @@ export const Logistics = () => {
                   )}
                 </div>
               ) : (
-                <div className="border rounded-lg overflow-hidden">
+                <div className="border rounded-lg overflow-hidden bg-white">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow>
+                        <TableRow className="bg-gray-50">
                           <TableHead>ID</TableHead>
                           <TableHead>Area Name</TableHead>
                           <TableHead>Postal Code</TableHead>
@@ -467,7 +847,7 @@ export const Logistics = () => {
                       </TableHeader>
                       <TableBody>
                         {filteredAreas.map((area) => (
-                          <TableRow key={area.id}>
+                          <TableRow key={area.id} className="hover:bg-gray-50">
                             <TableCell className="font-medium">
                               {area.id}
                             </TableCell>
@@ -478,11 +858,11 @@ export const Logistics = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="outline">{area.post_code}</div>
+                              <div className="font-mono">{area.post_code}</div>
                             </TableCell>
                             <TableCell>{area.division_name}</TableCell>
                             <TableCell>
-                              <div className="secondary">
+                              <div className="font-medium">
                                 Zone {area.zone_id}
                               </div>
                             </TableCell>
@@ -498,6 +878,7 @@ export const Logistics = () => {
                                   }));
                                   setActiveTab("calculator");
                                 }}
+                                className="text-[#003333] hover:text-[#002222] hover:bg-gray-100"
                               >
                                 <Calculator size={14} className="mr-1" />
                                 Calculate
@@ -519,7 +900,7 @@ export const Logistics = () => {
 
           {/* Statistics Card */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
+            <Card className="bg-white">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -532,7 +913,7 @@ export const Logistics = () => {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-white">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -547,7 +928,7 @@ export const Logistics = () => {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-white">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -560,7 +941,7 @@ export const Logistics = () => {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-white">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -578,7 +959,7 @@ export const Logistics = () => {
 
         {/* Pickup Stores Tab */}
         <TabsContent value="stores" className="space-y-6">
-          <Card>
+          <Card className="bg-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Store size={20} />
@@ -595,12 +976,12 @@ export const Logistics = () => {
                   <p className="mt-2 text-gray-600">Loading stores...</p>
                 </div>
               ) : pickupStores.length === 0 ? (
-                <div className="text-center py-8 border rounded-lg">
+                <div className="text-center py-8 border rounded-lg bg-white">
                   <Store className="h-12 w-12 mx-auto text-gray-400" />
                   <p className="mt-2 text-gray-600">No pickup stores found</p>
                   <Button
                     onClick={() => setActiveTab("create-store")}
-                    className="mt-4"
+                    className="mt-4 bg-[#003333] hover:bg-[#002222] text-white"
                   >
                     Create Your First Store
                   </Button>
@@ -608,7 +989,10 @@ export const Logistics = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {pickupStores.map((store) => (
-                    <Card key={store.id} className="overflow-hidden">
+                    <Card
+                      key={store.id}
+                      className="overflow-hidden bg-white hover:shadow-md transition-shadow"
+                    >
                       <CardContent className="p-0">
                         <div className="p-6">
                           <div className="flex items-start justify-between mb-4">
@@ -616,7 +1000,9 @@ export const Logistics = () => {
                               <h3 className="font-bold text-lg">
                                 {store.name}
                               </h3>
-                              <div className="mt-1">ID: {store.id}</div>
+                              <div className="mt-1 text-sm text-gray-500">
+                                ID: {store.id}
+                              </div>
                             </div>
                             <Button
                               variant="ghost"
@@ -626,6 +1012,7 @@ export const Logistics = () => {
                                   `${store.name} - ${store.address}`
                                 )
                               }
+                              className="text-gray-500 hover:text-gray-700"
                             >
                               <Copy size={14} />
                             </Button>
@@ -661,7 +1048,7 @@ export const Logistics = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="w-full"
+                            className="w-full border-[#003333] text-[#003333] hover:bg-[#003333] hover:text-white"
                             onClick={() => {
                               setParcelForm((prev) => ({
                                 ...prev,
@@ -685,7 +1072,7 @@ export const Logistics = () => {
 
         {/* Charge Calculator Tab */}
         <TabsContent value="calculator" className="space-y-6">
-          <Card>
+          <Card className="bg-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calculator size={20} />
@@ -709,12 +1096,16 @@ export const Logistics = () => {
                         }))
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-white">
                         <SelectValue placeholder="Select pickup area" />
                       </SelectTrigger>
                       <SelectContent className="bg-white">
                         {areas.map((area) => (
-                          <SelectItem key={area.id} value={area.id.toString()}>
+                          <SelectItem
+                            key={area.id}
+                            value={area.id.toString()}
+                            className="bg-white hover:bg-gray-100"
+                          >
                             {area.name} ({area.post_code})
                           </SelectItem>
                         ))}
@@ -733,12 +1124,16 @@ export const Logistics = () => {
                         }))
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-white">
                         <SelectValue placeholder="Select delivery area" />
                       </SelectTrigger>
                       <SelectContent className="bg-white">
                         {areas.map((area) => (
-                          <SelectItem key={area.id} value={area.id.toString()}>
+                          <SelectItem
+                            key={area.id}
+                            value={area.id.toString()}
+                            className="bg-white hover:bg-gray-100"
+                          >
                             {area.name} ({area.post_code})
                           </SelectItem>
                         ))}
@@ -759,6 +1154,7 @@ export const Logistics = () => {
                         }))
                       }
                       placeholder="Weight in grams"
+                      className="bg-white"
                     />
                   </div>
 
@@ -775,6 +1171,7 @@ export const Logistics = () => {
                         }))
                       }
                       placeholder="Cash collection amount"
+                      className="bg-white"
                     />
                   </div>
 
@@ -785,7 +1182,7 @@ export const Logistics = () => {
                       !chargeParams.pickup_area_id ||
                       !chargeParams.delivery_area_id
                     }
-                    className="w-full"
+                    className="w-full bg-[#003333] hover:bg-[#002222] text-white"
                   >
                     {loading ? "Calculating..." : "Calculate Charges"}
                   </Button>
@@ -848,7 +1245,7 @@ export const Logistics = () => {
                       </CardContent>
                     </Card>
                   ) : (
-                    <Card className="border-dashed">
+                    <Card className="border-dashed bg-white">
                       <CardContent className="flex flex-col items-center justify-center py-12">
                         <Calculator className="h-12 w-12 text-gray-400 mb-4" />
                         <p className="text-gray-600 text-center">
@@ -868,7 +1265,7 @@ export const Logistics = () => {
 
         {/* Track Parcel Tab */}
         <TabsContent value="tracking" className="space-y-6">
-          <Card>
+          <Card className="bg-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Truck size={20} />
@@ -886,24 +1283,26 @@ export const Logistics = () => {
                       placeholder="Enter RedX Tracking ID (e.g., 21A427TU4BN3R)"
                       value={trackingId}
                       onChange={(e) => setTrackingId(e.target.value)}
-                      className="text-lg"
+                      className="text-lg bg-white"
                     />
                   </div>
-                  <Button onClick={handleTrackParcel} disabled={loading}>
+                  <Button
+                    onClick={handleTrackParcel}
+                    disabled={loading}
+                    className="bg-[#003333] hover:bg-[#002222] text-white"
+                  >
                     {loading ? "Tracking..." : "Track Parcel"}
                   </Button>
                 </div>
 
                 {parcelInfo && (
-                  <Card>
+                  <Card className="bg-white">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="font-bold text-lg">
                           Parcel Information
                         </h3>
-                        <div className="outline">
-                          {getStatusBadge(parcelInfo.status)}
-                        </div>
+                        <div>{getStatusBadge(parcelInfo.status)}</div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -974,7 +1373,7 @@ export const Logistics = () => {
                 )}
 
                 {trackingData && trackingData.length > 0 && (
-                  <Card>
+                  <Card className="bg-white">
                     <CardHeader>
                       <CardTitle>Tracking History</CardTitle>
                     </CardHeader>
@@ -1020,213 +1419,565 @@ export const Logistics = () => {
 
         {/* Create Parcel Tab */}
         <TabsContent value="create-parcel" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package size={20} />
-                Create New Parcel
-              </CardTitle>
-              <CardDescription>
-                Fill in the details to create a new parcel for delivery
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="customer_name">Customer Name *</Label>
-                    <Input
-                      id="customer_name"
-                      value={parcelForm.customer_name}
-                      onChange={(e) =>
-                        setParcelForm((prev) => ({
-                          ...prev,
-                          customer_name: e.target.value,
-                        }))
-                      }
-                      placeholder="Full name"
-                    />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Customer Info */}
+            <div className="lg:col-span-2 space-y-6">
+              <Card className="bg-white">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User size={20} />
+                    Customer Information
+                  </CardTitle>
+                  <CardDescription>
+                    Enter recipient details for delivery
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="customer_name"
+                        className="flex items-center gap-1"
+                      >
+                        <User size={14} />
+                        Customer Name *
+                      </Label>
+                      <Input
+                        id="customer_name"
+                        value={parcelForm.customer_name}
+                        onChange={(e) =>
+                          setParcelForm((prev) => ({
+                            ...prev,
+                            customer_name: e.target.value,
+                          }))
+                        }
+                        placeholder="Full name"
+                        className="bg-white"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="customer_phone"
+                        className="flex items-center gap-1"
+                      >
+                        <PhoneCall size={14} />
+                        Customer Phone *
+                      </Label>
+                      <Input
+                        id="customer_phone"
+                        value={parcelForm.customer_phone}
+                        onChange={(e) =>
+                          setParcelForm((prev) => ({
+                            ...prev,
+                            customer_phone: e.target.value,
+                          }))
+                        }
+                        placeholder="01XXXXXXXXX"
+                        className="bg-white"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="customer_phone">Customer Phone *</Label>
-                    <Input
-                      id="customer_phone"
-                      value={parcelForm.customer_phone}
-                      onChange={(e) =>
-                        setParcelForm((prev) => ({
-                          ...prev,
-                          customer_phone: e.target.value,
-                        }))
-                      }
-                      placeholder="01XXXXXXXXX"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="customer_address">Delivery Address *</Label>
-                  <Textarea
-                    id="customer_address"
-                    value={parcelForm.customer_address}
-                    onChange={(e) =>
-                      setParcelForm((prev) => ({
-                        ...prev,
-                        customer_address: e.target.value,
-                      }))
-                    }
-                    placeholder="Full delivery address"
-                    rows={3}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="delivery_area">Delivery Area *</Label>
-                    <Select
-                      value={parcelForm.delivery_area_id.toString()}
-                      onValueChange={(value) => {
-                        const area = areas.find(
-                          (a) => a.id === parseInt(value)
-                        );
-                        setParcelForm((prev) => ({
-                          ...prev,
-                          delivery_area: area?.name || "",
-                          delivery_area_id: parseInt(value),
-                        }));
-                      }}
+                    <Label
+                      htmlFor="customer_address"
+                      className="flex items-center gap-1"
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select delivery area" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {areas.map((area) => (
-                          <SelectItem key={area.id} value={area.id.toString()}>
-                            {area.name} ({area.post_code})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="parcel_weight">
-                      Parcel Weight (grams) *
+                      <MapPinIcon size={14} />
+                      Delivery Address *
                     </Label>
-                    <Input
-                      id="parcel_weight"
-                      type="number"
-                      value={parcelForm.parcel_weight}
+                    <Textarea
+                      id="customer_address"
+                      value={parcelForm.customer_address}
                       onChange={(e) =>
                         setParcelForm((prev) => ({
                           ...prev,
-                          parcel_weight: parseInt(e.target.value) || 0,
+                          customer_address: e.target.value,
                         }))
                       }
-                      placeholder="Weight in grams"
+                      placeholder="Full delivery address"
+                      rows={3}
+                      className="bg-white"
                     />
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="delivery_area"
+                        className="flex items-center gap-1"
+                      >
+                        <Navigation size={14} />
+                        Delivery Area *
+                      </Label>
+                      <Select
+                        value={parcelForm.delivery_area_id.toString()}
+                        onValueChange={(value) => {
+                          const area = areas.find(
+                            (a) => a.id === parseInt(value)
+                          );
+                          setParcelForm((prev) => ({
+                            ...prev,
+                            delivery_area: area?.name || "",
+                            delivery_area_id: parseInt(value),
+                          }));
+                        }}
+                      >
+                        <SelectTrigger className="bg-white">
+                          <SelectValue placeholder="Select delivery area" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          {areas.map((area) => (
+                            <SelectItem
+                              key={area.id}
+                              value={area.id.toString()}
+                              className="bg-white hover:bg-gray-100"
+                            >
+                              {area.name} ({area.post_code})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="merchant_invoice_id"
+                        className="flex items-center gap-1"
+                      >
+                        <Hash size={14} />
+                        Invoice ID
+                      </Label>
+                      <Input
+                        id="merchant_invoice_id"
+                        value={parcelForm.merchant_invoice_id}
+                        onChange={(e) =>
+                          setParcelForm((prev) => ({
+                            ...prev,
+                            merchant_invoice_id: e.target.value,
+                          }))
+                        }
+                        placeholder="Your reference ID"
+                        className="bg-white"
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="cash_collection_amount">
-                      COD Amount (BDT)
+                    <Label
+                      htmlFor="instruction"
+                      className="flex items-center gap-1"
+                    >
+                      <MessageSquare size={14} />
+                      Delivery Instructions (Optional)
                     </Label>
-                    <Input
-                      id="cash_collection_amount"
-                      type="number"
-                      value={parcelForm.cash_collection_amount}
+                    <Textarea
+                      id="instruction"
+                      value={parcelForm.instruction}
                       onChange={(e) =>
                         setParcelForm((prev) => ({
                           ...prev,
-                          cash_collection_amount: e.target.value,
+                          instruction: e.target.value,
                         }))
                       }
-                      placeholder="Cash on delivery amount"
+                      placeholder="Special instructions for delivery..."
+                      rows={2}
+                      className="bg-white"
                     />
                   </div>
+                </CardContent>
+              </Card>
 
+              {/* Products Section */}
+              <Card className="bg-white">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <ShoppingCart size={20} />
+                        Parcel Contents
+                      </CardTitle>
+                      <CardDescription>
+                        Add products to include in the parcel
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {selectedProducts.length > 0 && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              <Trash2 size={16} className="mr-2" />
+                              Clear All
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="bg-white">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Clear All Products
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to remove all products
+                                from the parcel?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="bg-white">
+                                Cancel
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={handleClearProducts}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Clear All
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                      <Button
+                        onClick={() => setShowProductDialog(true)}
+                        className="bg-[#003333] hover:bg-[#002222] text-white"
+                      >
+                        <Plus size={16} className="mr-2" />
+                        Add Products
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {selectedProducts.length === 0 ? (
+                    <div className="text-center py-8 border-2 border-dashed rounded-lg bg-white">
+                      <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-600">No products added yet</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Click "Add Products" to select items for your parcel
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="border rounded-lg overflow-hidden bg-white">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-gray-50">
+                              <TableHead className="w-[40px]">#</TableHead>
+                              <TableHead>Product</TableHead>
+                              <TableHead className="text-center">
+                                Category
+                              </TableHead>
+                              <TableHead className="text-center">
+                                Quantity
+                              </TableHead>
+                              <TableHead className="text-right">
+                                Price
+                              </TableHead>
+                              <TableHead className="text-right">
+                                Total
+                              </TableHead>
+                              <TableHead className="w-[60px]"></TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {selectedProducts.map((item, index) => (
+                              <TableRow
+                                key={item.id}
+                                className="hover:bg-gray-50"
+                              >
+                                <TableCell>{index + 1}</TableCell>
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium">
+                                      {item.name}
+                                    </div>
+                                    {item.sku && (
+                                      <div className="text-xs text-gray-500">
+                                        SKU: {item.sku}
+                                      </div>
+                                    )}
+                                    <div className="text-xs text-gray-500">
+                                      Weight: {item.weight}g each
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Badge variant="outline" className="bg-white">
+                                    {item.category}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-6 w-6 bg-white"
+                                      onClick={() =>
+                                        handleUpdateQuantity(
+                                          item.id,
+                                          item.quantity - 1
+                                        )
+                                      }
+                                    >
+                                      <Minus size={12} />
+                                    </Button>
+                                    <span className="font-medium w-8 text-center">
+                                      {item.quantity}
+                                    </span>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-6 w-6 bg-white"
+                                      onClick={() =>
+                                        handleUpdateQuantity(
+                                          item.id,
+                                          item.quantity + 1
+                                        )
+                                      }
+                                    >
+                                      <Plus size={12} />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  ৳{item.value}
+                                </TableCell>
+                                <TableCell className="text-right font-semibold">
+                                  ৳{item.value * item.quantity}
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    onClick={() => handleRemoveProduct(item.id)}
+                                  >
+                                    <Trash2 size={16} />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+
+                      {/* Summary */}
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                            <Package2 className="h-8 w-8 text-blue-500" />
+                            <div>
+                              <p className="text-sm text-gray-600">
+                                Total Items
+                              </p>
+                              <p className="text-xl font-bold">
+                                {parcelTotals.totalItems}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                            <Weight className="h-8 w-8 text-green-500" />
+                            <div>
+                              <p className="text-sm text-gray-600">
+                                Total Weight
+                              </p>
+                              <p className="text-xl font-bold">
+                                {parcelTotals.totalWeight}g
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                            <DollarSign className="h-8 w-8 text-purple-500" />
+                            <div>
+                              <p className="text-sm text-gray-600">
+                                Total Value
+                              </p>
+                              <p className="text-xl font-bold">
+                                ৳{parcelTotals.subtotal}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Column - Summary and Actions */}
+            <div className="space-y-6">
+              <Card className="bg-white">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calculator size={20} />
+                    Quick Calculator
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="merchant_invoice_id">
-                      Merchant Invoice ID
+                    <Label className="flex items-center gap-1">
+                      <Weight size={14} />
+                      Estimated Weight
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={parcelTotals.totalWeight}
+                        readOnly
+                        className="text-center font-semibold bg-white"
+                      />
+                      <span className="text-sm text-gray-600">g</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1">
+                      <DollarSign size={14} />
+                      COD Amount
                     </Label>
                     <Input
-                      id="merchant_invoice_id"
-                      value={parcelForm.merchant_invoice_id}
-                      onChange={(e) =>
-                        setParcelForm((prev) => ({
-                          ...prev,
-                          merchant_invoice_id: e.target.value,
-                        }))
-                      }
-                      placeholder="Your reference ID"
+                      value={`৳${parcelTotals.subtotal}`}
+                      readOnly
+                      className="text-center font-semibold text-green-600 bg-white"
                     />
                   </div>
-                </div>
+                  <hr />
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">Delivery Area</p>
+                    <p className="font-semibold text-lg mt-1">
+                      {parcelForm.delivery_area || "Not selected"}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
 
-                <div className="space-y-2">
-                  <Label htmlFor="instruction">
-                    Delivery Instructions (Optional)
-                  </Label>
-                  <Textarea
-                    id="instruction"
-                    value={parcelForm.instruction}
-                    onChange={(e) =>
-                      setParcelForm((prev) => ({
-                        ...prev,
-                        instruction: e.target.value,
-                      }))
-                    }
-                    placeholder="Special instructions for delivery..."
-                    rows={2}
-                  />
-                </div>
+              <Card className="border-green-100 bg-green-50">
+                <CardHeader>
+                  <CardTitle className="text-green-700">
+                    Create Parcel
+                  </CardTitle>
+                  <CardDescription className="text-green-600">
+                    Review details and create parcel
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Items:</span>
+                      <span className="font-medium">
+                        {parcelTotals.totalItems}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Weight:</span>
+                      <span className="font-medium">
+                        {parcelTotals.totalWeight}g
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">COD Value:</span>
+                      <span className="font-semibold text-green-600">
+                        ৳{parcelTotals.subtotal}
+                      </span>
+                    </div>
+                  </div>
 
-                <div className="flex justify-end gap-2 pt-4 border-t">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setParcelForm({
-                        customer_name: "",
-                        customer_phone: "",
-                        delivery_area: "",
-                        delivery_area_id: 0,
-                        customer_address: "",
-                        cash_collection_amount: "0",
-                        parcel_weight: 500,
-                        merchant_invoice_id: "",
-                        instruction: "",
-                        value: "0",
-                        is_closed_box: "false",
-                        pickup_store_id: undefined,
-                        parcel_details_json: [],
-                      });
-                    }}
-                  >
-                    Clear Form
-                  </Button>
-                  <Button
-                    onClick={handleCreateParcel}
-                    disabled={
-                      loading ||
-                      !parcelForm.customer_name ||
-                      !parcelForm.customer_phone ||
-                      !parcelForm.delivery_area_id
-                    }
-                    className="bg-[#003333] hover:bg-[#002222] text-white"
-                  >
-                    {loading ? "Creating Parcel..." : "Create Parcel"}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                  <hr />
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        className="w-full bg-[#003333] hover:bg-[#002222] text-white h-12"
+                        disabled={
+                          loading ||
+                          !parcelForm.customer_name ||
+                          !parcelForm.customer_phone ||
+                          !parcelForm.delivery_area_id ||
+                          !parcelForm.customer_address ||
+                          selectedProducts.length === 0
+                        }
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating...
+                          </>
+                        ) : (
+                          <>
+                            <Package size={18} className="mr-2" />
+                            Create Parcel
+                          </>
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="bg-white">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Confirm Parcel Creation
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          <div className="space-y-2 mt-2">
+                            <p>
+                              Are you sure you want to create this parcel with
+                              the following details?
+                            </p>
+                            <div className="bg-gray-50 p-3 rounded text-sm space-y-1">
+                              <div className="flex justify-between">
+                                <span>Customer:</span>
+                                <span className="font-medium">
+                                  {parcelForm.customer_name}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Delivery Area:</span>
+                                <span className="font-medium">
+                                  {parcelForm.delivery_area}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Total Items:</span>
+                                <span className="font-medium">
+                                  {parcelTotals.totalItems}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>COD Amount:</span>
+                                <span className="font-semibold text-green-600">
+                                  ৳{parcelTotals.subtotal}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-white">
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleCreateParcel}
+                          className="bg-[#003333] hover:bg-[#002222]"
+                        >
+                          Create Parcel
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+
+                  <div className="text-xs text-center text-gray-500 pt-2">
+                    <p>By creating a parcel, you agree to RedX&apos;s</p>
+                    <p>terms and conditions of service.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Create Store Tab */}
         <TabsContent value="create-store">
-          <Card>
+          <Card className="bg-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Store size={20} />
@@ -1251,6 +2002,7 @@ export const Logistics = () => {
                         }))
                       }
                       placeholder="Store name"
+                      className="bg-white"
                     />
                   </div>
 
@@ -1266,6 +2018,7 @@ export const Logistics = () => {
                         }))
                       }
                       placeholder="01XXXXXXXXX"
+                      className="bg-white"
                     />
                   </div>
                 </div>
@@ -1283,6 +2036,7 @@ export const Logistics = () => {
                     }
                     placeholder="Full store address"
                     rows={3}
+                    className="bg-white"
                   />
                 </div>
 
@@ -1297,12 +2051,16 @@ export const Logistics = () => {
                       }))
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white">
                       <SelectValue placeholder="Select area" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       {areas.map((area) => (
-                        <SelectItem key={area.id} value={area.id.toString()}>
+                        <SelectItem
+                          key={area.id}
+                          value={area.id.toString()}
+                          className="bg-white hover:bg-gray-100"
+                        >
                           {area.name} ({area.post_code})
                         </SelectItem>
                       ))}
@@ -1321,6 +2079,7 @@ export const Logistics = () => {
                         area_id: 0,
                       });
                     }}
+                    className="bg-white"
                   >
                     Clear Form
                   </Button>
@@ -1342,124 +2101,10 @@ export const Logistics = () => {
             </CardContent>
           </Card>
         </TabsContent>
-
-        {/* Quick Tools Tab */}
-        <TabsContent value="quick-tools">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertCircle size={20} />
-                Quick Tools
-              </CardTitle>
-              <CardDescription>
-                Useful tools for RedX operations
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Card
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => setActiveTab("calculator")}
-                >
-                  <CardContent className="pt-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Calculator className="h-6 w-6 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold">Quick Calculator</h3>
-                        <p className="text-sm text-gray-600">
-                          Calculate charges instantly
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => setActiveTab("tracking")}
-                >
-                  <CardContent className="pt-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <Truck className="h-6 w-6 text-green-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold">Quick Track</h3>
-                        <p className="text-sm text-gray-600">
-                          Track any parcel instantly
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => loadAreas()}
-                >
-                  <CardContent className="pt-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-purple-100 rounded-lg">
-                        <RefreshCw className="h-6 w-6 text-purple-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold">Refresh Data</h3>
-                        <p className="text-sm text-gray-600">
-                          Reload all data from API
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-                      <CardContent className="pt-6">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-yellow-100 rounded-lg">
-                            <Eye className="h-6 w-6 text-yellow-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-bold">API Status</h3>
-                            <p className="text-sm text-gray-600">
-                              Check RedX API status
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>RedX API Status</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <span className="font-medium">Base URL:</span>
-                        <code className="text-sm bg-gray-100 px-2 py-1 rounded"></code>
-                      </div>
-                      <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                        <span className="font-medium">Status:</span>
-                        <div className="bg-green-100 text-green-800">
-                          Connected
-                        </div>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {/* <p>
-                          Token Status: {TOKEN ? "✓ Configured" : "✗ Missing"}
-                        </p> */}
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
+
+      {/* Product Selection Dialog */}
+      <ProductDialog />
     </div>
   );
 };

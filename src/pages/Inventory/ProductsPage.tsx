@@ -108,12 +108,21 @@ export default function AllProductsPage() {
 
       <div className="flex flex-col md:flex-row justify-between items-center gap-3 mb-4">
         <h1 className="text-2xl font-bold text-bw-900">All Products</h1>
-        <Link
-          to="/inventory/products/add"
-          className="flex items-center gap-2 btn-bw-primary"
-        >
-          <Plus size={18} /> Add Product
-        </Link>
+        <div className="flex gap-4 items-center">
+          {" "}
+          <Link
+            to="/inventory/products/bulk"
+            className="flex items-center gap-2 btn-bw-primary"
+          >
+            <Plus size={18} /> Add Bulk Product
+          </Link>
+          <Link
+            to="/inventory/products/add"
+            className="flex items-center gap-2 btn-bw-primary"
+          >
+            <Plus size={18} /> Add Product
+          </Link>
+        </div>
       </div>
 
       <DataTable
