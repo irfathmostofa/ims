@@ -9,7 +9,6 @@ import {
   Settings,
   SquareArrowOutUpLeft,
   ChevronDown,
-  
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -59,9 +58,7 @@ export default function Header({
           <Menu size={20} className="text-bw-50" />
         </button>
 
-        <p className="flex gap-2 text-amber-50 border-l-1 sm:border-l-none p-5 ">
-          {time}
-        </p>
+        <p className="flex gap-2 text-amber-50  p-5 ">{time}</p>
       </div>
 
       {/* Right - User Actions */}

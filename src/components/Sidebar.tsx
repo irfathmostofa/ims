@@ -161,7 +161,7 @@ export default function Sidebar({
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         {/* Brand */}
-        <div className="h-16 flex-shrink-0 flex items-center justify-between border-b border-bw-200 px-4">
+        <div className="h-16 flex-shrink-0 flex items-center justify-between px-4">
           <h1
             className="text-4xl font-bold text-bw-50  tracking-tight"
             style={{ fontFamily: "'Montserrat', sans-serif" }}
