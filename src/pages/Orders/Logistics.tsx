@@ -53,7 +53,7 @@ export const Logistics = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 w-full overflow-x-auto bg-white">
+        <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 w-full  bg-white">
           <TabsTrigger
             value="areas"
             className="flex items-center gap-2 min-w-fit"
