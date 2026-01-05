@@ -60,6 +60,8 @@ export interface CreateParcelData {
     name: string;
     category: string;
     value: number;
+    quantity?: number;
+    weight?: number;
   }>;
 }
 
@@ -112,37 +114,29 @@ export interface ChargeResponse {
   deliveryCharge: number;
   codCharge: number;
 }
-export type Product = {
+
+// Product Types
+export interface Product {
   id: number;
-  product_id: number;
-  variant_id: number;
-  code: string;
-  product_name: string;
-  variant_name: string;
-  display_name: string;
-  description: string;
-  selling_price: number;
-  cost_price: number;
-  additional_price: number;
-  uom_symbol: string;
-  uom_name: string;
-  category_name: string;
-  stock_qty: number;
-  status: string;
-  image: string;
+  name: string;
   sku: string;
-  weight: number;
-  variant_status: string;
-};
+  price: number;
+  stock: number;
+  category: string;
+  brand?: string;
+  weight?: number;
+  image?: string;
+  description?: string;
+}
+
 export interface ParcelItem {
-  id: string; // Product ID
-  name: string; // Product name
-  category: string; // Product category
-  value: number; // Price per unit
-  quantity: number; // Quantity
-  weight: number; // Weight per unit in grams
-  sku?: string; // Product SKU
-  brand?: string; // Product brand
-  image?: string; // Product image URL
-  attributes?: Record<string, string>; // For variants
+  id: string;
+  name: string;
+  category: string;
+  value: number;
+  quantity: number;
+  weight: number;
+  sku?: string;
+  brand?: string;
+  image?: string;
 }

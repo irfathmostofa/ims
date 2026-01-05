@@ -9,6 +9,7 @@ interface InputProps {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
   disabled?: boolean;
+  readonly?: boolean;
   required?: boolean;
   className?: string;
 }
@@ -22,6 +23,7 @@ const CustomInput: React.FC<InputProps> = ({
   onChange,
   error,
   disabled = false,
+  readonly = false,
   required = false,
   className = "",
 }) => {
@@ -40,6 +42,7 @@ const CustomInput: React.FC<InputProps> = ({
         value={value}
         onChange={onChange}
         disabled={disabled}
+        readOnly={readonly}
         className={`
           w-full rounded-lg border px-3 py-2 text-sm
           transition focus:outline-none focus:ring-2
@@ -49,6 +52,7 @@ const CustomInput: React.FC<InputProps> = ({
               : "border-gray-300 focus:ring-blue-500"
           }
           ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}
+          ${readonly ? "bg-gray-50 cursor-default" : ""}
           ${className}
         `}
       />
