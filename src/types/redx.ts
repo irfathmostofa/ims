@@ -112,18 +112,28 @@ export interface ChargeResponse {
   deliveryCharge: number;
   codCharge: number;
 }
-export interface Product {
-  id: string;
-  name: string;
+export type Product = {
+  id: number;
+  product_id: number;
+  variant_id: number;
+  code: string;
+  product_name: string;
+  variant_name: string;
+  display_name: string;
+  description: string;
+  selling_price: number;
+  cost_price: number;
+  additional_price: number;
+  uom_symbol: string;
+  uom_name: string;
+  category_name: string;
+  stock_qty: number;
+  status: string;
+  image: string;
   sku: string;
-  price: number;
-  stock: number;
-  category: string;
-  brand?: string;
-  weight?: number;
-  image?: string;
-  description?: string;
-}
+  weight: number;
+  variant_status: string;
+};
 export interface ParcelItem {
   id: string; // Product ID
   name: string; // Product name

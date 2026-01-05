@@ -82,6 +82,10 @@ import {
   ShoppingBag,
   Package2,
 } from "lucide-react";
+import { redxApi } from "@/hook/RedXApi";
+import { useQuickStore } from "@/store/quickStore";
+
+// Import proper types from your types file
 import type {
   Area,
   CreateParcelData,
@@ -91,14 +95,19 @@ import type {
   ChargeResponse,
   Product,
   ParcelItem,
+  ParcelInfo as RedXParcelInfo,
+  TrackingUpdate,
 } from "@/types/redx";
-import { redxApi } from "@/hook/RedXApi";
-import { apiClient } from "@/hook/apiClient";
 
 export const Logistics = () => {
   const [activeTab, setActiveTab] = useState<string>("areas");
   const [loading, setLoading] = useState<boolean>(false);
   const [productsLoading, setProductsLoading] = useState<boolean>(false);
+
+  // Get products and categories from store - ensure proper typing
+  const store = useQuickStore();
+  const products = store.products || [];
+  const categories = store.categories || [];
 
   // States for different tabs
   const [areas, setAreas] = useState<Area[]>([]);
@@ -107,11 +116,9 @@ export const Logistics = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Product selection states
-  const [products, setProducts] = useState<Product[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<ParcelItem[]>([]);
   const [productSearch, setProductSearch] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [categories, setCategories] = useState<string[]>(["All"]);
   const [showProductDialog, setShowProductDialog] = useState<boolean>(false);
 
   // Charge calculator states
@@ -125,8 +132,8 @@ export const Logistics = () => {
 
   // Parcel tracking
   const [trackingId, setTrackingId] = useState<string>("");
-  const [trackingData, setTrackingData] = useState<any>(null);
-  const [parcelInfo, setParcelInfo] = useState<any>(null);
+  const [trackingData, setTrackingData] = useState<TrackingUpdate[]>([]);
+  const [parcelInfo, setParcelInfo] = useState<RedXParcelInfo | null>(null);
 
   // Create store form
   const [storeForm, setStoreForm] = useState<CreateStoreData>({
@@ -212,41 +219,6 @@ export const Logistics = () => {
     }
   }, [searchQuery, areas]);
 
-  // Load products function
-  const loadProducts = async () => {
-    setProductsLoading(true);
-    try {
-      const data = await apiClient(
-        `${import.meta.env.VITE_SERVER}/product/get-pos-products`,
-        {
-          data: {
-            category_id:
-              selectedCategory === "All" ? undefined : selectedCategory,
-            search: productSearch.trim() || undefined,
-          },
-          method: "POST",
-          tokenType: "jwt",
-        }
-      );
-
-      if (data.success) {
-        const productsData: Product[] = data.data?.products || [];
-        setProducts(productsData);
-
-        const uniqueCategories = [
-          "All",
-          ...new Set(productsData.map((p) => p.category).filter(Boolean)),
-        ];
-        setCategories(uniqueCategories);
-      }
-    } catch (error: any) {
-      console.error("Failed to load products:", error);
-      toast.error(error.message || "Failed to load products");
-    } finally {
-      setProductsLoading(false);
-    }
-  };
-
   const loadAreas = async () => {
     setLoading(true);
     try {
@@ -315,7 +287,7 @@ export const Logistics = () => {
       console.error("Tracking failed:", error);
       toast.error(error.message || "Failed to track parcel");
       setParcelInfo(null);
-      setTrackingData(null);
+      setTrackingData([]);
     } finally {
       setLoading(false);
     }
@@ -356,32 +328,35 @@ export const Logistics = () => {
 
   // Product selection handlers
   const handleAddProduct = (product: Product) => {
-    const existingItem = selectedProducts.find((p) => p.id === product.id);
+    const existingItem = selectedProducts.find(
+      (p) => p.id === product.id.toString()
+    );
 
     if (existingItem) {
       setSelectedProducts((prev) =>
         prev.map((item) =>
-          item.id === product.id
+          item.id === product.id.toString()
             ? { ...item, quantity: item.quantity + 1 }
             : item
         )
       );
     } else {
+      // Convert Product to ParcelItem
       const newItem: ParcelItem = {
-        id: product.id,
-        name: product.name,
-        category: product.category,
-        value: product.price,
+        id: product.code,
+        name: product.product_name,
+        category: product.category_name || "Uncategorized",
+        value: product.selling_price || 0,
         quantity: 1,
-        weight: product.weight || 100,
+        weight: product.weight,
         sku: product.sku,
-        brand: product.brand,
+        brand: "non-branded",
         image: product.image,
       };
       setSelectedProducts((prev) => [...prev, newItem]);
     }
 
-    toast.success(`${product.name} added to parcel`);
+    toast.success(`${product.product_name} added to parcel`);
   };
 
   const handleRemoveProduct = (productId: string) => {
@@ -428,6 +403,7 @@ export const Logistics = () => {
       const totalValue = parcelTotals.subtotal;
       const totalWeight = parcelTotals.totalWeight;
 
+      // Prepare parcel details for API
       const parcelDetails = selectedProducts.map((item) => ({
         name: item.name,
         category: item.category,
@@ -436,6 +412,7 @@ export const Logistics = () => {
         weight: item.weight,
       }));
 
+      // Prepare API payload
       const payload: CreateParcelData = {
         ...parcelForm,
         cash_collection_amount: totalValue.toString(),
@@ -462,6 +439,7 @@ export const Logistics = () => {
         </div>
       );
 
+      // Reset form
       setParcelForm({
         customer_name: "",
         customer_phone: "",
@@ -565,36 +543,6 @@ export const Logistics = () => {
                 className="pl-10 bg-white"
               />
             </div>
-            <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger className="w-[180px] bg-white">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                {categories.map((category) => (
-                  <SelectItem
-                    key={category}
-                    value={category}
-                    className="bg-white hover:bg-gray-100"
-                  >
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              onClick={loadProducts}
-              disabled={productsLoading}
-              className="bg-white"
-            >
-              <RefreshCw
-                size={16}
-                className={`${productsLoading ? "animate-spin" : ""}`}
-              />
-            </Button>
           </div>
 
           {/* Product Grid */}
@@ -615,45 +563,32 @@ export const Logistics = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                 {products.map((product) => (
                   <Card
-                    key={product.id}
+                    key={product.code}
                     className="overflow-hidden hover:shadow-md transition-shadow bg-white"
                   >
                     <CardContent className="p-4">
                       <div className="flex gap-3">
-                        {product.image ? (
-                          <div className="w-16 h-16 rounded-md overflow-hidden">
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-16 h-16 rounded-md bg-gray-100 flex items-center justify-center">
-                            <Package2 className="h-8 w-8 text-gray-400" />
-                          </div>
-                        )}
                         <div className="flex-1">
                           <div className="flex justify-between items-start">
                             <h4 className="font-semibold text-sm line-clamp-2">
-                              {product.name}
+                              {product.product_name}
                             </h4>
                             <Badge
                               variant="outline"
                               className="text-xs bg-white"
                             >
-                              {product.category}
+                              {product.category_name || "Uncategorized"}
                             </Badge>
                           </div>
                           <p className="text-xs text-gray-500 mt-1">
-                            SKU: {product.sku}
+                            SKU: {"N/A"}
                           </p>
                           <div className="flex items-center justify-between mt-2">
                             <span className="font-bold text-green-600">
-                              ৳{product.price}
+                              ৳{product.selling_price || 0}
                             </span>
                             <span className="text-xs text-gray-500">
-                              Stock: {product.stock}
+                              Stock: {product.stock_qty || 0}
                             </span>
                           </div>
                         </div>
@@ -662,7 +597,7 @@ export const Logistics = () => {
                         size="sm"
                         className="w-full mt-3 bg-[#003333] hover:bg-[#002222] text-white"
                         onClick={() => handleAddProduct(product)}
-                        disabled={product.stock === 0}
+                        disabled={(product.stock_qty || 0) === 0}
                       >
                         <Plus size={14} className="mr-2" />
                         Add to Parcel
@@ -1379,35 +1314,37 @@ export const Logistics = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        {trackingData.map((update: any, index: number) => (
-                          <div key={index} className="flex gap-4">
-                            <div className="flex flex-col items-center">
-                              <div
-                                className={`w-3 h-3 rounded-full ${
-                                  index === 0 ? "bg-green-500" : "bg-gray-300"
-                                }`}
-                              />
-                              {index < trackingData.length - 1 && (
-                                <div className="w-0.5 h-full bg-gray-300 mt-1" />
-                              )}
-                            </div>
-                            <div className="flex-1 pb-4">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className="font-medium">
-                                    {update.message_en}
-                                  </p>
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    {update.message_bn}
+                        {trackingData.map(
+                          (update: TrackingUpdate, index: number) => (
+                            <div key={index} className="flex gap-4">
+                              <div className="flex flex-col items-center">
+                                <div
+                                  className={`w-3 h-3 rounded-full ${
+                                    index === 0 ? "bg-green-500" : "bg-gray-300"
+                                  }`}
+                                />
+                                {index < trackingData.length - 1 && (
+                                  <div className="w-0.5 h-full bg-gray-300 mt-1" />
+                                )}
+                              </div>
+                              <div className="flex-1 pb-4">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <p className="font-medium">
+                                      {update.message_en}
+                                    </p>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                      {update.message_bn}
+                                    </p>
+                                  </div>
+                                  <p className="text-sm text-gray-500 whitespace-nowrap">
+                                    {new Date(update.time).toLocaleString()}
                                   </p>
                                 </div>
-                                <p className="text-sm text-gray-500 whitespace-nowrap">
-                                  {new Date(update.time).toLocaleString()}
-                                </p>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        )}
                       </div>
                     </CardContent>
                   </Card>
