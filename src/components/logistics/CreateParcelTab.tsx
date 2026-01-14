@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import  { useState, useEffect, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -46,7 +46,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Search,
+ 
   Calculator,
   Package,
   Plus,
@@ -56,9 +56,7 @@ import {
   Loader2,
   DollarSign,
   Weight,
-  Hash,
   User,
-  PhoneCall,
   MapPin as MapPinIcon,
   MessageSquare,
   ShoppingBag,
@@ -227,7 +225,7 @@ export const CreateParcelTab = () => {
       );
     } else {
       const price = parsePrice(product.selling_price);
-      const stock = parseStock(product.stock_qty);
+
 
       const newItem: ParcelItem = {
         id: productId,

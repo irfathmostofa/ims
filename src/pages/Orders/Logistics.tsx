@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Truck,
@@ -42,7 +42,10 @@ export const Logistics = () => {
             variant="outline"
             size="sm"
             onClick={() => {
-              // Add refresh logic if needed
+              setLoading(true);
+              setTimeout(() => {
+                setLoading(false);
+              }, 1000);
             }}
             disabled={loading}
           >

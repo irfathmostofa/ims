@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import  { useState } from "react";
 import {
   Card,
   CardContent,
@@ -20,7 +20,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Search,
   MapPin,
-  Calculator,
   Navigation,
   Filter,
   Calendar,
