@@ -57,6 +57,7 @@ import AccountHeadpage from "./pages/Accounts/AccountHeadpage";
 import AccountPage from "./pages/Accounts/AccountPage";
 import AccountingPeriodPage from "./pages/Accounts/AccountingPeriodPage";
 import BulkProductUpload from "./pages/Inventory/BulkProductUpload";
+import ThemePage from "./pages/Website/ThemePage";
 
 export default function App() {
   return (
@@ -185,6 +186,7 @@ export default function App() {
                 element={<PurchaseReportPage />}
               />
               <Route path="/config" element={<ConfigPage />} />
+              <Route path="/theme" element={<ThemePage />} />
             </Route>
           </Route>
 

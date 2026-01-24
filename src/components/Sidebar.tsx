@@ -124,8 +124,8 @@ const navItems: NavItem[] = [
     icon: Globe2,
     children: [
       { name: "Config", path: "/config" },
-      { name: "Tamplate", path: "/under-construction" },
-      { name: "Visit Website", path: "https://rasian-mart.netlify.app/" },
+      { name: "Theme", path: "/theme" },
+      { name: "Visit Website", path: "https://inventory-mart.netlify.app/" },
     ],
   },
 ];
@@ -141,7 +141,7 @@ export default function Sidebar({
 
   const toggleMenu = (name: string) => {
     setOpenMenus((prev) =>
-      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
     );
   };
 
