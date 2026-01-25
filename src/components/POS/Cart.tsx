@@ -100,8 +100,8 @@ export default function Cart({
                 item.id &&
                 item.name &&
                 typeof item.price === "number" &&
-                typeof item.quantity === "number"
-            )
+                typeof item.quantity === "number",
+            ),
         );
         setSavedCarts(validCarts);
       }
@@ -215,7 +215,7 @@ export default function Cart({
               </button>
             </DialogTrigger>
 
-            <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col bg-amber-50">
               <DialogHeader>
                 <DialogTitle>Saved Carts</DialogTitle>
               </DialogHeader>
@@ -431,7 +431,7 @@ export default function Cart({
                         />
                         <span className="text-sm capitalize">{method}</span>
                       </label>
-                    )
+                    ),
                   )}
                 </div>
               </div>
@@ -468,7 +468,7 @@ export default function Cart({
                   Remaining: ৳
                   {Math.max(
                     total - parseFloat(partialAmount || "0"),
-                    0
+                    0,
                   ).toFixed(2)}
                 </div>
               </div>

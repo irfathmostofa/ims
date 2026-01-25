@@ -124,7 +124,7 @@ export default function GRNPage() {
             total_pages: 1,
             has_next: false,
             has_prev: false,
-          }
+          },
         );
       }
     } catch (err: any) {
@@ -205,7 +205,7 @@ export default function GRNPage() {
       items: prev.items.map((i) =>
         i.po_item_id === po_item_id
           ? { ...i, receivedQty: Math.min(Math.max(0, value), i.leftToReceive) }
-          : i
+          : i,
       ),
     }));
   };
@@ -234,7 +234,7 @@ export default function GRNPage() {
             notes: i.notes || null,
           })),
       };
-
+      console.log(payload);
       const url = form.id
         ? `${import.meta.env.VITE_SERVER}/po/update-grn/${form.id}`
         : `${import.meta.env.VITE_SERVER}/po/grn`;
@@ -269,7 +269,7 @@ export default function GRNPage() {
         {
           method: "DELETE",
           tokenType: "jwt",
-        }
+        },
       );
       if (res.success) {
         toast.success("GRN deleted successfully");
@@ -437,7 +437,7 @@ export default function GRNPage() {
                               onChange={(e) =>
                                 handleItemChange(
                                   item.po_item_id,
-                                  Number(e.target.value)
+                                  Number(e.target.value),
                                 )
                               }
                               min={0}
@@ -509,10 +509,10 @@ export default function GRNPage() {
                         selectedGRN.status === "RECEIVED"
                           ? "bg-green-100 text-green-800"
                           : selectedGRN.status === "PENDING"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : selectedGRN.status === "PARTIALLY_RECEIVED"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-gray-100 text-gray-800"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : selectedGRN.status === "PARTIALLY_RECEIVED"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-gray-100 text-gray-800"
                       }`}
                     >
                       {formatStatus(selectedGRN.status)}
