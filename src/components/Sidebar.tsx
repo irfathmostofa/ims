@@ -115,6 +115,8 @@ const navItems: NavItem[] = [
     children: [
       { name: "Company Info", path: "/setup/company" },
       { name: "Branches", path: "/setup/branches" },
+      { name: "Payment Method", path: "/setup/payment-methods" },
+      { name: "Delivary Method", path: "/setup/delivery-methods" },
       { name: "Roles", path: "/setup/roles" },
       { name: "Users", path: "/setup/users" },
     ],

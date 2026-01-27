@@ -58,6 +58,8 @@ import AccountPage from "./pages/Accounts/AccountPage";
 import AccountingPeriodPage from "./pages/Accounts/AccountingPeriodPage";
 import BulkProductUpload from "./pages/Inventory/BulkProductUpload";
 import ThemePage from "./pages/Website/ThemePage";
+import DeliveryMethodPage from "./pages/Setup/DeliveryMethodPage";
+import PaymentMethodPage from "./pages/Setup/PaymentMethodPage";
 
 export default function App() {
   return (
@@ -106,11 +108,22 @@ export default function App() {
               <Route path="/setup/roles" element={<RolesPage />} />
               <Route path="/setup/company" element={<CompanyPage />} />
               <Route path="/setup/users" element={<UsersPage />} />
+              {/* payment */}
+              <Route
+                path="/setup/payment-methods"
+                element={<PaymentMethodPage />}
+              />
+              {/* delivery */}
+              <Route
+                path="/setup/delivery-methods"
+                element={<DeliveryMethodPage />}
+              />
               {/* Sale */}
               <Route path="/sales/sale-list" element={<SaleListPage />} />
               <Route path="/sales/returns-list" element={<ReturnsListPage />} />
               <Route path="/sales/hold" element={<HoldSalesPage />} />
               <Route path="/sales/discounts" element={<DiscountPage />} />
+
               {/* Procurement */}
               <Route
                 path="/procurement/purchase-orders"

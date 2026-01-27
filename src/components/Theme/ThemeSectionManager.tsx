@@ -767,7 +767,7 @@ const ConfigEditorModal: React.FC<ConfigEditorModalProps> = ({
           <DialogTitle>Configure {section.name}</DialogTitle>
           <DialogDescription>
             Edit configuration for{" "}
-            {getVariantDisplayName(section.component_variant_id)}
+            {/* {getVariantDisplayName(section.component_variant_id)} */}
           </DialogDescription>
         </DialogHeader>
 
@@ -2278,11 +2278,6 @@ export default function ThemeSectionManager({
                             <p className="text-sm text-gray-500 mt-1">
                               {variant.description}
                             </p>
-                            {variant.recommended && (
-                              <Badge className="mt-2 bg-green-100 text-green-800">
-                                Recommended
-                              </Badge>
-                            )}
                           </div>
                         </div>
                       </button>
