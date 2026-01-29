@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Pen, Trash, Plus } from "lucide-react";
+import { Pen, Trash, Plus, Eye } from "lucide-react";
 import { DataTable } from "@/components/ui/dataTable";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import {
 import { apiClient } from "@/hook/apiClient";
 import { toast } from "sonner";
 import { useCrud } from "@/hook/crudHelper";
+import { useNavigate } from "react-router-dom";
 
 type Customer = {
   id: number;
@@ -49,13 +50,13 @@ export default function CustomerPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Partial<Customer>>({});
   const [update, setUpdate] = useState(0);
-
+  const navigate = useNavigate();
   // Load branches
   const fetchBranches = async () => {
     try {
       const branch = await apiClient(
         `${import.meta.env.VITE_SERVER}/setup/get-branches`,
-        { method: "GET", tokenType: "jwt" }
+        { method: "GET", tokenType: "jwt" },
       );
 
       setBranches(branch.data || []);
@@ -199,6 +200,10 @@ export default function CustomerPage() {
           { label: "Address", value: "address" },
         ]}
         actions={[
+          {
+            label: <Eye size={16} />,
+            onClick: (row) => navigate(`/party/view/Customer/${row.id}`),
+          },
           {
             label: <Pen size={16} />,
             onClick: (row) => handleEdit(row),

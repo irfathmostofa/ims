@@ -60,6 +60,7 @@ import BulkProductUpload from "./pages/Inventory/BulkProductUpload";
 import ThemePage from "./pages/Website/ThemePage";
 import DeliveryMethodPage from "./pages/Setup/DeliveryMethodPage";
 import PaymentMethodPage from "./pages/Setup/PaymentMethodPage";
+import { PartyViewPage } from "./pages/Profile/PartyViewPage";
 
 export default function App() {
   return (
@@ -170,6 +171,7 @@ export default function App() {
                 path="/suppliers/payables"
                 element={<SuppliersPayPage />}
               />
+              <Route path="/party/view/:type/:id" element={<PartyViewPage />} />
 
               {/* Accounts */}
               <Route

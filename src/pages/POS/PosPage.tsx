@@ -47,7 +47,7 @@ export default function POSPage() {
         return prev.map((item) =>
           item.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
-            : item
+            : item,
         );
       }
       return [...prev, { ...product, quantity: 1 }];
@@ -64,9 +64,9 @@ export default function POSPage() {
         .map((item) =>
           item.id === id
             ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-            : item
+            : item,
         )
-        .filter((item) => item.quantity > 0)
+        .filter((item) => item.quantity > 0),
     );
   };
 
@@ -121,7 +121,7 @@ export default function POSPage() {
           method: "POST",
           tokenType: "jwt",
           data: formData,
-        }
+        },
       );
 
       toast.success(data.message || "Customer created successfully");
@@ -200,7 +200,7 @@ export default function POSPage() {
               | "CARD"
               | "ONLINE",
             amount: finalPaymentAmount,
-            reference_no: null,
+            reference_no: finalCustomerId,
           },
         ],
       };
@@ -211,7 +211,7 @@ export default function POSPage() {
           method: "POST",
           tokenType: "jwt",
           data: formData,
-        }
+        },
       );
       setInvoiceId(data.data?.code || data.data?.id || `INV-${Date.now()}`);
       toast.success(data.message || "Invoice created successfully");
@@ -296,8 +296,8 @@ export default function POSPage() {
           paymentType === "partial"
             ? parseFloat(partialAmount || "0")
             : paymentType === "paid"
-            ? total
-            : 0
+              ? total
+              : 0
         }
         invoiceNumber={invoiceId}
         handleClear={clearNoConfirm}
