@@ -266,7 +266,7 @@ const OrderTable = ({
       onClick: (row: Order) => handleUpdateOrderStatus(row.id, "REFUNDED"),
     },
   ];
-
+  console.log(orders);
   return (
     <div>
       <DataTable<Order>
@@ -355,7 +355,7 @@ export const OrderList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [loader, setLoading] = useState(false);
   const [processingOrderId, setProcessingOrderId] = useState<number | null>(
-    null
+    null,
   );
   const [orders, setOrders] = useState<Order[]>([]);
   const [allOrders, setAllOrders] = useState<Order[]>([]);
@@ -367,9 +367,8 @@ export const OrderList = () => {
     total: 0,
     totalPages: 1,
   });
-  console.log(pagination);
   const [activeTab, setActiveTab] = useState<OrderStatusTab>(
-    (searchParams.get("status")?.toUpperCase() as OrderStatusTab) || "ALL"
+    (searchParams.get("status")?.toUpperCase() as OrderStatusTab) || "ALL",
   );
 
   const [statusCounts, setStatusCounts] = useState<StatusCounts>({
@@ -396,9 +395,8 @@ export const OrderList = () => {
             ...(status && status !== "ALL" && { status }),
           },
           tokenType: "jwt",
-        }
+        },
       );
-
       if (response.success) {
         const fetchedOrders = response.data || [];
 
@@ -416,7 +414,7 @@ export const OrderList = () => {
             limit: 100,
             total: 0,
             totalPages: 1,
-          }
+          },
         );
       } else {
         toast.error(response.message || "Failed to fetch orders");
@@ -428,7 +426,6 @@ export const OrderList = () => {
       setLoading(false);
     }
   };
-  console.log(orders);
   const calculateStatusCounts = (ordersList: Order[]) => {
     const counts: StatusCounts = {
       ALL: ordersList.length,
@@ -465,7 +462,7 @@ export const OrderList = () => {
       setOrders(allOrders);
     } else {
       const filteredOrders = allOrders.filter(
-        (order) => order.order_status === tab
+        (order) => order.order_status === tab,
       );
       setOrders(filteredOrders);
     }
@@ -483,8 +480,9 @@ export const OrderList = () => {
 
   const handleUpdateOrderStatus = async (
     orderId: number,
-    newStatus: string
+    newStatus: string,
   ) => {
+    console.log(orderId, newStatus);
     try {
       setProcessingOrderId(orderId);
       const response = await apiClient(
@@ -496,9 +494,9 @@ export const OrderList = () => {
             id: orderId,
             order_status: newStatus,
           },
-        }
+        },
       );
-
+      console.log(response);
       if (response.success) {
         const statusMessages = {
           CONFIRMED: "Order accepted successfully!",
@@ -511,21 +509,20 @@ export const OrderList = () => {
 
         toast.success(
           statusMessages[newStatus as keyof typeof statusMessages] ||
-            "Order status updated successfully!"
+            "Order status updated successfully!",
         );
 
         // Refresh orders list
         fetchData(1);
 
         // Navigate to logistics page only for CONFIRMED status
-        if (newStatus === "CONFIRMED") {
-          router(`/order/logistics/${orderId}`);
-        }
+        // if (newStatus === "CONFIRMED") {
+        //   router(`/order/logistics/${orderId}`);
+        // }
       } else {
         toast.error(response.message || "Failed to update order status");
       }
     } catch (err: any) {
-      console.error(err);
       toast.error(err.message || "Failed to update order status");
     } finally {
       setProcessingOrderId(null);
@@ -534,7 +531,7 @@ export const OrderList = () => {
 
   const getOrderStatusBadge = (status: string) => {
     const validStatus = (Object.keys(statusConfigs) as OrderStatusTab[]).find(
-      (key) => key === status
+      (key) => key === status,
     );
 
     const config = validStatus
@@ -694,7 +691,7 @@ export const OrderList = () => {
                     isActive={activeTab === status}
                     onClick={() => handleTabChange(status)}
                   />
-                )
+                ),
               )}
             </TabsList>
 
@@ -729,7 +726,7 @@ export const OrderList = () => {
                 <TabsContent key={status} value={status} className="m-0">
                   <OrderTable
                     orders={orders.filter(
-                      (order) => order.order_status === status
+                      (order) => order.order_status === status,
                     )}
                     loader={loader}
                     handleQuickView={handleQuickView}
@@ -891,7 +888,7 @@ export const OrderList = () => {
                       <span>
                         -
                         {formatCurrency(
-                          parseFloat(selectedOrder.discount_amount)
+                          parseFloat(selectedOrder.discount_amount),
                         )}
                       </span>
                     </div>
