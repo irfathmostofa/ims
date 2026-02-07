@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { useClockWithDate } from "@/hook/useClockwithDate";
 import { useQuickStore } from "@/store/quickStore";
+import { toast } from "sonner";
 
 export default function Header({
   setSidebarOpen,
@@ -26,12 +27,17 @@ export default function Header({
   const [userOpen, setUserOpen] = useState(false);
   const navigate = useNavigate();
   const time = useClockWithDate();
-
+  const logout = useAuthStore((state) => state.logout);
   const [branchOpen, setBranchOpen] = useState(false);
   // 🔹 Get logged-in user from store
   const { user } = useAuthStore();
   const { branches, activeBranch, fetchBranches, switchBranch } =
     useQuickStore();
+  const handleLogout = () => {
+    logout();
+    toast.success("Logged out successfully");
+    navigate("/");
+  };
 
   // Fetch branches on mount
   useEffect(() => {
@@ -209,10 +215,7 @@ export default function Header({
               </Link>
               <button
                 className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                onClick={() => {
-                  localStorage.removeItem("token");
-                  navigate("/");
-                }}
+                onClick={handleLogout}
               >
                 <LogOut size={16} /> Logout
               </button>

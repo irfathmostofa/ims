@@ -139,42 +139,21 @@ export default function DashboardPage() {
     <div className="p-6 space-y-6  min-h-screen text-gray-100">
       {/* SECTION 1: Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card
-          icon={<Package />}
-          title="Total Stock"
-          value={totalStock}
-          bg="bg-[#003333]"
-        />
-        <Card
-          icon={<Store />}
-          title="Branches"
-          value={totalBranches}
-          bg="bg-[#003333]"
-        />
-        <Card
-          icon={<Users />}
-          title="Customers"
-          value={totalCustomers}
-          bg="bg-[#003333]"
-        />
-        <Card
-          icon={<Users />}
-          title="Staff"
-          value={totalStaff}
-          bg="bg-[#003333]"
-        />
+        <Card icon={<Package />} title="Total Stock" value={totalStock} />
+        <Card icon={<Store />} title="Branches" value={totalBranches} />
+        <Card icon={<Users />} title="Customers" value={totalCustomers} />
+        <Card icon={<Users />} title="Staff" value={totalStaff} />
         <Card
           icon={<DollarSign />}
           title="Total Sales"
           value={`$${totalSales}`}
-          bg="bg-[#003333]"
         />
       </div>
 
       {/* SECTION 2: Monthly Recap + Branch Stock */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Monthly Recap */}
-        <div className="bg-[#003333] p-4 rounded-lg shadow">
+        <div className="bg-bw-900 p-4 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-2 text-[#fff]">
             Monthly Recap Report
           </h3>
@@ -184,12 +163,12 @@ export default function DashboardPage() {
               <XAxis dataKey="month" stroke="#fff" />
               <YAxis stroke="#fff" />
               <Tooltip
-                contentStyle={{ backgroundColor: "#fff", color: "#fff" }}
+                contentStyle={{ backgroundColor: "#000", color: "#fff" }}
               />
               <Line
                 type="monotone"
                 dataKey="sales"
-                stroke="#fff"
+                stroke="#f68826"
                 strokeWidth={3}
               />
             </LineChart>
@@ -197,7 +176,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Branch Stock + Low Stock */}
-        <div className="bg-[#003333] p-4 rounded-lg shadow space-y-4">
+        <div className="bg-bw-900 p-4 rounded-lg shadow space-y-4">
           <h3 className="text-lg font-semibold text-[#fff]">
             Branch-wise Stock
           </h3>
@@ -207,9 +186,9 @@ export default function DashboardPage() {
               <XAxis dataKey="branch" stroke="#fff" />
               <YAxis stroke="#fff" />
               <Tooltip
-                contentStyle={{ backgroundColor: "#003333", color: "#fff" }}
+                contentStyle={{ backgroundColor: "#000", color: "#fff" }}
               />
-              <Bar dataKey="stock" fill="#fff" />
+              <Bar dataKey="stock" fill="#f68826" />
             </BarChart>
           </ResponsiveContainer>
 
@@ -248,24 +227,21 @@ export default function DashboardPage() {
           icon={<CreditCard />}
           title="Total Revenue"
           value={`$${totalRevenue}`}
-          bg="bg-[#003333]"
         />
         <Card
           icon={<CreditCard />}
           title="Total Cost"
           value={`$${totalCost}`}
-          bg="bg-[#003333]"
         />
         <Card
           icon={<TrendingUp />}
           title="Total Profit"
           value={`$${totalProfit}`}
-          bg="bg-[#003333]"
         />
       </div>
       {/* SECTION 4: Latest Orders & Recently Added Products */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-[#003333] p-4 rounded-lg shadow">
+        <div className="bg-bw-900 p-4 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-2 text-[#FFF]">
             Latest Orders
           </h3>
@@ -276,7 +252,7 @@ export default function DashboardPage() {
           />
         </div>
 
-        <div className="bg-[#003333] p-4 rounded-lg shadow">
+        <div className="bg-bw-900 p-4 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-2 text-[#FFF]">
             Recently Added Products
           </h3>
@@ -296,18 +272,16 @@ function Card({
   icon,
   title,
   value,
-  bg,
 }: {
   icon: React.ReactNode;
   title: string;
   value: any;
-  bg: string;
 }) {
   return (
     <div
-      className={`p-4 flex items-center gap-4 rounded-lg text-gray-900 font-semibold ${bg}`}
+      className={`p-4 flex items-center gap-4 rounded-lg text-gray-900 font-semibold bg-bw-900`}
     >
-      <div className="p-2 bg-white/75 rounded-full">{icon}</div>
+      <div className="p-2 bg-[#f68826] rounded-full">{icon}</div>
       <div className="text-amber-50">
         <h3 className="text-sm">{title}</h3>
         <p className="text-2xl font-bold">{value}</p>

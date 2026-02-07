@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,18 +21,23 @@ import { useAuthStore } from "@/store/authStore";
 export default function LoginPage() {
   const [form, setForm] = useState({ phone: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const router = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const token = useAuthStore((state) => state.token);
+  useEffect(() => {
+    if (token) {
+      router("/dashboard");
+    }
+  }, [router]);
 
   const setToken = useAuthStore((state) => state.setToken);
   const setUser = useAuthStore((state) => state.setUser);
-
-  const router = useNavigate();
 
   const handleChange = useCallback(
     (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
     },
-    []
+    [],
   );
 
   const handleLogin = useCallback(
@@ -48,7 +53,7 @@ export default function LoginPage() {
           {
             method: "POST",
             data: { phone: form.phone, password: form.password },
-          }
+          },
         );
 
         setToken(loginData.token);
@@ -63,7 +68,7 @@ export default function LoginPage() {
         setLoading(false);
       }
     },
-    [form.phone, form.password, loading, setToken, setUser, router]
+    [form.phone, form.password, loading, setToken, setUser, router],
   );
 
   const formFields = useMemo(
@@ -112,7 +117,7 @@ export default function LoginPage() {
         </div>
       </div>
     ),
-    [form, showPassword, loading, handleChange]
+    [form, showPassword, loading, handleChange],
   );
 
   return (

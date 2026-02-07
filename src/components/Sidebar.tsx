@@ -1,6 +1,6 @@
 "use client";
 
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Package,
@@ -140,7 +140,7 @@ export default function Sidebar({
   setSidebarOpen: (v: boolean) => void;
 }) {
   const [openMenus, setOpenMenus] = useState<string[]>([]);
-
+  const navigate = useNavigate();
   const toggleMenu = (name: string) => {
     setOpenMenus((prev) =>
       prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
@@ -165,8 +165,9 @@ export default function Sidebar({
         {/* Brand */}
         <div className="h-16 flex-shrink-0 flex items-center justify-between px-4">
           <h1
-            className="text-4xl font-bold text-[#f5f5f5]  tracking-tight"
+            className="text-4xl font-bold text-[#f5f5f5]  tracking-tight cursor-pointer"
             style={{ fontFamily: "'Montserrat', sans-serif" }}
+            onClick={() => navigate("/dashboard")}
           >
             UniStock
             <span className="text-2xl font-semibold text-[#f68826] ml-1">
@@ -223,7 +224,10 @@ export default function Sidebar({
                       (isOpen ? (
                         <ChevronDown size={16} />
                       ) : (
-                        <ChevronRight size={16} />
+                        <ChevronRight
+                          className="text-[#f68826] font-bold"
+                          size={16}
+                        />
                       ))}
                   </button>
 
@@ -243,7 +247,10 @@ export default function Sidebar({
                           }
                           onClick={() => setSidebarOpen(false)}
                         >
-                          <ChevronRight size={14} className="opacity-60" />
+                          <ChevronRight
+                            size={14}
+                            className="opacity-60 text-[#f68826]"
+                          />
                           {child.name}
                         </NavLink>
                       ))}
