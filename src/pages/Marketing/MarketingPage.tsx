@@ -59,7 +59,7 @@ export default function MarketingPage() {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-6 mx-auto space-y-6">
       <h1 className="text-2xl font-semibold">📣 Marketing – WhatsApp</h1>
 
       <Card>
@@ -139,7 +139,9 @@ export default function MarketingPage() {
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={sendMessage}>🚀 Send Message</Button>
+            <Button onClick={sendMessage} className="btn-bw-primary">
+              Send Message
+            </Button>
           </div>
         </CardContent>
       </Card>

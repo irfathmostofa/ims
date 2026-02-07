@@ -63,6 +63,7 @@ import PaymentMethodPage from "./pages/Setup/PaymentMethodPage";
 import { PartyViewPage } from "./pages/Profile/PartyViewPage";
 import UnauthorizedPage from "./pages/Others/UnauthorizedPage";
 import { RoleBasedRoute } from "./hook/RoleBasedRoute";
+import MarketingPage from "./pages/Marketing/MarketingPage";
 
 export default function App() {
   return (
@@ -149,6 +150,7 @@ export default function App() {
                   path="/reports/purchase"
                   element={<PurchaseReportPage />}
                 />
+                <Route path="/marketing" element={<MarketingPage />} />
               </Route>
             </Route>
           </Route>
