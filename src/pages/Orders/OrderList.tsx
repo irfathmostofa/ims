@@ -361,12 +361,12 @@ export const OrderList = () => {
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showQuickView, setShowQuickView] = useState(false);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 1,
-  });
+  // const [pagination, setPagination] = useState({
+  //   page: 1,
+  //   limit: 10,
+  //   total: 0,
+  //   totalPages: 1,
+  // });
   const [activeTab, setActiveTab] = useState<OrderStatusTab>(
     (searchParams.get("status")?.toUpperCase() as OrderStatusTab) || "ALL",
   );
@@ -408,14 +408,14 @@ export const OrderList = () => {
           calculateStatusCounts(fetchedOrders);
         }
 
-        setPagination(
-          response.pagination || {
-            page,
-            limit: 100,
-            total: 0,
-            totalPages: 1,
-          },
-        );
+        // setPagination(
+        //   response.pagination || {
+        //     page,
+        //     limit: 100,
+        //     total: 0,
+        //     totalPages: 1,
+        //   },
+        // );
       } else {
         toast.error(response.message || "Failed to fetch orders");
       }

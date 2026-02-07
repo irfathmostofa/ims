@@ -26,7 +26,6 @@ import {
   Calendar,
   AlertCircle,
   CheckCircle,
-  Clock,
 } from "lucide-react";
 
 interface PartyInfo {

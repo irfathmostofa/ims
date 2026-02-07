@@ -27,18 +27,11 @@ import {
   ChevronRight,
   Star,
   Zap,
-  Tag,
   Grid3x3,
   Megaphone,
   Award,
-  Image,
-  Text,
-  Link,
-  ToggleLeft,
   Sliders,
   Palette,
-  Code,
-  Eye,
   Save,
   X,
   ChevronDown,
@@ -1597,8 +1590,6 @@ const ThemeSectionService = {
 export default function ThemeSectionManager({
   themeId,
   sections,
-  componentVariants,
-  componentTypes,
   onSectionsUpdated,
 }: ThemeSectionManagerProps) {
   const [loading, setLoading] = useState(false);
