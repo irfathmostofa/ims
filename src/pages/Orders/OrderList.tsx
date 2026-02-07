@@ -266,7 +266,7 @@ const OrderTable = ({
       onClick: (row: Order) => handleUpdateOrderStatus(row.id, "REFUNDED"),
     },
   ];
-  console.log(orders);
+
   return (
     <div>
       <DataTable<Order>

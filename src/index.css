@@ -4,7 +4,7 @@
   font-family: "Tiro Bangla", serif;
 }
 .btn-peach {
-  @apply bg-[#003333] text-white hover:bg-[#374151] font-semibold px-6 py-2 rounded-lg;
+  @apply bg-[#1d2226] text-white hover:bg-[#374151] font-semibold px-6 py-2 rounded-lg;
 }
 /* Background Colors */
 .bg-bw-30 {
@@ -23,7 +23,7 @@
   background-color: #024343;
 } /* Hover / active elements */
 .bg-bw-900 {
-  background-color: #003333;
+  background-color: #1d2226;
 } /* Sidebar / Header / primary buttons */
 
 /* Text Colors */
@@ -46,7 +46,7 @@
   color: #1f2937;
 } /* Primary text */
 .text-bw-900 {
-  color: #003333;
+  color: #1d2226;
 } /* Sidebar / Header text */
 
 /* Borders */
@@ -57,13 +57,13 @@
   border-color: #d1d5db;
 }
 .bw-primary {
-  background-color: #003333;
+  background-color: #1d2226;
   color: white;
   transition: background-color 0.2s ease-in-out;
 }
 /* Buttons */
 .btn-bw-primary {
-  background-color: #003333;
+  background-color: #1d2226;
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
@@ -183,7 +183,7 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #003333; /* track color */
+  background: #1d2226; /* track color */
 }
 
 ::-webkit-scrollbar-thumb {
@@ -198,7 +198,7 @@
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #4b5563 #003333;
+  scrollbar-color: #4b5563 #1d2226;
 }
 @media print {
   body * {
@@ -243,7 +243,8 @@ nav {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: radial-gradient(
+  background-image:
+    radial-gradient(
       circle at 25% 25%,
       rgba(255, 255, 255, 0.05) 1px,
       transparent 1px

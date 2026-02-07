@@ -165,20 +165,20 @@ export default function Sidebar({
         {/* Brand */}
         <div className="h-16 flex-shrink-0 flex items-center justify-between px-4">
           <h1
-            className="text-4xl font-bold text-bw-50  tracking-tight"
+            className="text-4xl font-bold text-[#f5f5f5]  tracking-tight"
             style={{ fontFamily: "'Montserrat', sans-serif" }}
           >
             UniStock
-            <span className="text-2xl font-semibold text-[#a1c5c5] ml-1">
+            <span className="text-2xl font-semibold text-[#f68826] ml-1">
               Pro
             </span>
           </h1>
           {/* Close button (mobile only) */}
           <button
-            className="md:hidden p-2 rounded-md hover:bg-bw-700"
+            className="md:hidden p-2 rounded-md hover:bg-[#f68826]"
             onClick={() => setSidebarOpen(false)}
           >
-            <X size={20} className="text-bw-50" />
+            <X size={20} className="text-[#1d2226]" />
           </button>
         </div>
 
@@ -201,8 +201,8 @@ export default function Sidebar({
                     }
                     className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg transition ${
                       isOpen
-                        ? "bg-bw-700 text-bw-50 font-medium"
-                        : "text-bw-100 hover:bg-bw-700 hover:text-bw-50"
+                        ? "bg-[#f68826] text-[#1d2226] font-medium"
+                        : "text-bw-100 hover:bg-[#f68826] hover:text-[#1d2226]"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -237,8 +237,8 @@ export default function Sidebar({
                           className={({ isActive }) =>
                             `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
                               isActive
-                                ? "bg-bw-700 text-bw-50 font-medium"
-                                : "text-bw-100 hover:bg-bw-700 hover:text-bw-50"
+                                ? "bg-[#f68826] text-[#1d2226] font-medium"
+                                : "text-bw-100 hover:bg-[#f68826] hover:text-[#1d2226]"
                             }`
                           }
                           onClick={() => setSidebarOpen(false)}
