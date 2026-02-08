@@ -16,6 +16,7 @@ import {
   Globe2,
   ShoppingBag,
   SendToBack,
+  LineChart,
 } from "lucide-react";
 import { useState } from "react";
 import logo from "../../src/assets/logo.png";
@@ -120,6 +121,11 @@ const navItems: NavItem[] = [
       { name: "Roles", path: "/setup/roles" },
       { name: "Users", path: "/setup/users" },
     ],
+  },
+  {
+    name: "Marketing",
+    icon: LineChart,
+    children: [{ name: "Send SMS", path: "/send-sms" }],
   },
   {
     name: "Website Setup",

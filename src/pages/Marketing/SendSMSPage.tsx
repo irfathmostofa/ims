@@ -11,7 +11,7 @@ interface Customer {
   whatsappOptIn: boolean;
 }
 
-export default function MarketingPage() {
+export default function SendSMSPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [message, setMessage] = useState("");
