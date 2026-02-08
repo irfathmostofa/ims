@@ -18,7 +18,7 @@ import {
   SendToBack,
 } from "lucide-react";
 import { useState } from "react";
-
+import logo from "../../src/assets/logo.png";
 type NavItem = {
   name: string;
   path?: string;
@@ -163,14 +163,15 @@ export default function Sidebar({
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         {/* Brand */}
-        <div className="h-16 flex-shrink-0 flex items-center justify-between px-4">
+        <div className="h-16 flex items-center gap-2 px-7">
+          <img src={logo} className="h-10 w-10" alt="" />
           <h1
-            className="text-4xl font-bold text-[#f5f5f5]  tracking-tight cursor-pointer"
+            className="text-2xl tracking-wide font-bold text-[#f5f5f5] cursor-pointer"
             style={{ fontFamily: "'Montserrat', sans-serif" }}
             onClick={() => navigate("/dashboard")}
           >
             UniStock
-            <span className="text-2xl font-semibold text-[#f68826] ml-1">
+            <span className="text-2xl tracking-wide font-semibold text-[#f68826] ml-2">
               Pro
             </span>
           </h1>

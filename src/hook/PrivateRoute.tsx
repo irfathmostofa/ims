@@ -35,6 +35,7 @@ export function PrivateRoute() {
             tokenType: "jwt",
           },
         );
+        console.log(data);
         setUser(data.data);
         setAuthenticated(true);
       } catch (err) {
