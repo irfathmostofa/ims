@@ -201,44 +201,46 @@ export default function Sidebar({
               return (
                 <div key={item.name}>
                   {/* Parent Link */}
-                  <button
-                    onClick={() =>
-                      hasChildren
-                        ? toggleMenu(item.name)
-                        : setSidebarOpen(false)
-                    }
-                    className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg transition ${
-                      isOpen
-                        ? "bg-[#f68826] text-[#1d2226] font-medium"
-                        : "text-bw-100 hover:bg-[#f68826] hover:text-[#1d2226]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      {Icon && <Icon size={20} />}
-                      {item.path ? (
-                        <NavLink
-                          to={item.path}
-                          className="flex-1 text-left"
-                          onClick={() => setSidebarOpen(false)}
-                        >
-                          {item.name}
-                        </NavLink>
-                      ) : (
+                  {hasChildren ? (
+                    <button
+                      onClick={() => toggleMenu(item.name)}
+                      className={`flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg transition ${
+                        isOpen
+                          ? "bg-[#f68826] text-[#1d2226] font-medium"
+                          : "text-white hover:bg-[#f68826] hover:text-[#1d2226] hover:font-semibold"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {Icon && <Icon size={20} />}
                         <span>{item.name}</span>
-                      )}
-                    </div>
-                    {hasChildren &&
-                      (isOpen ? (
-                        <ChevronDown size={16} />
-                      ) : (
-                        <ChevronRight
-                          className="text-[#f68826] font-bold"
-                          size={16}
-                        />
-                      ))}
-                  </button>
+                      </div>
+                      <ChevronDown
+                        size={16}
+                        className={`transform transition-transform ${isOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                  ) : (
+                    <NavLink
+                      to={item.path!}
+                      className={({ isActive }) =>
+                        `flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg transition ${
+                          isActive
+                            ? "bg-[#f68826] text-[#1d2226] font-medium"
+                            : "text-white hover:bg-[#f68826] hover:text-[#1d2226] hover:font-semibold"
+                        }`
+                      }
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <div className="flex items-center gap-3">
+                        {Icon && <Icon size={20} />}
+                        <span>{item.name}</span>
+                      </div>
+                      {/* Empty div for alignment when there's no chevron */}
+                      <div className="w-4"></div>
+                    </NavLink>
+                  )}
 
-                  {/* Child Links */}
+                  {/* Child Links (only for items with children) */}
                   {hasChildren && isOpen && (
                     <div className="ml-3 mt-1 space-y-1">
                       {item.children!.map((child) => (
@@ -249,14 +251,14 @@ export default function Sidebar({
                             `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
                               isActive
                                 ? "bg-[#f68826] text-[#1d2226] font-medium"
-                                : "text-bw-100 hover:bg-[#f68826] hover:text-[#1d2226]"
+                                : "text-bw-100 hover:bg-[#f68826] hover:text-[#1d2226] hover:transition"
                             }`
                           }
                           onClick={() => setSidebarOpen(false)}
                         >
                           <ChevronRight
                             size={14}
-                            className="opacity-60 text-[#f68826]"
+                            className="opacity-60 text-[#f68826] hover:text-[#000]"
                           />
                           {child.name}
                         </NavLink>

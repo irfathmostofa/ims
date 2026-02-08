@@ -63,7 +63,9 @@ import PaymentMethodPage from "./pages/Setup/PaymentMethodPage";
 import { PartyViewPage } from "./pages/Profile/PartyViewPage";
 import UnauthorizedPage from "./pages/Others/UnauthorizedPage";
 import { RoleBasedRoute } from "./hook/RoleBasedRoute";
-import SendSMSPage from "./pages/Marketing/SendSMSPage";
+
+import CampaignPage from "./pages/Marketing/CampaignPage";
+import SendMessagePage from "./pages/Marketing/SendMessagePage";
 
 export default function App() {
   return (
@@ -150,7 +152,8 @@ export default function App() {
                   path="/reports/purchase"
                   element={<PurchaseReportPage />}
                 />
-                <Route path="/send-sms" element={<SendSMSPage />} />
+                <Route path="/campaign" element={<CampaignPage />} />
+                <Route path="/send-sms" element={<SendMessagePage />} />
               </Route>
             </Route>
           </Route>
