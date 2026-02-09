@@ -125,7 +125,11 @@ const navItems: NavItem[] = [
   {
     name: "Marketing",
     icon: LineChart,
-    children: [{ name: "Send SMS", path: "/send-sms" }],
+
+    children: [
+      { name: "Campaign", path: "/campaign" },
+      { name: "Send SMS", path: "/send-sms" },
+    ],
   },
   {
     name: "Website Setup",
@@ -169,7 +173,7 @@ export default function Sidebar({
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         {/* Brand */}
-        <div className="h-16 flex items-center gap-2 px-7">
+        <div className="h-16 flex items-center gap-2 px-4">
           <img src={logo} className="h-10 w-10" alt="" />
           <h1
             className="text-2xl tracking-wide font-bold text-[#f5f5f5] cursor-pointer"

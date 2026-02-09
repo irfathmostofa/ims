@@ -10,6 +10,14 @@ export interface Branch {
   status?: string;
 }
 
+export interface Customer {
+  id: number;
+  name: string;
+  phone: string;
+  address: string;
+  type?: string; // Add type for customer
+}
+
 export interface Category {
   id: number;
   name: string;
@@ -42,27 +50,38 @@ interface FetchProductsParams {
   branch_id?: number;
 }
 
+// Add interface for fetchParty parameters
+interface FetchPartyParams {
+  type?: string;
+  limit?: number;
+  search?: string; // Added search parameter
+}
+
 interface StoreState {
   branches: Branch[];
+  Party: Customer[]; // Changed from Customer[] to be consistent
   categories: Category[];
   products: Product[];
   loading: boolean;
-  activeBranch: Branch | null; // Add active branch
+  activeBranch: Branch | null;
 
   fetchBranches: () => Promise<void>;
+  fetchParty: (params?: FetchPartyParams) => Promise<void>; // Updated signature
   fetchCategories: () => Promise<void>;
   fetchProducts: (params?: FetchProductsParams) => Promise<void>;
 
   setBranches: (data: Branch[]) => void;
+  setParty: (data: Customer[]) => void;
   setCategories: (data: Category[]) => void;
   setProducts: (data: Product[]) => void;
   setLoading: (value: boolean) => void;
-  setActiveBranch: (branch: Branch | null) => void; // Add setter
-  switchBranch: (branchId: number) => void; // Method to switch branch
+  setActiveBranch: (branch: Branch | null) => void;
+  switchBranch: (branchId: number) => void;
 }
 
 export const useQuickStore = create<StoreState>((set) => ({
   branches: [],
+  Party: [],
   categories: [],
   products: [],
   loading: false,
@@ -70,6 +89,7 @@ export const useQuickStore = create<StoreState>((set) => ({
 
   // Setters
   setBranches: (data) => set({ branches: data }),
+  setParty: (data) => set({ Party: data }),
   setCategories: (data) => set({ categories: data }),
   setProducts: (data) => set({ products: data }),
   setLoading: (value) => set({ loading: value }),
@@ -92,7 +112,7 @@ export const useQuickStore = create<StoreState>((set) => ({
         {
           method: "GET",
           tokenType: "jwt",
-        }
+        },
       );
 
       if (result.success) {
@@ -102,7 +122,7 @@ export const useQuickStore = create<StoreState>((set) => ({
         const savedBranchId = localStorage.getItem("activeBranchId");
         if (savedBranchId && result.data.length > 0) {
           const savedBranch = result.data.find(
-            (b: Branch) => b.id === parseInt(savedBranchId)
+            (b: Branch) => b.id === parseInt(savedBranchId),
           );
           if (savedBranch) {
             set({ activeBranch: savedBranch });
@@ -133,7 +153,7 @@ export const useQuickStore = create<StoreState>((set) => ({
         {
           method: "GET",
           tokenType: "jwt",
-        }
+        },
       );
 
       if (result.success) {
@@ -143,6 +163,35 @@ export const useQuickStore = create<StoreState>((set) => ({
       }
     } catch (err: unknown) {
       console.error("Error fetching categories:", err);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  // Fetch Party - Fixed with proper parameters
+  fetchParty: async (params: FetchPartyParams = {}) => {
+    try {
+      set({ loading: true });
+
+      const result = await apiClient(
+        `${import.meta.env.VITE_SERVER}/party/get-party`,
+        {
+          method: "POST",
+          tokenType: "jwt",
+          data: {
+            type: params.type || null,
+            limit: params.limit || null,
+          },
+        },
+      );
+
+      if (result.success) {
+        set({ Party: result.data });
+      } else {
+        console.error("Failed to fetch Party:", result.message);
+      }
+    } catch (err: unknown) {
+      console.error("Error fetching Party:", err);
     } finally {
       set({ loading: false });
     }
@@ -163,7 +212,7 @@ export const useQuickStore = create<StoreState>((set) => ({
             branch_id: params.branch_id || null,
           },
           tokenType: "jwt",
-        }
+        },
       );
 
       if (result.success) {

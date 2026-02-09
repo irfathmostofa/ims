@@ -2,9 +2,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, Plus, Trash, Upload } from "lucide-react";
-import { DataTable } from "@/components/ui/dataTable";
+import { useNavigate } from "react-router-dom";
+import { Send, Plus, X } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -13,22 +13,36 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { apiClient } from "@/hook/apiClient";
+import { useQuickStore } from "@/store/quickStore";
 
-// Customer type (if you have customers in your system)
+// Customer type
 interface Customer {
   id: number;
   name: string;
   phone: string;
 }
 
+// Campaign/Marketing Message type
+interface Campaign {
+  id: number;
+  title: string;
+  content: string;
+  status: string;
+  created_at: string;
+  template_name?: string;
+  variables?: string[];
+}
+
 export default function SendMessagePage() {
   const navigate = useNavigate();
-
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [message, setMessage] = useState<any>(null);
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(
+    null,
+  );
   const [selectedCustomers, setSelectedCustomers] = useState<Customer[]>([]);
+  const { fetchParty, Party } = useQuickStore();
 
   // Send mode: 'single' or 'bulk'
   const [sendMode, setSendMode] = useState<"single" | "bulk">("single");
@@ -43,14 +57,13 @@ export default function SendMessagePage() {
   // Common fields
   const [partyId, setPartyId] = useState("");
 
-  // Load message details
+  // Load campaigns and customers
   useEffect(() => {
-    fetchMessage();
-    // Optional: Fetch customers if you have a customer list
-    // fetchCustomers();
+    fetchCampaigns();
+    fetchParty({ type: "CUSTOMER", limit: 100000000 });
   }, []);
 
-  const fetchMessage = async () => {
+  const fetchCampaigns = async () => {
     try {
       setLoading(true);
       const response = await apiClient(
@@ -65,46 +78,33 @@ export default function SendMessagePage() {
         },
       );
 
-      if (response.success && response.data?.data?.length > 0) {
-        setMessage(response.data.data[0]);
-
-        if (response.data.data[0].status !== "active") {
-          toast.error(
-            "This message is not active. Only active messages can be sent.",
-          );
-          navigate("/send-sms");
+      if (response.success) {
+        setCampaigns(response.data);
+        if (response.data.length > 0) {
+          setSelectedCampaign(response.data[0]);
         }
-      } else {
-        toast.error("Message not found");
-        navigate("/send-sms");
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to load message");
+      toast.error(err.message || "Failed to load campaigns");
       navigate("/send-sms");
     } finally {
       setLoading(false);
     }
   };
 
-  // Optional: Fetch customers from your system
-  const fetchCustomers = async () => {
-    try {
-      // Replace with your actual customer API endpoint
-      const response = await apiClient(
-        `${import.meta.env.VITE_SERVER}/party/get-party`,
-        {
-          method: "POST",
-          tokenType: "jwt",
-          data: { type: "CUSTOMER" },
-        },
-      );
-
-      if (response.success && response.data?.data) {
-        setCustomers(response.data.data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch customers:", err);
+  // Handle campaign selection
+  const handleCampaignSelect = (campaignId: string) => {
+    const campaign = campaigns.find((c) => c.id.toString() === campaignId);
+    if (campaign) {
+      setSelectedCampaign(campaign);
     }
+  };
+
+  // Extract variables from message content
+  const extractVariables = (content: string) => {
+    const regex = /\{\{([^}]+)\}\}/g;
+    const matches = content.match(regex);
+    return matches ? [...new Set(matches)] : [];
   };
 
   // Add phone to bulk list
@@ -114,18 +114,21 @@ export default function SendMessagePage() {
       return;
     }
 
-    const phoneRegex = /^[0-9+\s\-()]{10,}$/;
-    if (!phoneRegex.test(newPhone)) {
-      toast.error("Please enter a valid phone number");
+    // Clean phone number (remove spaces, dashes, parentheses)
+    const cleanedPhone = newPhone.replace(/[\s\-()]/g, "");
+
+    const phoneRegex = /^[0-9+]{10,}$/;
+    if (!phoneRegex.test(cleanedPhone)) {
+      toast.error("Please enter a valid phone number (min 10 digits)");
       return;
     }
 
-    if (bulkPhones.includes(newPhone)) {
+    if (bulkPhones.includes(cleanedPhone)) {
       toast.error("Phone number already added");
       return;
     }
 
-    setBulkPhones([...bulkPhones, newPhone]);
+    setBulkPhones([...bulkPhones, cleanedPhone]);
     setNewPhone("");
   };
 
@@ -133,31 +136,9 @@ export default function SendMessagePage() {
     setBulkPhones(bulkPhones.filter((_, i) => i !== index));
   };
 
-  // Handle file upload for bulk numbers
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const content = e.target?.result as string;
-        const lines = content
-          .split("\n")
-          .map((line) => line.trim())
-          .filter((line) => line && /^[0-9+\s\-()]{10,}$/.test(line));
-
-        if (lines.length > 0) {
-          setBulkPhones([...new Set([...bulkPhones, ...lines])]); // Remove duplicates
-          toast.success(`Added ${lines.length} phone numbers`);
-        } else {
-          toast.error("No valid phone numbers found in file");
-        }
-      } catch (error) {
-        toast.error("Failed to parse file");
-      }
-    };
-    reader.readAsText(file);
+  // Remove phone chip
+  const handleRemovePhoneChip = (phoneToRemove: string) => {
+    setBulkPhones(bulkPhones.filter((phone) => phone !== phoneToRemove));
   };
 
   // Handle customer selection
@@ -175,6 +156,11 @@ export default function SendMessagePage() {
 
   // Handle send message
   const handleSend = async () => {
+    if (!selectedCampaign) {
+      toast.error("Please select a campaign");
+      return;
+    }
+
     // Validation
     if (sendMode === "single" && !singlePhone.trim()) {
       toast.error("Please enter a phone number");
@@ -189,6 +175,7 @@ export default function SendMessagePage() {
     // Prepare payload based on mode
     const payload: any = {
       mode: sendMode,
+      message_id: selectedCampaign.id,
     };
 
     if (sendMode === "single") {
@@ -200,7 +187,7 @@ export default function SendMessagePage() {
     if (partyId) {
       payload.party_id = partyId;
     }
-
+    console.log(payload);
     try {
       setSending(true);
       const response = await apiClient(
@@ -211,7 +198,7 @@ export default function SendMessagePage() {
           data: payload,
         },
       );
-
+      console.log(response);
       if (response.success) {
         toast.success(
           `Message sent successfully! ` +
@@ -225,9 +212,6 @@ export default function SendMessagePage() {
         setNewPhone("");
         setPartyId("");
         setSelectedCustomers([]);
-
-        // Optionally navigate to history
-        // navigate(`/marketing/history/${id}`);
       } else {
         throw new Error(response.message || "Failed to send message");
       }
@@ -253,7 +237,7 @@ export default function SendMessagePage() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading message details...</p>
+          <p className="mt-4 text-gray-600">Loading campaigns...</p>
         </div>
       </div>
     );
@@ -261,57 +245,64 @@ export default function SendMessagePage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/marketing")}
-          >
-            <ArrowLeft size={20} />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Send Message</h1>
-            <p className="text-gray-600">Campaign: {message?.campaign_name}</p>
-          </div>
-        </div>
-        <Badge variant={message?.status === "active" ? "default" : "secondary"}>
-          {message?.status?.toUpperCase() || "DRAFT"}
-        </Badge>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Message Preview */}
+        {/* Left Column - Campaign Selection and Preview */}
         <div className="lg:col-span-1 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Message Details</CardTitle>
+              <CardTitle>Select Campaign</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label className="text-gray-500 text-sm">Code</Label>
-                <p className="font-medium">{message?.code}</p>
+              <div className="space-y-2">
+                <Label htmlFor="campaign-select">Choose a Campaign</Label>
+                <select
+                  id="campaign-select"
+                  className="w-full p-2 border rounded-md"
+                  value={selectedCampaign?.id || ""}
+                  onChange={(e) => handleCampaignSelect(e.target.value)}
+                >
+                  {campaigns.map((campaign) => (
+                    <option key={campaign.id} value={campaign.id}>
+                      {campaign.title} ({campaign.status})
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div>
-                <Label className="text-gray-500 text-sm">Title</Label>
-                <p className="font-medium">{message?.title}</p>
-              </div>
-
-              <div>
-                <Label className="text-gray-500 text-sm">Template</Label>
-                <p className="font-medium">
-                  {message?.template_name || "Not specified"}
-                </p>
-              </div>
-
-              <div>
-                <Label className="text-gray-500 text-sm">Created</Label>
-                <p className="font-medium">
-                  {formatDate(message?.created_at || "")}
-                </p>
-              </div>
+              {selectedCampaign && (
+                <div className="space-y-3 pt-4 border-t">
+                  <div>
+                    <Label className="text-sm font-medium">Status</Label>
+                    <div className="mt-1">
+                      <Badge
+                        variant={
+                          selectedCampaign.status === "active"
+                            ? "default"
+                            : "secondary"
+                        }
+                      >
+                        {selectedCampaign.status.toUpperCase()}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Created</Label>
+                    <p className="text-sm text-gray-600">
+                      {formatDate(selectedCampaign.created_at)}
+                    </p>
+                  </div>
+                  {selectedCampaign.template_name && (
+                    <div>
+                      <Label className="text-sm font-medium">
+                        Template Name
+                      </Label>
+                      <p className="text-sm text-gray-600 font-mono">
+                        {selectedCampaign.template_name}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -320,29 +311,29 @@ export default function SendMessagePage() {
               <CardTitle>Message Content</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="border rounded-lg p-4 bg-gray-50 min-h-[100px]">
+              <div className="border rounded-lg p-4 bg-gray-50 min-h-[150px]">
                 <p className="text-gray-700 whitespace-pre-wrap">
-                  {message?.content}
+                  {selectedCampaign?.content || "Select a campaign to preview"}
                 </p>
               </div>
 
-              {message?.content?.includes("{{") && (
+              {selectedCampaign?.content && (
                 <div className="mt-4">
                   <Label className="text-gray-500 text-sm">
                     Variables Detected
                   </Label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {Array.from(
-                      new Set(message.content.match(/\{\{([^}]+)\}\}/g) || []),
-                    ).map((variable, index) => (
-                      <Badge
-                        key={index}
-                        variant="outline"
-                        className="bg-blue-50"
-                      >
-                        0
-                      </Badge>
-                    ))}
+                    {extractVariables(selectedCampaign.content).map(
+                      (variable, index) => (
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="bg-blue-50"
+                        >
+                          {variable}
+                        </Badge>
+                      ),
+                    )}
                   </div>
                 </div>
               )}
@@ -387,12 +378,12 @@ export default function SendMessagePage() {
                     <Label htmlFor="phone">Phone Number *</Label>
                     <Input
                       id="phone"
-                      placeholder="+1234567890"
+                      placeholder="+919876543210"
                       value={singlePhone}
                       onChange={(e) => setSinglePhone(e.target.value)}
                     />
                     <p className="text-sm text-gray-500">
-                      Enter phone number with country code
+                      Enter phone number with country code (e.g., +91 for India)
                     </p>
                   </div>
                 </div>
@@ -405,7 +396,7 @@ export default function SendMessagePage() {
                     <Label>Add Phone Numbers</Label>
                     <div className="flex gap-2">
                       <Input
-                        placeholder="+1234567890"
+                        placeholder="+919876543210"
                         value={newPhone}
                         onChange={(e) => setNewPhone(e.target.value)}
                         onKeyPress={(e) => {
@@ -424,41 +415,24 @@ export default function SendMessagePage() {
                     </p>
                   </div>
 
-                  {/* File Upload */}
-                  <div className="space-y-2">
-                    <Label>Or Upload File</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="file"
-                        accept=".txt,.csv"
-                        onChange={handleFileUpload}
-                        className="cursor-pointer"
-                      />
-                      <Upload size={18} className="text-gray-500" />
-                    </div>
-                    <p className="text-sm text-gray-500">
-                      Upload .txt or .csv file with one phone number per line
-                    </p>
-                  </div>
-
-                  {/* Phone Numbers List */}
+                  {/* Phone Numbers Chips */}
                   {bulkPhones.length > 0 && (
                     <div className="space-y-2">
                       <Label>Phone Numbers ({bulkPhones.length})</Label>
-                      <div className="border rounded-lg p-4 max-h-60 overflow-y-auto">
+                      <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-gray-50">
                         {bulkPhones.map((phone, index) => (
                           <div
                             key={index}
-                            className="flex items-center justify-between py-2 border-b last:border-b-0"
+                            className="inline-flex items-center gap-2 bg-white border rounded-full px-3 py-1 text-sm"
                           >
-                            <span className="text-sm font-mono">{phone}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemovePhone(index)}
+                            <span>{phone}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePhoneChip(phone)}
+                              className="text-gray-400 hover:text-red-500"
                             >
-                              <Trash size={14} className="text-red-500" />
-                            </Button>
+                              <X size={14} />
+                            </button>
                           </div>
                         ))}
                       </div>
@@ -467,27 +441,19 @@ export default function SendMessagePage() {
                 </div>
               )}
 
-              {/* Party ID (Optional) */}
-              <div className="space-y-2">
-                <Label htmlFor="party_id">Party ID (Optional)</Label>
-                <Input
-                  id="party_id"
-                  placeholder="Enter party/customer ID"
-                  value={partyId}
-                  onChange={(e) => setPartyId(e.target.value)}
-                />
-                <p className="text-sm text-gray-500">
-                  Link this message to a specific customer record
-                </p>
-              </div>
-
               {/* Send Button */}
-              <div className="pt-4 border-t">
+              <div className="pt-4">
                 <Button
                   className="w-full"
                   size="lg"
                   onClick={handleSend}
-                  disabled={sending || message?.status !== "active"}
+                  disabled={
+                    sending ||
+                    !selectedCampaign ||
+                    selectedCampaign?.status !== "active" ||
+                    (sendMode === "single" && !singlePhone) ||
+                    (sendMode === "bulk" && bulkPhones.length === 0)
+                  }
                 >
                   {sending ? (
                     <>
@@ -502,10 +468,10 @@ export default function SendMessagePage() {
                   )}
                 </Button>
 
-                {message?.status !== "active" && (
+                {selectedCampaign?.status !== "active" && (
                   <p className="text-center text-sm text-red-500 mt-2">
-                    Only active messages can be sent. Please activate this
-                    message first.
+                    Only active campaigns can be sent. Please select an active
+                    campaign.
                   </p>
                 )}
 
@@ -519,63 +485,75 @@ export default function SendMessagePage() {
             </CardContent>
           </Card>
 
-          {/* Optional: Customer Selection Card */}
-          {customers.length > 0 && (
+          {/* Customer Selection Card */}
+          {Party && Party.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Select Customers</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="max-h-60 overflow-y-auto">
-                  <DataTable
-                    data={customers}
-                    label="Customers"
-                    showColumns={["name", "phone"]}
-                    loading={false}
-                    rowsPerPage={5}
-                    selectable
-                   
-                  />
+                  <table className="w-full border-collapse">
+                    <thead className="sticky top-0 bg-gray-50">
+                      <tr>
+                        <th className="text-left p-2 border-b">Select</th>
+                        <th className="text-left p-2 border-b">Name</th>
+                        <th className="text-left p-2 border-b">Phone</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Party.map((customer) => (
+                        <tr
+                          key={customer.id}
+                          className="hover:bg-gray-50 cursor-pointer"
+                          onClick={() => handleCustomerSelect(customer)}
+                        >
+                          <td className="p-2 border-b">
+                            <input
+                              type="checkbox"
+                              checked={selectedCustomers.some(
+                                (c) => c.id === customer.id,
+                              )}
+                              onChange={() => handleCustomerSelect(customer)}
+                              className="h-4 w-4"
+                            />
+                          </td>
+                          <td className="p-2 border-b">{customer.name}</td>
+                          <td className="p-2 border-b">{customer.phone}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
+                {selectedCustomers.length > 0 && (
+                  <div className="mt-4 pt-4 border-t">
+                    <Label className="text-sm font-medium">
+                      Selected Customers ({selectedCustomers.length})
+                    </Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {selectedCustomers.map((customer) => (
+                        <div
+                          key={customer.id}
+                          className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-full px-3 py-1 text-sm"
+                        >
+                          <span>
+                            {customer.name} ({customer.phone})
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleCustomerSelect(customer)}
+                            className="text-blue-400 hover:text-blue-600"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
-
-          {/* Tips Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Tips for Sending</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-start">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 mr-2"></div>
-                  <span>
-                    Make sure the WhatsApp template name matches exactly with
-                    your Business account
-                  </span>
-                </li>
-                <li className="flex items-start">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 mr-2"></div>
-                  <span>
-                    Phone numbers must include country code (e.g., +91 for
-                    India)
-                  </span>
-                </li>
-                <li className="flex items-start">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 mr-2"></div>
-                  <span>Test with a single number before sending in bulk</span>
-                </li>
-                <li className="flex items-start">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 mr-2"></div>
-                  <span>
-                    Bulk sending may take time depending on the number of
-                    recipients
-                  </span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
