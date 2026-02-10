@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Send, Plus, X } from "lucide-react";
+import { Send, Plus, X, Users, Phone } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -148,10 +148,47 @@ export default function SendMessagePage() {
       setSelectedCustomers(
         selectedCustomers.filter((c) => c.id !== customer.id),
       );
+      // Also remove from bulk phones if exists
+      setBulkPhones(bulkPhones.filter((phone) => phone !== customer.phone));
     } else {
       // Add to selected
       setSelectedCustomers([...selectedCustomers, customer]);
+      // Also add to bulk phones if not already there
+      if (!bulkPhones.includes(customer.phone)) {
+        setBulkPhones([...bulkPhones, customer.phone]);
+      }
     }
+  };
+
+  // Add all customers to bulk list
+  const handleAddAllCustomers = () => {
+    if (!Party || Party.length === 0) {
+      toast.error("No customers available");
+      return;
+    }
+
+    const allCustomerPhones = Party.map((customer) => customer.phone);
+    const uniqueNewPhones = allCustomerPhones.filter(
+      (phone) => !bulkPhones.includes(phone),
+    );
+
+    if (uniqueNewPhones.length === 0) {
+      toast.info("All customers are already added");
+      return;
+    }
+
+    setBulkPhones([...bulkPhones, ...uniqueNewPhones]);
+    setSelectedCustomers([...Party]); // Select all customers
+    toast.success(`Added ${uniqueNewPhones.length} customer(s) to recipients`);
+  };
+
+  // Clear all selected customers
+  const handleClearAllCustomers = () => {
+    // Remove all customer phones from bulk list
+    const customerPhones = selectedCustomers.map((c) => c.phone);
+    setBulkPhones(bulkPhones.filter((phone) => !customerPhones.includes(phone)));
+    setSelectedCustomers([]);
+    toast.info("Cleared all selected customers");
   };
 
   // Handle send message
@@ -161,13 +198,26 @@ export default function SendMessagePage() {
       return;
     }
 
+    // Combine bulk phones and selected customer phones
+    let allPhones = [...bulkPhones];
+    
+    // Add phones from selected customers that aren't already in bulkPhones
+    selectedCustomers.forEach(customer => {
+      if (!allPhones.includes(customer.phone)) {
+        allPhones.push(customer.phone);
+      }
+    });
+
+    // Remove duplicates
+    allPhones = [...new Set(allPhones)];
+
     // Validation
     if (sendMode === "single" && !singlePhone.trim()) {
       toast.error("Please enter a phone number");
       return;
     }
 
-    if (sendMode === "bulk" && bulkPhones.length === 0) {
+    if (sendMode === "bulk" && allPhones.length === 0) {
       toast.error("Please add at least one phone number");
       return;
     }
@@ -181,13 +231,16 @@ export default function SendMessagePage() {
     if (sendMode === "single") {
       payload.phone = singlePhone;
     } else {
-      payload.phones = bulkPhones;
+      payload.phones = allPhones;
     }
 
     if (partyId) {
       payload.party_id = partyId;
     }
-    console.log(payload);
+    
+    console.log("Sending to phones:", sendMode === "bulk" ? allPhones : singlePhone);
+    console.log("Total recipients:", sendMode === "bulk" ? allPhones.length : 1);
+
     try {
       setSending(true);
       const response = await apiClient(
@@ -357,6 +410,7 @@ export default function SendMessagePage() {
                     onClick={() => setSendMode("single")}
                     className="flex-1"
                   >
+                    <Phone size={16} className="mr-2" />
                     Single Number
                   </Button>
                   <Button
@@ -364,6 +418,7 @@ export default function SendMessagePage() {
                     onClick={() => setSendMode("bulk")}
                     className="flex-1"
                   >
+                    <Users size={16} className="mr-2" />
                     Multiple Numbers
                   </Button>
                 </div>
@@ -452,7 +507,9 @@ export default function SendMessagePage() {
                     !selectedCampaign ||
                     selectedCampaign?.status !== "active" ||
                     (sendMode === "single" && !singlePhone) ||
-                    (sendMode === "bulk" && bulkPhones.length === 0)
+                    (sendMode === "bulk" && 
+                      bulkPhones.length === 0 && 
+                      selectedCustomers.length === 0)
                   }
                 >
                   {sending ? (
@@ -470,15 +527,19 @@ export default function SendMessagePage() {
 
                 {selectedCampaign?.status !== "active" && (
                   <p className="text-center text-sm text-red-500 mt-2">
-                    Only active campaigns can be sent. Please select an active
-                    campaign.
+                    Only active campaigns can be sent. Please select an active campaign.
                   </p>
                 )}
 
-                {sendMode === "bulk" && bulkPhones.length > 0 && (
+                {sendMode === "bulk" && (
                   <p className="text-center text-sm text-gray-500 mt-2">
-                    This will send the message to {bulkPhones.length}{" "}
-                    recipient(s)
+                    {selectedCustomers.length > 0 && bulkPhones.length > 0 
+                      ? `This will send the message to ${selectedCustomers.length} selected customer(s) and ${bulkPhones.length} additional phone number(s)`
+                      : selectedCustomers.length > 0
+                      ? `This will send the message to ${selectedCustomers.length} selected customer(s)`
+                      : bulkPhones.length > 0
+                      ? `This will send the message to ${bulkPhones.length} recipient(s)`
+                      : "Add phone numbers or select customers to send messages"}
                   </p>
                 )}
               </div>
@@ -488,8 +549,31 @@ export default function SendMessagePage() {
           {/* Customer Selection Card */}
           {Party && Party.length > 0 && (
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Select Customers</CardTitle>
+                {sendMode === "bulk" && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddAllCustomers}
+                      disabled={selectedCustomers.length === Party.length}
+                    >
+                      <Users size={14} className="mr-1" />
+                      Select All
+                    </Button>
+                    {selectedCustomers.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleClearAllCustomers}
+                      >
+                        <X size={14} className="mr-1" />
+                        Clear All
+                      </Button>
+                    )}
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
                 <div className="max-h-60 overflow-y-auto">
@@ -505,7 +589,11 @@ export default function SendMessagePage() {
                       {Party.map((customer) => (
                         <tr
                           key={customer.id}
-                          className="hover:bg-gray-50 cursor-pointer"
+                          className={`hover:bg-gray-50 cursor-pointer ${
+                            selectedCustomers.some((c) => c.id === customer.id)
+                              ? "bg-blue-50"
+                              : ""
+                          }`}
                           onClick={() => handleCustomerSelect(customer)}
                         >
                           <td className="p-2 border-b">
@@ -549,6 +637,9 @@ export default function SendMessagePage() {
                         </div>
                       ))}
                     </div>
+                    <p className="text-sm text-gray-500 mt-2">
+                      These customers' phone numbers are automatically added to the recipients list.
+                    </p>
                   </div>
                 )}
               </CardContent>
