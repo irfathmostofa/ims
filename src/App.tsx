@@ -66,6 +66,7 @@ import { RoleBasedRoute } from "./hook/RoleBasedRoute";
 
 import CampaignPage from "./pages/Marketing/CampaignPage";
 import SendMessagePage from "./pages/Marketing/SendMessagePage";
+import SendMobileMessagePage from "./pages/Marketing/SendMobileMessagePage";
 
 export default function App() {
   return (
@@ -153,7 +154,14 @@ export default function App() {
                   element={<PurchaseReportPage />}
                 />
                 <Route path="/campaign" element={<CampaignPage />} />
-                <Route path="/send-sms" element={<SendMessagePage />} />
+                <Route
+                  path="/send-whatsapp-sms"
+                  element={<SendMessagePage />}
+                />
+                <Route
+                  path="/send-mobile-sms"
+                  element={<SendMobileMessagePage />}
+                />
               </Route>
             </Route>
           </Route>

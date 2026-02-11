@@ -54,7 +54,7 @@ export default function AccountPage() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [update, setUpdate] = useState(0);
-
+  console.log(form);
   // Fetch account heads
   const fetchAccountHeads = async () => {
     try {
@@ -66,7 +66,7 @@ export default function AccountPage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-        }
+        },
       );
       const data = await response.json();
       if (data.success) {
@@ -195,7 +195,7 @@ export default function AccountPage() {
   const handleDelete = async (account: Account) => {
     if (
       !confirm(
-        `Delete Account "${account.name}"? This action cannot be undone.`
+        `Delete Account "${account.name}"? This action cannot be undone.`,
       )
     )
       return;
@@ -351,8 +351,8 @@ export default function AccountPage() {
                       })
                     }
                   >
-                    <option value="DR">Debit (Dr)</option>
-                    <option value="CR">Credit (Cr)</option>
+                    <option value="DEBIT">Debit (Dr)</option>
+                    <option value="CREDIT">Credit (Cr)</option>
                   </select>
                 </div>
               </div>
@@ -383,8 +383,8 @@ export default function AccountPage() {
                   {loading
                     ? "Saving..."
                     : form.id
-                    ? "Update Account"
-                    : "Add Account"}
+                      ? "Update Account"
+                      : "Add Account"}
                 </Button>
               </div>
             </div>
