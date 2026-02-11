@@ -128,7 +128,8 @@ const navItems: NavItem[] = [
 
     children: [
       { name: "Campaign", path: "/campaign" },
-      { name: "Send SMS", path: "/send-sms" },
+      { name: "Send WhatsApp Message ", path: "/send-whatsapp-sms" },
+      { name: "Send Mobile Message", path: "/send-mobile-sms" },
     ],
   },
   {
