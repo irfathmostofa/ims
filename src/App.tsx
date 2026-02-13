@@ -67,6 +67,8 @@ import { RoleBasedRoute } from "./hook/RoleBasedRoute";
 import CampaignPage from "./pages/Marketing/CampaignPage";
 import SendMessagePage from "./pages/Marketing/SendMessagePage";
 import SendMobileMessagePage from "./pages/Marketing/SendMobileMessagePage";
+import WebsiteSetupPage from "./pages/Website/websiteSetupPage";
+
 
 export default function App() {
   return (
@@ -94,6 +96,7 @@ export default function App() {
                 <Route path="/setup/company" element={<CompanyPage />} />
                 <Route path="/setup/users" element={<UsersPage />} />
                 <Route path="/config" element={<ConfigPage />} />
+                <Route path="/web-setting" element={<WebsiteSetupPage />} />
                 <Route path="/theme" element={<ThemePage />} />
 
                 {/* Admin Only: Accounts */}

@@ -137,6 +137,7 @@ const navItems: NavItem[] = [
     icon: Globe2,
     children: [
       { name: "Config", path: "/config" },
+      { name: "Setting", path: "/web-setting" },
       { name: "Theme", path: "/theme" },
       { name: "Visit Website", path: "https://inventory-mart.netlify.app/" },
     ],

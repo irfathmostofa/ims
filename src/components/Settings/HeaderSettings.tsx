@@ -1,0 +1,737 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Save, Plus, Trash, MoveUp, MoveDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+interface HeaderSettingsProps {
+  data?: any;
+  onChange: (data: any) => void;
+  onSave: () => void;
+  saving: boolean;
+}
+
+export default function HeaderSettings({
+  data,
+  onChange,
+  onSave,
+  saving,
+}: HeaderSettingsProps) {
+  const [formData, setFormData] = useState(data || {});
+
+  useEffect(() => {
+    if (data) {
+      setFormData(data);
+    }
+  }, [data]);
+
+  const handleChange = (field: string, value: any) => {
+    const updated = { ...formData, [field]: value };
+    setFormData(updated);
+    onChange(updated);
+  };
+
+  const handleHeaderTopChange = (field: string, value: any) => {
+    const updated = {
+      ...formData,
+      header_top: {
+        ...(formData.header_top || {}),
+        [field]: value,
+      },
+    };
+    setFormData(updated);
+    onChange(updated);
+  };
+
+  const handleHeaderTopContentChange = (
+    position: string,
+    field: string,
+    value: any,
+  ) => {
+    const updated = {
+      ...formData,
+      header_top: {
+        ...(formData.header_top || {}),
+        content: {
+          ...(formData.header_top?.content || {}),
+          [position]: {
+            ...(formData.header_top?.content?.[position] || {}),
+            [field]: value,
+          },
+        },
+      },
+    };
+    setFormData(updated);
+    onChange(updated);
+  };
+
+  const addHeaderTopItem = (position: string) => {
+    const currentItems = formData.header_top?.content?.[position]?.items || [];
+    const newItem =
+      position === "right"
+        ? { text: "New Button", link: "/", variant: "text" }
+        : { text: "New Item", link: "/", icon: "tag" };
+
+    handleHeaderTopContentChange(position, "items", [...currentItems, newItem]);
+  };
+
+  const removeHeaderTopItem = (position: string, index: number) => {
+    const currentItems = formData.header_top?.content?.[position]?.items || [];
+    const updatedItems = currentItems.filter(
+      (_: any, i: number) => i !== index,
+    );
+    handleHeaderTopContentChange(position, "items", updatedItems);
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Header Settings</CardTitle>
+        <Button onClick={onSave} disabled={saving} className="gap-2">
+          <Save className="w-4 h-4" />
+          {saving ? "Saving..." : "Save Changes"}
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="header_top" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="header_top">Header Top</TabsTrigger>
+            <TabsTrigger value="header_main">Header Main</TabsTrigger>
+            <TabsTrigger value="header_bottom">Header Bottom</TabsTrigger>
+            <TabsTrigger value="mobile">Mobile Menu</TabsTrigger>
+          </TabsList>
+
+          {/* Header Top Tab */}
+          <TabsContent value="header_top" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={formData.header_top?.status || false}
+                  onCheckedChange={(checked) =>
+                    handleHeaderTopChange("status", checked)
+                  }
+                />
+                <Label>Enable Header Top</Label>
+              </div>
+              <Select
+                value={formData.header_top?.layout || "grid-cols-3"}
+                onValueChange={(value) =>
+                  handleHeaderTopChange("layout", value)
+                }
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Layout" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="grid-cols-3">3 Columns</SelectItem>
+                  <SelectItem value="grid-cols-2">2 Columns</SelectItem>
+                  <SelectItem value="flex-between">Flex Between</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {["left", "center", "right"].map((position) => (
+              <Card key={position} className="p-4">
+                <h4 className="font-medium mb-4 capitalize">
+                  {position} Section
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={
+                        formData.header_top?.content?.[position]?.status ||
+                        false
+                      }
+                      onCheckedChange={(checked) =>
+                        handleHeaderTopContentChange(
+                          position,
+                          "status",
+                          checked,
+                        )
+                      }
+                    />
+                    <Label>Enable</Label>
+                  </div>
+
+                  <Select
+                    value={
+                      formData.header_top?.content?.[position]?.type ||
+                      "news_ticker"
+                    }
+                    onValueChange={(value) =>
+                      handleHeaderTopContentChange(position, "type", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Content Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="news_ticker">News Ticker</SelectItem>
+                      <SelectItem value="slide_news">Slide News</SelectItem>
+                      <SelectItem value="buttons">Buttons</SelectItem>
+                      <SelectItem value="text">Text</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <div className="space-y-2">
+                    <Label>Items</Label>
+                    {(
+                      formData.header_top?.content?.[position]?.items || []
+                    ).map((item: any, index: number) => (
+                      <div key={index} className="flex gap-2 items-center">
+                        <Input
+                          value={item.text || item}
+                          onChange={(e) => {
+                            const newItems = [
+                              ...(formData.header_top?.content?.[position]
+                                ?.items || []),
+                            ];
+                            if (typeof item === "string") {
+                              newItems[index] = e.target.value;
+                            } else {
+                              newItems[index] = {
+                                ...item,
+                                text: e.target.value,
+                              };
+                            }
+                            handleHeaderTopContentChange(
+                              position,
+                              "items",
+                              newItems,
+                            );
+                          }}
+                          placeholder="Item text"
+                          className="flex-1"
+                        />
+                        {item.link !== undefined && (
+                          <Input
+                            value={item.link || ""}
+                            onChange={(e) => {
+                              const newItems = [
+                                ...(formData.header_top?.content?.[position]
+                                  ?.items || []),
+                              ];
+                              newItems[index] = {
+                                ...item,
+                                link: e.target.value,
+                              };
+                              handleHeaderTopContentChange(
+                                position,
+                                "items",
+                                newItems,
+                              );
+                            }}
+                            placeholder="Link"
+                            className="w-32"
+                          />
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeHeaderTopItem(position, index)}
+                        >
+                          <Trash className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addHeaderTopItem(position)}
+                      className="mt-2"
+                    >
+                      <Plus className="w-4 h-4 mr-2" /> Add Item
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </TabsContent>
+
+          {/* Header Main Tab */}
+          <TabsContent value="header_main" className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={formData.header_main?.status || false}
+                onCheckedChange={(checked) =>
+                  handleChange("header_main", {
+                    ...formData.header_main,
+                    status: checked,
+                  })
+                }
+              />
+              <Label>Enable Header Main</Label>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              {/* Logo Settings */}
+              <Card className="p-4">
+                <h4 className="font-medium mb-4">Logo Settings</h4>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="logo_src">Logo URL</Label>
+                    <Input
+                      id="logo_src"
+                      value={formData.header_main?.content?.logo?.src || ""}
+                      onChange={(e) => {
+                        const updated = {
+                          ...formData,
+                          header_main: {
+                            ...formData.header_main,
+                            content: {
+                              ...formData.header_main?.content,
+                              logo: {
+                                ...formData.header_main?.content?.logo,
+                                src: e.target.value,
+                              },
+                            },
+                          },
+                        };
+                        setFormData(updated);
+                        onChange(updated);
+                      }}
+                      placeholder="/images/logo.png"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="logo_width">Width</Label>
+                      <Input
+                        id="logo_width"
+                        type="number"
+                        value={
+                          formData.header_main?.content?.logo?.width || 150
+                        }
+                        onChange={(e) => {
+                          const updated = {
+                            ...formData,
+                            header_main: {
+                              ...formData.header_main,
+                              content: {
+                                ...formData.header_main?.content,
+                                logo: {
+                                  ...formData.header_main?.content?.logo,
+                                  width: parseInt(e.target.value),
+                                },
+                              },
+                            },
+                          };
+                          setFormData(updated);
+                          onChange(updated);
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="logo_height">Height</Label>
+                      <Input
+                        id="logo_height"
+                        type="number"
+                        value={
+                          formData.header_main?.content?.logo?.height || 50
+                        }
+                        onChange={(e) => {
+                          const updated = {
+                            ...formData,
+                            header_main: {
+                              ...formData.header_main,
+                              content: {
+                                ...formData.header_main?.content,
+                                logo: {
+                                  ...formData.header_main?.content?.logo,
+                                  height: parseInt(e.target.value),
+                                },
+                              },
+                            },
+                          };
+                          setFormData(updated);
+                          onChange(updated);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Search Settings */}
+              <Card className="p-4">
+                <h4 className="font-medium mb-4">Search Settings</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={
+                        formData.header_main?.content?.search?.status || false
+                      }
+                      onCheckedChange={(checked) => {
+                        const updated = {
+                          ...formData,
+                          header_main: {
+                            ...formData.header_main,
+                            content: {
+                              ...formData.header_main?.content,
+                              search: {
+                                ...formData.header_main?.content?.search,
+                                status: checked,
+                              },
+                            },
+                          },
+                        };
+                        setFormData(updated);
+                        onChange(updated);
+                      }}
+                    />
+                    <Label>Enable Search</Label>
+                  </div>
+                  <div>
+                    <Label htmlFor="search_placeholder">Placeholder</Label>
+                    <Input
+                      id="search_placeholder"
+                      value={
+                        formData.header_main?.content?.search?.placeholder ||
+                        "পণ্য খুঁজুন..."
+                      }
+                      onChange={(e) => {
+                        const updated = {
+                          ...formData,
+                          header_main: {
+                            ...formData.header_main,
+                            content: {
+                              ...formData.header_main?.content,
+                              search: {
+                                ...formData.header_main?.content?.search,
+                                placeholder: e.target.value,
+                              },
+                            },
+                          },
+                        };
+                        setFormData(updated);
+                        onChange(updated);
+                      }}
+                    />
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Menu Items */}
+            <Card className="p-4">
+              <h4 className="font-medium mb-4">Main Menu</h4>
+              <div className="space-y-2">
+                {(formData.header_main?.content?.menu?.items || []).map(
+                  (item: any, index: number) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        value={item.label || ""}
+                        onChange={(e) => {
+                          const newItems = [
+                            ...(formData.header_main?.content?.menu?.items ||
+                              []),
+                          ];
+                          newItems[index] = { ...item, label: e.target.value };
+                          const updated = {
+                            ...formData,
+                            header_main: {
+                              ...formData.header_main,
+                              content: {
+                                ...formData.header_main?.content,
+                                menu: {
+                                  ...formData.header_main?.content?.menu,
+                                  items: newItems,
+                                },
+                              },
+                            },
+                          };
+                          setFormData(updated);
+                          onChange(updated);
+                        }}
+                        placeholder="Label"
+                      />
+                      <Input
+                        value={item.link || ""}
+                        onChange={(e) => {
+                          const newItems = [
+                            ...(formData.header_main?.content?.menu?.items ||
+                              []),
+                          ];
+                          newItems[index] = { ...item, link: e.target.value };
+                          const updated = {
+                            ...formData,
+                            header_main: {
+                              ...formData.header_main,
+                              content: {
+                                ...formData.header_main?.content,
+                                menu: {
+                                  ...formData.header_main?.content?.menu,
+                                  items: newItems,
+                                },
+                              },
+                            },
+                          };
+                          setFormData(updated);
+                          onChange(updated);
+                        }}
+                        placeholder="/link"
+                        className="w-40"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const newItems = (
+                            formData.header_main?.content?.menu?.items || []
+                          ).filter((_: any, i: number) => i !== index);
+                          const updated = {
+                            ...formData,
+                            header_main: {
+                              ...formData.header_main,
+                              content: {
+                                ...formData.header_main?.content,
+                                menu: {
+                                  ...formData.header_main?.content?.menu,
+                                  items: newItems,
+                                },
+                              },
+                            },
+                          };
+                          setFormData(updated);
+                          onChange(updated);
+                        }}
+                      >
+                        <Trash className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ),
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const newItems = [
+                      ...(formData.header_main?.content?.menu?.items || []),
+                      { label: "New Menu", link: "/" },
+                    ];
+                    const updated = {
+                      ...formData,
+                      header_main: {
+                        ...formData.header_main,
+                        content: {
+                          ...formData.header_main?.content,
+                          menu: {
+                            ...formData.header_main?.content?.menu,
+                            items: newItems,
+                          },
+                        },
+                      },
+                    };
+                    setFormData(updated);
+                    onChange(updated);
+                  }}
+                  className="mt-2"
+                >
+                  <Plus className="w-4 h-4 mr-2" /> Add Menu Item
+                </Button>
+              </div>
+            </Card>
+
+            {/* Action Buttons */}
+            <Card className="p-4">
+              <h4 className="font-medium mb-4">Action Buttons</h4>
+              <div className="grid grid-cols-3 gap-4">
+                {["cart", "wishlist", "account"].map((btn) => (
+                  <div key={btn} className="space-y-2 p-3 border rounded">
+                    <div className="flex items-center justify-between">
+                      <Label className="capitalize">{btn}</Label>
+                      <Switch
+                        checked={
+                          formData.header_main?.content?.action_buttons?.[btn]
+                            ?.status || false
+                        }
+                        onCheckedChange={(checked) => {
+                          const updated = {
+                            ...formData,
+                            header_main: {
+                              ...formData.header_main,
+                              content: {
+                                ...formData.header_main?.content,
+                                action_buttons: {
+                                  ...formData.header_main?.content
+                                    ?.action_buttons,
+                                  [btn]: {
+                                    ...formData.header_main?.content
+                                      ?.action_buttons?.[btn],
+                                    status: checked,
+                                  },
+                                },
+                              },
+                            },
+                          };
+                          setFormData(updated);
+                          onChange(updated);
+                        }}
+                      />
+                    </div>
+                    <Input
+                      value={
+                        formData.header_main?.content?.action_buttons?.[btn]
+                          ?.icon || btn
+                      }
+                      onChange={(e) => {
+                        const updated = {
+                          ...formData,
+                          header_main: {
+                            ...formData.header_main,
+                            content: {
+                              ...formData.header_main?.content,
+                              action_buttons: {
+                                ...formData.header_main?.content
+                                  ?.action_buttons,
+                                [btn]: {
+                                  ...formData.header_main?.content
+                                    ?.action_buttons?.[btn],
+                                  icon: e.target.value,
+                                },
+                              },
+                            },
+                          },
+                        };
+                        setFormData(updated);
+                        onChange(updated);
+                      }}
+                      placeholder="Icon name"
+                    />
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* Header Bottom Tab */}
+          <TabsContent value="header_bottom" className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={formData.header_bottom?.status || false}
+                onCheckedChange={(checked) =>
+                  handleChange("header_bottom", {
+                    ...formData.header_bottom,
+                    status: checked,
+                  })
+                }
+              />
+              <Label>Enable Header Bottom</Label>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="bottom_type">Type</Label>
+                <Select
+                  value={formData.header_bottom?.type || "selected_menu"}
+                  onValueChange={(value) =>
+                    handleChange("header_bottom", {
+                      ...formData.header_bottom,
+                      type: value,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="selected_menu">Selected Menu</SelectItem>
+                    <SelectItem value="custom_menu">Custom Menu</SelectItem>
+                    <SelectItem value="categories">Categories</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="menu_id">Menu ID</Label>
+                <Input
+                  id="menu_id"
+                  value={formData.header_bottom?.menu_id || "main-menu"}
+                  onChange={(e) =>
+                    handleChange("header_bottom", {
+                      ...formData.header_bottom,
+                      menu_id: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={formData.header_bottom?.sticky || false}
+                  onCheckedChange={(checked) =>
+                    handleChange("header_bottom", {
+                      ...formData.header_bottom,
+                      sticky: checked,
+                    })
+                  }
+                />
+                <Label>Sticky Header</Label>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Mobile Menu Tab */}
+          <TabsContent value="mobile" className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={formData.header_bottom?.mobile_menu?.status || false}
+                onCheckedChange={(checked) => {
+                  const updated = {
+                    ...formData,
+                    header_bottom: {
+                      ...formData.header_bottom,
+                      mobile_menu: {
+                        ...formData.header_bottom?.mobile_menu,
+                        status: checked,
+                      },
+                    },
+                  };
+                  setFormData(updated);
+                  onChange(updated);
+                }}
+              />
+              <Label>Enable Mobile Menu</Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="toggle_icon">Toggle Icon</Label>
+              <Input
+                id="toggle_icon"
+                value={
+                  formData.header_bottom?.mobile_menu?.toggle_icon || "bars"
+                }
+                onChange={(e) => {
+                  const updated = {
+                    ...formData,
+                    header_bottom: {
+                      ...formData.header_bottom,
+                      mobile_menu: {
+                        ...formData.header_bottom?.mobile_menu,
+                        toggle_icon: e.target.value,
+                      },
+                    },
+                  };
+                  setFormData(updated);
+                  onChange(updated);
+                }}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+}
