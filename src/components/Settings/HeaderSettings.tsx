@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Plus, Trash, MoveUp, MoveDown } from "lucide-react";
+import { Save, Plus, Trash, MoveUp, MoveDown, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { toast } from "sonner";
+import { uploadImageToCloudinary } from "@/hook/uploadImageToCloudinary";
 
 interface HeaderSettingsProps {
   data?: any;
@@ -30,6 +40,7 @@ export default function HeaderSettings({
   saving,
 }: HeaderSettingsProps) {
   const [formData, setFormData] = useState(data || {});
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (data) {
@@ -77,6 +88,35 @@ export default function HeaderSettings({
     onChange(updated);
   };
 
+  const handleLogoUpload = async (file: File) => {
+    try {
+      setUploading(true);
+      const imageUrl = await uploadImageToCloudinary(file);
+      
+      const updated = {
+        ...formData,
+        header_main: {
+          ...formData.header_main,
+          content: {
+            ...formData.header_main?.content,
+            logo: {
+              ...formData.header_main?.content?.logo,
+              src: imageUrl,
+            },
+          },
+        },
+      };
+      setFormData(updated);
+      onChange(updated);
+      toast.success("Logo uploaded successfully");
+    } catch (error) {
+      toast.error("Failed to upload logo");
+      console.error(error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const addHeaderTopItem = (position: string) => {
     const currentItems = formData.header_top?.content?.[position]?.items || [];
     const newItem =
@@ -99,7 +139,7 @@ export default function HeaderSettings({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Header Settings</CardTitle>
-        <Button onClick={onSave} disabled={saving} className="gap-2">
+        <Button onClick={onSave} disabled={saving || uploading} className="gap-2">
           <Save className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>
@@ -282,28 +322,64 @@ export default function HeaderSettings({
                 <div className="space-y-3">
                   <div>
                     <Label htmlFor="logo_src">Logo URL</Label>
-                    <Input
-                      id="logo_src"
-                      value={formData.header_main?.content?.logo?.src || ""}
-                      onChange={(e) => {
-                        const updated = {
-                          ...formData,
-                          header_main: {
-                            ...formData.header_main,
-                            content: {
-                              ...formData.header_main?.content,
-                              logo: {
-                                ...formData.header_main?.content?.logo,
-                                src: e.target.value,
+                    <div className="flex gap-2">
+                      <Input
+                        id="logo_src"
+                        value={formData.header_main?.content?.logo?.src || ""}
+                        onChange={(e) => {
+                          const updated = {
+                            ...formData,
+                            header_main: {
+                              ...formData.header_main,
+                              content: {
+                                ...formData.header_main?.content,
+                                logo: {
+                                  ...formData.header_main?.content?.logo,
+                                  src: e.target.value,
+                                },
                               },
                             },
-                          },
-                        };
-                        setFormData(updated);
-                        onChange(updated);
-                      }}
-                      placeholder="/images/logo.png"
-                    />
+                          };
+                          setFormData(updated);
+                          onChange(updated);
+                        }}
+                        placeholder="/images/logo.png"
+                        className="flex-1"
+                      />
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="icon" disabled={uploading}>
+                            <Upload className="w-4 h-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Upload Logo</DialogTitle>
+                          </DialogHeader>
+                          <div className="p-4">
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  handleLogoUpload(file);
+                                }
+                              }}
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                    {formData.header_main?.content?.logo?.src && (
+                      <div className="mt-2 p-2 border rounded">
+                        <img 
+                          src={formData.header_main.content.logo.src} 
+                          alt="Logo preview" 
+                          className="max-h-16 object-contain"
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>

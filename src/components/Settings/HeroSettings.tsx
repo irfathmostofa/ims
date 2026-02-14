@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Plus, Trash, Image as ImageIcon } from "lucide-react";
+import { Save, Plus, Trash, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { uploadImageToCloudinary } from "@/hook/uploadImageToCloudinary";
 
 interface HeroSettingsProps {
   data?: any;
@@ -32,6 +41,10 @@ export default function HeroSettings({
   const [formData, setFormData] = useState(
     data || { status: true, slides: [] },
   );
+  const [uploading, setUploading] = useState(false);
+  const [uploadingForSlide, setUploadingForSlide] = useState<number | null>(
+    null,
+  );
 
   useEffect(() => {
     if (data) {
@@ -45,9 +58,32 @@ export default function HeroSettings({
     onChange(updated);
   };
 
+  const handleSlideImageUpload = async (file: File, slideIndex: number) => {
+    try {
+      setUploading(true);
+      setUploadingForSlide(slideIndex);
+      const imageUrl = await uploadImageToCloudinary(file);
+
+      const updatedSlides = [...(formData.slides || [])];
+      updatedSlides[slideIndex] = {
+        ...updatedSlides[slideIndex],
+        image: imageUrl,
+      };
+      handleChange("slides", updatedSlides);
+
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      toast.error("Failed to upload image");
+      console.error(error);
+    } finally {
+      setUploading(false);
+      setUploadingForSlide(null);
+    }
+  };
+
   const addSlide = () => {
     const newSlide = {
-      image: "/images/hero-default.jpg",
+      image: "",
       title: "New Slide",
       title_bn: "নতুন স্লাইড",
       subtitle: "Amazing Offer",
@@ -78,7 +114,11 @@ export default function HeroSettings({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Hero Section Settings</CardTitle>
-        <Button onClick={onSave} disabled={saving} className="gap-2">
+        <Button
+          onClick={onSave}
+          disabled={saving || uploading}
+          className="gap-2"
+        >
           <Save className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>
@@ -196,13 +236,40 @@ export default function HeroSettings({
                               placeholder="/images/hero.jpg"
                               className="flex-1"
                             />
-                            <Button variant="outline" size="icon">
-                              <ImageIcon className="w-4 h-4" />
-                            </Button>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  disabled={
+                                    uploading && uploadingForSlide === index
+                                  }
+                                >
+                                  <Upload className="w-4 h-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Upload Hero Image</DialogTitle>
+                                </DialogHeader>
+                                <div className="p-4">
+                                  <Input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        handleSlideImageUpload(file, index);
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                           </div>
                           {slide.image && (
                             <div
-                              className="mt-2 h-20 w-full bg-cover bg-center rounded border"
+                              className="mt-2 h-32 w-full bg-cover bg-center rounded border"
                               style={{ backgroundImage: `url(${slide.image})` }}
                             />
                           )}

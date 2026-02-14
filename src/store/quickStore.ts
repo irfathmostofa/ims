@@ -19,6 +19,7 @@ export interface Customer {
 }
 
 export interface Category {
+  children: any;
   id: number;
   name: string;
 }
@@ -149,7 +150,7 @@ export const useQuickStore = create<StoreState>((set) => ({
       set({ loading: true });
 
       const result = await apiClient(
-        `${import.meta.env.VITE_SERVER}/setup/get-categories`,
+        `${import.meta.env.VITE_SERVER}/product/get-product-cat`,
         {
           method: "GET",
           tokenType: "jwt",

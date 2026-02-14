@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Plus, Trash, Image as ImageIcon } from "lucide-react";
+import { Save, Plus, Trash, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { uploadImageToCloudinary } from "@/hook/uploadImageToCloudinary";
 
 interface CarouselSettingsProps {
   data?: any;
@@ -29,6 +38,8 @@ export default function CarouselSettings({
   saving,
 }: CarouselSettingsProps) {
   const [formData, setFormData] = useState(data || { status: true, items: [] });
+  const [uploading, setUploading] = useState(false);
+  const [uploadingForItem, setUploadingForItem] = useState<number | null>(null);
 
   useEffect(() => {
     if (data) {
@@ -42,10 +53,30 @@ export default function CarouselSettings({
     onChange(updated);
   };
 
+  const handleImageUpload = async (file: File, itemIndex: number) => {
+    try {
+      setUploading(true);
+      setUploadingForItem(itemIndex);
+      const imageUrl = await uploadImageToCloudinary(file);
+      
+      const updatedItems = [...(formData.items || [])];
+      updatedItems[itemIndex] = { ...updatedItems[itemIndex], image: imageUrl };
+      handleChange("items", updatedItems);
+      
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      toast.error("Failed to upload image");
+      console.error(error);
+    } finally {
+      setUploading(false);
+      setUploadingForItem(null);
+    }
+  };
+
   const addItem = () => {
     const newItem = {
       product_id: Date.now(),
-      image: "/images/product-placeholder.jpg",
+      image: "",
       title: "New Product",
       title_bn: "নতুন পণ্য",
       price: 0,
@@ -70,7 +101,7 @@ export default function CarouselSettings({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Carousel Settings</CardTitle>
-        <Button onClick={onSave} disabled={saving} className="gap-2">
+        <Button onClick={onSave} disabled={saving || uploading} className="gap-2">
           <Save className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>
@@ -207,7 +238,7 @@ export default function CarouselSettings({
                       )}
 
                       <div className="space-y-2">
-                        <Label>Image URL</Label>
+                        <Label>Image</Label>
                         <div className="flex gap-2">
                           <Input
                             value={item.image || ""}
@@ -217,10 +248,42 @@ export default function CarouselSettings({
                             placeholder="/images/product.jpg"
                             className="flex-1"
                           />
-                          <Button variant="outline" size="icon">
-                            <ImageIcon className="w-4 h-4" />
-                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="icon"
+                                disabled={uploading && uploadingForItem === index}
+                              >
+                                <Upload className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Upload Product Image</DialogTitle>
+                              </DialogHeader>
+                              <div className="p-4">
+                                <Input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      handleImageUpload(file, index);
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </div>
+                        {item.image && (
+                          <img 
+                            src={item.image} 
+                            alt={item.title} 
+                            className="w-full h-24 object-cover rounded border"
+                          />
+                        )}
                       </div>
 
                       <div className="space-y-2">

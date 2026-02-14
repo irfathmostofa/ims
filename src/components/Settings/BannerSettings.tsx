@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Plus, Trash, Image as ImageIcon } from "lucide-react";
+import { Save, Plus, Trash, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { uploadImageToCloudinary } from "@/hook/uploadImageToCloudinary";
 
 interface BannerSettingsProps {
   data?: any;
@@ -31,6 +40,8 @@ export default function BannerSettings({
   const [formData, setFormData] = useState(
     data || { status: true, banners: [] },
   );
+  const [uploading, setUploading] = useState(false);
+  const [uploadingForBanner, setUploadingForBanner] = useState<number | null>(null);
 
   useEffect(() => {
     if (data) {
@@ -44,9 +55,29 @@ export default function BannerSettings({
     onChange(updated);
   };
 
+  const handleImageUpload = async (file: File, bannerIndex: number) => {
+    try {
+      setUploading(true);
+      setUploadingForBanner(bannerIndex);
+      const imageUrl = await uploadImageToCloudinary(file);
+      
+      const updatedBanners = [...(formData.banners || [])];
+      updatedBanners[bannerIndex] = { ...updatedBanners[bannerIndex], image: imageUrl };
+      handleChange("banners", updatedBanners);
+      
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      toast.error("Failed to upload image");
+      console.error(error);
+    } finally {
+      setUploading(false);
+      setUploadingForBanner(null);
+    }
+  };
+
   const addBanner = () => {
     const newBanner = {
-      image: "/images/banner-placeholder.jpg",
+      image: "",
       title: "New Banner",
       title_bn: "নতুন ব্যানার",
       link: "/category",
@@ -72,7 +103,7 @@ export default function BannerSettings({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Banner Settings</CardTitle>
-        <Button onClick={onSave} disabled={saving} className="gap-2">
+        <Button onClick={onSave} disabled={saving || uploading} className="gap-2">
           <Save className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>
@@ -154,13 +185,38 @@ export default function BannerSettings({
                             placeholder="/images/banner.jpg"
                             className="flex-1"
                           />
-                          <Button variant="outline" size="icon">
-                            <ImageIcon className="w-4 h-4" />
-                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="icon"
+                                disabled={uploading && uploadingForBanner === index}
+                              >
+                                <Upload className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Upload Banner Image</DialogTitle>
+                              </DialogHeader>
+                              <div className="p-4">
+                                <Input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      handleImageUpload(file, index);
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </div>
                         {banner.image && (
                           <div
-                            className="mt-2 h-20 w-full bg-cover bg-center rounded border"
+                            className="mt-2 h-24 w-full bg-cover bg-center rounded border"
                             style={{ backgroundImage: `url(${banner.image})` }}
                           />
                         )}

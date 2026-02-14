@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Plus, Trash, MoveUp, MoveDown } from "lucide-react";
+import { Save, Plus, Trash, MoveUp, MoveDown, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,12 +14,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useQuickStore } from "@/store/quickStore";
+
+import { toast } from "sonner";
+import { uploadImageToCloudinary } from "@/hook/uploadImageToCloudinary";
 
 interface SectionsSettingsProps {
   data?: any;
   onChange: (data: any) => void;
   onSave: () => void;
   saving: boolean;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  parent_id?: number | null;
+  children?: Category[];
 }
 
 export default function SectionsSettings({
@@ -29,11 +47,16 @@ export default function SectionsSettings({
   saving,
 }: SectionsSettingsProps) {
   const [formData, setFormData] = useState(data || []);
+  const [uploading, setUploading] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<number[]>([]);
+
+  const { fetchCategories, categories } = useQuickStore();
 
   useEffect(() => {
     if (data) {
       setFormData(data);
     }
+    fetchCategories();
   }, [data]);
 
   const handleChange = (sections: any[]) => {
@@ -50,6 +73,7 @@ export default function SectionsSettings({
       status: true,
       layout: "grid",
       columns: 4,
+      categoryids: [], // Initialize empty array for categories
     };
     handleChange([...formData, newSection]);
   };
@@ -79,24 +103,140 @@ export default function SectionsSettings({
     handleChange(updated);
   };
 
+  const handleImageUpload = async (
+    file: File,
+    sectionIndex: number,
+    field: string,
+    brandIndex?: number,
+  ) => {
+    try {
+      setUploading(true);
+      const imageUrl = await uploadImageToCloudinary(file);
+
+      if (brandIndex !== undefined) {
+        // Update brand logo
+        const updated = [...formData];
+        const brands = [...(updated[sectionIndex].brands || [])];
+        brands[brandIndex] = { ...brands[brandIndex], logo: imageUrl };
+        updated[sectionIndex] = { ...updated[sectionIndex], brands };
+        handleChange(updated);
+      } else {
+        // Update section field (like banner_image)
+        updateSection(sectionIndex, field, imageUrl);
+      }
+
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      toast.error("Failed to upload image");
+      console.error(error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const toggleCategory = (sectionIndex: number, categoryId: number) => {
+    const section = formData[sectionIndex];
+    const currentIds = section.categoryids || [];
+
+    const newIds = currentIds.includes(categoryId)
+      ? currentIds.filter((id: number) => id !== categoryId)
+      : [...currentIds, categoryId];
+
+    updateSection(sectionIndex, "categoryids", newIds);
+  };
+
+  const toggleExpand = (categoryId: number) => {
+    setExpandedCategories((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId],
+    );
+  };
+
+  const renderCategoryTree = (
+    categories: Category[],
+    sectionIndex: number,
+    level: number = 0,
+  ) => {
+    return categories.map((category) => (
+      <div key={category.id} className="space-y-1">
+        <div
+          className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded"
+          style={{ marginLeft: `${level * 20}px` }}
+        >
+          {category.children && category.children.length > 0 && (
+            <button
+              type="button"
+              onClick={() => toggleExpand(category.id)}
+              className="w-4 h-4 flex items-center justify-center text-gray-500 hover:text-gray-700"
+            >
+              {expandedCategories.includes(category.id) ? "▼" : "▶"}
+            </button>
+          )}
+          <input
+            type="checkbox"
+            checked={
+              formData[sectionIndex]?.categoryids?.includes(category.id) ||
+              false
+            }
+            onChange={() => toggleCategory(sectionIndex, category.id)}
+            className="rounded border-gray-300 w-4 h-4"
+          />
+          <span className="text-sm font-medium">{category.name}</span>
+          <span className="text-xs text-gray-500">(ID: {category.id})</span>
+        </div>
+
+        {category.children &&
+          category.children.length > 0 &&
+          expandedCategories.includes(category.id) && (
+            <div className="ml-4">
+              {renderCategoryTree(category.children, sectionIndex, level + 1)}
+            </div>
+          )}
+      </div>
+    ));
+  };
+
+  const getSelectedCategoriesText = (section: any) => {
+    if (!section.categoryids || section.categoryids.length === 0) {
+      return "No categories selected";
+    }
+
+    const findCategoryName = (id: number): string => {
+      for (const cat of categories) {
+        if (cat.id === id) return cat.name;
+        if (cat.children) {
+          const child = cat.children.find((c: Category) => c.id === id);
+          if (child) return `${cat.name} → ${child.name}`;
+        }
+      }
+      return id.toString();
+    };
+
+    const names = section.categoryids.map((id: number) => findCategoryName(id));
+    return names.join(", ");
+  };
+
   const getSectionFields = (type: string, index: number, section: any) => {
     switch (type) {
       case "featured_products":
         return (
           <>
-            <div className="space-y-2">
-              <Label>Category IDs (comma separated)</Label>
-              <Input
-                value={section.categoryids?.join(", ") || ""}
-                onChange={(e) => {
-                  const ids = e.target.value
-                    .split(",")
-                    .map((id) => parseInt(id.trim()))
-                    .filter((id) => !isNaN(id));
-                  updateSection(index, "categoryids", ids);
-                }}
-                placeholder="1, 2, 3, 4"
-              />
+            <div className="space-y-2 col-span-2">
+              <Label>Select Categories (Multiple)</Label>
+              <div className="border rounded-lg p-4 max-h-80 overflow-y-auto bg-white">
+                {categories.length > 0 ? (
+                  renderCategoryTree(categories, index)
+                ) : (
+                  <p className="text-gray-500 text-center py-4">
+                    Loading categories...
+                  </p>
+                )}
+              </div>
+              <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                <span className="font-medium">Selected: </span>
+                {getSelectedCategoriesText(section)}
+              </div>
             </div>
           </>
         );
@@ -104,20 +244,23 @@ export default function SectionsSettings({
       case "category_grid":
         return (
           <>
-            <div className="space-y-2">
-              <Label>Category IDs (comma separated)</Label>
-              <Input
-                value={section.categoryids?.join(", ") || ""}
-                onChange={(e) => {
-                  const ids = e.target.value
-                    .split(",")
-                    .map((id) => parseInt(id.trim()))
-                    .filter((id) => !isNaN(id));
-                  updateSection(index, "categoryids", ids);
-                }}
-                placeholder="1, 2, 3, 4"
-              />
+            <div className="space-y-2 col-span-2">
+              <Label>Select Categories (Multiple)</Label>
+              <div className="border rounded-lg p-4 max-h-80 overflow-y-auto bg-white">
+                {categories.length > 0 ? (
+                  renderCategoryTree(categories, index)
+                ) : (
+                  <p className="text-gray-500 text-center py-4">
+                    Loading categories...
+                  </p>
+                )}
+              </div>
+              <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                <span className="font-medium">Selected: </span>
+                {getSelectedCategoriesText(section)}
+              </div>
             </div>
+
             <div className="space-y-2">
               <Label>Grid Columns</Label>
               <Select
@@ -143,41 +286,150 @@ export default function SectionsSettings({
 
       case "banner":
         return (
-          <div className="space-y-2">
-            <Label>Banner ID</Label>
-            <Input
-              value={section.banner_id || ""}
-              onChange={(e) =>
-                updateSection(index, "banner_id", e.target.value)
-              }
-            />
+          <div className="space-y-4 col-span-2">
+            <div className="space-y-2">
+              <Label>Banner Image</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={section.banner_image || ""}
+                  onChange={(e) =>
+                    updateSection(index, "banner_image", e.target.value)
+                  }
+                  placeholder="Image URL"
+                  className="flex-1"
+                />
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="icon" disabled={uploading}>
+                      <Upload className="w-4 h-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-3/12">
+                    <DialogHeader>
+                      <DialogTitle>Upload Banner Image</DialogTitle>
+                    </DialogHeader>
+                    <div className="p-4">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleImageUpload(file, index, "banner_image");
+                          }
+                        }}
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              {section.banner_image && (
+                <div className="relative w-full h-32 border rounded overflow-hidden">
+                  <img
+                    src={section.banner_image}
+                    alt="Banner"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Banner Link</Label>
+              <Input
+                value={section.banner_link || ""}
+                onChange={(e) =>
+                  updateSection(index, "banner_link", e.target.value)
+                }
+                placeholder="/category/sale"
+              />
+            </div>
           </div>
         );
 
       case "featured_brands":
         return (
-          <div className="space-y-4">
+          <div className="space-y-4 col-span-2">
             <Label>Brands</Label>
             {(section.brands || []).map((brand: any, brandIndex: number) => (
-              <div key={brandIndex} className="flex gap-2">
-                <Input
-                  value={brand.name || ""}
-                  onChange={(e) => {
-                    const newBrands = [...(section.brands || [])];
-                    newBrands[brandIndex] = { ...brand, name: e.target.value };
-                    updateSection(index, "brands", newBrands);
-                  }}
-                  placeholder="Brand name"
-                />
-                <Input
-                  value={brand.logo || ""}
-                  onChange={(e) => {
-                    const newBrands = [...(section.brands || [])];
-                    newBrands[brandIndex] = { ...brand, logo: e.target.value };
-                    updateSection(index, "brands", newBrands);
-                  }}
-                  placeholder="/brands/logo.png"
-                />
+              <div
+                key={brandIndex}
+                className="flex gap-2 items-start border p-3 rounded"
+              >
+                <div className="flex-1 space-y-2">
+                  <Input
+                    value={brand.name || ""}
+                    onChange={(e) => {
+                      const newBrands = [...(section.brands || [])];
+                      newBrands[brandIndex] = {
+                        ...brand,
+                        name: e.target.value,
+                      };
+                      updateSection(index, "brands", newBrands);
+                    }}
+                    placeholder="Brand name"
+                  />
+
+                  <div className="flex gap-2">
+                    <Input
+                      value={brand.logo || ""}
+                      onChange={(e) => {
+                        const newBrands = [...(section.brands || [])];
+                        newBrands[brandIndex] = {
+                          ...brand,
+                          logo: e.target.value,
+                        };
+                        updateSection(index, "brands", newBrands);
+                      }}
+                      placeholder="Logo URL"
+                      className="flex-1"
+                    />
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          disabled={uploading}
+                        >
+                          <Upload className="w-4 h-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Upload Brand Logo</DialogTitle>
+                        </DialogHeader>
+                        <div className="p-4">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleImageUpload(
+                                  file,
+                                  index,
+                                  "brands",
+                                  brandIndex,
+                                );
+                              }
+                            }}
+                          />
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+
+                  {brand.logo && (
+                    <div className="w-16 h-16 border rounded overflow-hidden">
+                      <img
+                        src={brand.logo}
+                        alt={brand.name}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
+
                 <Button
                   variant="ghost"
                   size="icon"
@@ -192,6 +444,7 @@ export default function SectionsSettings({
                 </Button>
               </div>
             ))}
+
             <Button
               variant="outline"
               size="sm"
@@ -217,7 +470,11 @@ export default function SectionsSettings({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Sections Settings</CardTitle>
-        <Button onClick={onSave} disabled={saving} className="gap-2">
+        <Button
+          onClick={onSave}
+          disabled={saving || uploading}
+          className="gap-2"
+        >
           <Save className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>

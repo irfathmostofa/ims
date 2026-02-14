@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Plus, Trash } from "lucide-react";
+import { Save, Plus, Trash, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { uploadImageToCloudinary } from "@/hook/uploadImageToCloudinary";
 
 interface FooterSettingsProps {
   data?: any;
@@ -29,6 +38,11 @@ export default function FooterSettings({
   saving,
 }: FooterSettingsProps) {
   const [formData, setFormData] = useState(data || { status: true, boxes: [] });
+  const [uploading, setUploading] = useState(false);
+  const [uploadingForBox, setUploadingForBox] = useState<{
+    boxIndex: number;
+    field: string;
+  } | null>(null);
 
   useEffect(() => {
     if (data) {
@@ -54,7 +68,37 @@ export default function FooterSettings({
     onChange(updated);
   };
 
+  const handleImageUpload = async (
+    file: File,
+    boxIndex: number,
+    field: string,
+  ) => {
+    try {
+      setUploading(true);
+      setUploadingForBox({ boxIndex, field });
+      const imageUrl = await uploadImageToCloudinary(file);
+
+      const updatedBoxes = [...(formData.boxes || [])];
+      updatedBoxes[boxIndex] = { ...updatedBoxes[boxIndex], [field]: imageUrl };
+      handleChange("boxes", updatedBoxes);
+
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      toast.error("Failed to upload image");
+      console.error(error);
+    } finally {
+      setUploading(false);
+      setUploadingForBox(null);
+    }
+  };
+
   const addBox = () => {
+    // Limit to 4 boxes
+    if ((formData.boxes || []).length >= 4) {
+      toast.error("Maximum 4 boxes allowed");
+      return;
+    }
+
     const newBox = {
       id: `box-${Date.now()}`,
       type: "about",
@@ -162,11 +206,17 @@ export default function FooterSettings({
     });
   };
 
+  const boxCount = formData.boxes?.length || 0;
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Footer Settings</CardTitle>
-        <Button onClick={onSave} disabled={saving} className="gap-2">
+        <Button
+          onClick={onSave}
+          disabled={saving || uploading}
+          className="gap-2"
+        >
           <Save className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>
@@ -254,8 +304,18 @@ export default function FooterSettings({
             {/* Footer Boxes */}
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="font-medium">Footer Boxes</h3>
-                <Button onClick={addBox} variant="outline" size="sm">
+                <div>
+                  <h3 className="font-medium">Footer Boxes</h3>
+                  <p className="text-sm text-gray-500">
+                    {boxCount}/4 boxes used
+                  </p>
+                </div>
+                <Button
+                  onClick={addBox}
+                  variant="outline"
+                  size="sm"
+                  disabled={boxCount >= 4}
+                >
                   <Plus className="w-4 h-4 mr-2" /> Add Box
                 </Button>
               </div>
@@ -336,13 +396,59 @@ export default function FooterSettings({
                         <>
                           <div className="space-y-2">
                             <Label>Logo URL</Label>
-                            <Input
-                              value={box.logo || ""}
-                              onChange={(e) =>
-                                updateBox(boxIndex, "logo", e.target.value)
-                              }
-                              placeholder="/images/logo.png"
-                            />
+                            <div className="flex gap-2">
+                              <Input
+                                value={box.logo || ""}
+                                onChange={(e) =>
+                                  updateBox(boxIndex, "logo", e.target.value)
+                                }
+                                placeholder="/images/logo.png"
+                                className="flex-1"
+                              />
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    disabled={
+                                      uploading &&
+                                      uploadingForBox?.boxIndex === boxIndex &&
+                                      uploadingForBox?.field === "logo"
+                                    }
+                                  >
+                                    <Upload className="w-4 h-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Upload Logo</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="p-4">
+                                    <Input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          handleImageUpload(
+                                            file,
+                                            boxIndex,
+                                            "logo",
+                                          );
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+                            {box.logo && (
+                              <img
+                                src={box.logo}
+                                alt="Logo"
+                                className="mt-2 h-16 object-contain border rounded"
+                              />
+                            )}
                           </div>
 
                           <div className="space-y-2">
