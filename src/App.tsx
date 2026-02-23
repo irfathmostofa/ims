@@ -68,6 +68,7 @@ import CampaignPage from "./pages/Marketing/CampaignPage";
 import SendMessagePage from "./pages/Marketing/SendMessagePage";
 import SendMobileMessagePage from "./pages/Marketing/SendMobileMessagePage";
 import WebsiteSetupPage from "./pages/Website/websiteSetupPage";
+import SeoPage from "./pages/SEO/SeoPage";
 
 export default function App() {
   return (
@@ -178,7 +179,7 @@ export default function App() {
               <Route element={<MainLayout />}>
                 {/* Dashboard */}
                 <Route path="/dashboard" element={<DashboardPage />} />
-
+  <Route path="/seo" element={<SeoPage />} />
                 {/* Inventory - Basic Access */}
                 <Route
                   path="/inventory/products"
