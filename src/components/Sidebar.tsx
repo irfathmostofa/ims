@@ -65,7 +65,7 @@ const navItems: NavItem[] = [
     name: "Online Sales",
     icon: ShoppingBag,
     children: [
-      { name: "Order List", path: "/order/list" },
+      { name: "Order List", path: "/order" },
       { name: "Order Payment", path: "/order/payment" },
       { name: "Order Tracking", path: "/order/tracking" },
       { name: "Order Return", path: "/order/return" },

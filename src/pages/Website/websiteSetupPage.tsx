@@ -19,6 +19,7 @@ import ProductSettings from "@/components/Settings/ProductSettings";
 import ProductCardSettings from "@/components/Settings/ProductCardSettings";
 import FooterSettings from "@/components/Settings/FooterSettings";
 import PaymentSettings from "@/components/Settings/PaymentSettings";
+import FloatingButtonSettings from "@/components/Settings/FloatingButtonSettings";
 
 type SetupData = {
   id?: number;
@@ -290,6 +291,9 @@ export default function WebsiteSetupPage() {
           <TabsTrigger value="footer" className="px-4 py-2">
             Footer
           </TabsTrigger>
+          <TabsTrigger value="floating" className="px-4 py-2">
+            Floating Button
+          </TabsTrigger>
           <TabsTrigger value="payment" className="px-4 py-2">
             Payment
           </TabsTrigger>
@@ -400,6 +404,14 @@ export default function WebsiteSetupPage() {
               data={configData.footer_section?.value}
               onChange={(data) => handleSectionChange("footer_section", data)}
               onSave={() => handleSaveSection("footer_section")}
+              saving={saving}
+            />
+          </TabsContent>
+          <TabsContent value="floating">
+            <FloatingButtonSettings
+              data={configData.floating_buttons?.value}
+              onChange={(data) => handleSectionChange("floating_buttons", data)}
+              onSave={() => handleSaveSection("floating_buttons")}
               saving={saving}
             />
           </TabsContent>

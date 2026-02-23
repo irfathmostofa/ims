@@ -69,7 +69,6 @@ import SendMessagePage from "./pages/Marketing/SendMessagePage";
 import SendMobileMessagePage from "./pages/Marketing/SendMobileMessagePage";
 import WebsiteSetupPage from "./pages/Website/websiteSetupPage";
 
-
 export default function App() {
   return (
     <>
@@ -242,7 +241,7 @@ export default function App() {
                 />
 
                 {/* Online Order */}
-                <Route path="/order/list" element={<OrderList />} />
+                <Route path="/order" element={<OrderList />} />
                 <Route path="/order/:id" element={<OrderDetails />} />
                 <Route path="/order/payment" element={<OrderPayment />} />
                 <Route path="/order/tracking" element={<OrderTracking />} />
