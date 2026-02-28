@@ -80,7 +80,7 @@ export const CouponMgmt = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [processingCouponId, setProcessingCouponId] = useState<number | null>(
-    null
+    null,
   );
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<string>("ALL");
@@ -111,7 +111,7 @@ export const CouponMgmt = () => {
           method: "POST", // Using POST
           tokenType: "jwt",
           data: {}, // Empty object as body
-        }
+        },
       );
 
       console.log("Fetch coupons response:", response);
@@ -166,7 +166,7 @@ export const CouponMgmt = () => {
           method: "POST",
           tokenType: "jwt",
           data: formData,
-        }
+        },
       );
 
       console.log("Create response:", response);
@@ -203,7 +203,7 @@ export const CouponMgmt = () => {
             id: selectedCoupon.id,
             ...formData,
           },
-        }
+        },
       );
 
       console.log("Update response:", response);
@@ -236,7 +236,7 @@ export const CouponMgmt = () => {
           method: "POST", // Using POST
           tokenType: "jwt",
           data: { id: selectedCoupon.id },
-        }
+        },
       );
 
       console.log("Delete response:", response);
@@ -268,7 +268,7 @@ export const CouponMgmt = () => {
     const filtered = coupons.filter(
       (coupon) =>
         coupon.code.toLowerCase().includes(term.toLowerCase()) ||
-        coupon.description.toLowerCase().includes(term.toLowerCase())
+        coupon.description.toLowerCase().includes(term.toLowerCase()),
     );
     setFilteredCoupons(filtered);
   };
@@ -306,7 +306,6 @@ export const CouponMgmt = () => {
 
   // Get status count
   const getStatusCount = (status: string) => {
-   
     switch (status) {
       case "ALL":
         return coupons.length;
@@ -315,7 +314,7 @@ export const CouponMgmt = () => {
           (c) =>
             c.is_active &&
             new Date() >= new Date(c.start_date) &&
-            new Date() <= new Date(c.end_date)
+            new Date() <= new Date(c.end_date),
         ).length;
       case "INACTIVE":
         return coupons.filter((c) => !c.is_active).length;
@@ -411,7 +410,7 @@ export const CouponMgmt = () => {
     const startDate = new Date(coupon.start_date);
     const endDate = new Date(coupon.end_date);
 
-    if (!coupon.is_active) {
+    if (!coupon) {
       return (
         <Badge variant="destructive" className="text-xs">
           <XCircle size={12} className="mr-1" />
@@ -873,7 +872,7 @@ const CouponForm = ({
 }: CouponFormProps) => {
   const handleChange = (
     field: keyof CouponFormData,
-    value: string | number | boolean | null
+    value: string | number | boolean | null,
   ) => {
     setFormData({ ...formData, [field]: value });
   };
@@ -968,7 +967,7 @@ const CouponForm = ({
             onChange={(e) =>
               handleChange(
                 "min_purchase_amount",
-                e.target.value ? parseFloat(e.target.value) : null
+                e.target.value ? parseFloat(e.target.value) : null,
               )
             }
             placeholder="No minimum"
@@ -990,7 +989,7 @@ const CouponForm = ({
               onChange={(e) =>
                 handleChange(
                   "max_discount_amount",
-                  e.target.value ? parseFloat(e.target.value) : null
+                  e.target.value ? parseFloat(e.target.value) : null,
                 )
               }
               placeholder="No maximum"
@@ -1011,7 +1010,7 @@ const CouponForm = ({
           onChange={(e) =>
             handleChange(
               "usage_limit",
-              e.target.value ? parseInt(e.target.value) : null
+              e.target.value ? parseInt(e.target.value) : null,
             )
           }
           placeholder="Unlimited"
@@ -1049,7 +1048,7 @@ const CouponForm = ({
           <Select
             value={formData.applicable_to}
             onValueChange={(
-              value: "all" | "specific_categories" | "specific_products"
+              value: "all" | "specific_categories" | "specific_products",
             ) => handleChange("applicable_to", value)}
           >
             <SelectTrigger>

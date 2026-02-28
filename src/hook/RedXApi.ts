@@ -21,7 +21,7 @@ const TOKEN =
 class RedXApi {
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<T> {
     const url = `${BASE_URL}${endpoint}`;
 
@@ -53,7 +53,7 @@ class RedXApi {
       console.log(
         "RedX API Response Status:",
         response.status,
-        response.statusText
+        response.statusText,
       );
 
       // Get the response as text first
@@ -61,7 +61,7 @@ class RedXApi {
       console.log(
         "RedX API Raw Response:",
         responseText.substring(0, 500) +
-          (responseText.length > 500 ? "..." : "")
+          (responseText.length > 500 ? "..." : ""),
       );
 
       let data: any;
@@ -182,7 +182,7 @@ class RedXApi {
 
   // Parcel Endpoints - FIXED based on documentation
   async trackParcel(
-    trackingId: string
+    trackingId: string,
   ): Promise<{ tracking: TrackingUpdate[] }> {
     console.log("Tracking parcel:", trackingId);
     // Documentation shows endpoint: /parcel/track/<:parcel_id>
@@ -215,7 +215,7 @@ class RedXApi {
   }
 
   async updateParcel(
-    data: UpdateParcelData
+    data: UpdateParcelData,
   ): Promise<{ success: boolean; message: string }> {
     console.log("Updating parcel:", data);
     // Documentation shows endpoint: /parcels (not /parcel)
@@ -256,7 +256,7 @@ class RedXApi {
   async getAreasByDistrict(districtName: string): Promise<{ areas: Area[] }> {
     console.log("Getting areas by district:", districtName);
     return this.request(
-      `/areas?district_name=${encodeURIComponent(districtName)}`
+      `/areas?district_name=${encodeURIComponent(districtName)}`,
     );
   }
 
@@ -278,7 +278,7 @@ class RedXApi {
   }
 
   async getPickupStoreInfo(
-    storeId: number
+    storeId: number,
   ): Promise<{ pickup_store: PickupStore }> {
     console.log("Getting pickup store info:", storeId);
     return this.request(`/pickup/store/info/${storeId}`);
@@ -295,7 +295,7 @@ class RedXApi {
       cash_collection_amount: params.cash_collection_amount.toString(),
       weight: params.weight.toString(),
     });
-
+    console.log(query, "rq");
     return this.request(`/charge/charge_calculator?${query}`);
   }
 

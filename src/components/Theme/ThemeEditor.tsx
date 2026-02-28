@@ -599,7 +599,7 @@ export default function ThemeEditor({
             {/* Save button for general tab */}
             {activeTab === "general" && (
               <div className="flex justify-end">
-                <Button type="submit" disabled={saving}>
+                <Button type="submit" disabled={saving} className="btn-bw-primary">
                   <Save
                     className={`h-4 w-4 mr-2 ${saving ? "animate-spin" : ""}`}
                   />

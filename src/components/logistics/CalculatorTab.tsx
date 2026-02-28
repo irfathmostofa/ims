@@ -1,4 +1,4 @@
-import  { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -38,7 +38,7 @@ export const CalculatorTab = () => {
   });
   const [chargeResult, setChargeResult] = useState<ChargeResponse | null>(null);
   const [postalCode, setPostalCode] = useState<string>("");
-
+  console.log(chargeParams);
   const loadAreasByPostalCode = async () => {
     if (!postalCode.trim()) {
       toast.error("Please enter a postal code");

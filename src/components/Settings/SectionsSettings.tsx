@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Plus, Trash, MoveUp, MoveDown, Upload } from "lucide-react";
+import { Save, Plus, Trash, MoveUp, MoveDown, Upload, Settings, Layout, Image, Tag, Star, Clock, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -39,6 +40,16 @@ interface Category {
   children?: Category[];
 }
 
+// Section type definitions with icons and labels
+const SECTION_TYPES = [
+  { value: "featured_products", label: "Featured Products", icon: Star, category: "products" },
+  { value: "recent_products", label: "Recent Products", icon: Clock, category: "products" },
+  { value: "best_sellers", label: "Best Sellers", icon: TrendingUp, category: "products" },
+  { value: "category_grid", label: "Category Grid", icon: Tag, category: "categories" },
+  { value: "banner", label: "Banner", icon: Image, category: "content" },
+  { value: "featured_brands", label: "Featured Brands", icon: Layout, category: "content" },
+];
+
 export default function SectionsSettings({
   data,
   onChange,
@@ -56,6 +67,7 @@ export default function SectionsSettings({
     sectionIndex: number;
     brandIndex: number;
   } | null>(null);
+  const [activeSectionTab, setActiveSectionTab] = useState<string>("all");
 
   const { fetchCategories, categories } = useQuickStore();
   useEffect(() => {
@@ -73,10 +85,10 @@ export default function SectionsSettings({
     onChange(sections);
   };
 
-  const addSection = () => {
+  const addSection = (type: string = "featured_products") => {
     const newSection = {
       id: `section-${Date.now()}`,
-      type: "featured_products",
+      type: type,
       title: "New Section",
       title_bn: "নতুন সেকশন",
       status: true,
@@ -313,292 +325,192 @@ export default function SectionsSettings({
                 </Button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* Image */}
-                <div className="col-span-2 space-y-2">
-                  <Label>Banner Image</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={banner.image || ""}
-                      onChange={(e) => {
-                        const updated = [...formData];
-                        updated[index].banners[bannerIndex].image =
-                          e.target.value;
-                        handleChange(updated);
-                      }}
-                      placeholder="/images/banner.jpg"
-                      className="flex-1"
-                    />
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          disabled={
-                            uploading &&
-                            uploadingForBanner?.sectionIndex === index &&
-                            uploadingForBanner?.bannerIndex === bannerIndex
-                          }
-                        >
-                          <Upload className="w-4 h-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Upload Banner Image</DialogTitle>
-                        </DialogHeader>
-                        <div className="p-4">
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                handleBannerImageUpload(
-                                  file,
-                                  index,
-                                  bannerIndex,
-                                );
-                              }
-                            }}
-                          />
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                  {banner.image && (
-                    <div className="relative w-full h-32 border rounded overflow-hidden">
-                      <img
-                        src={banner.image}
-                        alt="Banner"
-                        className="w-full h-full object-cover"
+              <Tabs defaultValue="content" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="content">Content</TabsTrigger>
+                  <TabsTrigger value="image">Image</TabsTrigger>
+                  <TabsTrigger value="button">Button</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="content" className="space-y-4 mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Title (English)</Label>
+                      <Input
+                        value={banner.title || ""}
+                        onChange={(e) => {
+                          const updated = [...formData];
+                          updated[index].banners[bannerIndex].title = e.target.value;
+                          handleChange(updated);
+                        }}
                       />
                     </div>
-                  )}
-                </div>
 
-                {/* Titles */}
-                <div className="space-y-2">
-                  <Label>Title (English)</Label>
-                  <Input
-                    value={banner.title || ""}
-                    onChange={(e) => {
-                      const updated = [...formData];
-                      updated[index].banners[bannerIndex].title =
-                        e.target.value;
-                      handleChange(updated);
-                    }}
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <Label>Title (Bengali)</Label>
+                      <Input
+                        value={banner.title_bn || ""}
+                        onChange={(e) => {
+                          const updated = [...formData];
+                          updated[index].banners[bannerIndex].title_bn = e.target.value;
+                          handleChange(updated);
+                        }}
+                        placeholder="বাংলা টাইটেল"
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>Title (Bengali)</Label>
-                  <Input
-                    value={banner.title_bn || ""}
-                    onChange={(e) => {
-                      const updated = [...formData];
-                      updated[index].banners[bannerIndex].title_bn =
-                        e.target.value;
-                      handleChange(updated);
-                    }}
-                    placeholder="বাংলা টাইটেল"
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <Label>Subtitle (English)</Label>
+                      <Input
+                        value={banner.subtitle || ""}
+                        onChange={(e) => {
+                          const updated = [...formData];
+                          updated[index].banners[bannerIndex].subtitle = e.target.value;
+                          handleChange(updated);
+                        }}
+                      />
+                    </div>
 
-                {/* Subtitles */}
-                <div className="space-y-2">
-                  <Label>Subtitle (English)</Label>
-                  <Input
-                    value={banner.subtitle || ""}
-                    onChange={(e) => {
-                      const updated = [...formData];
-                      updated[index].banners[bannerIndex].subtitle =
-                        e.target.value;
-                      handleChange(updated);
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Subtitle (Bengali)</Label>
-                  <Input
-                    value={banner.subtitle_bn || ""}
-                    onChange={(e) => {
-                      const updated = [...formData];
-                      updated[index].banners[bannerIndex].subtitle_bn =
-                        e.target.value;
-                      handleChange(updated);
-                    }}
-                    placeholder="বাংলা সাবটাইটেল"
-                  />
-                </div>
-
-                {/* Button Settings */}
-                <div className="space-y-2">
-                  <Label>Button Text (English)</Label>
-                  <Input
-                    value={banner.button_text || "Shop Now"}
-                    onChange={(e) => {
-                      const updated = [...formData];
-                      updated[index].banners[bannerIndex].button_text =
-                        e.target.value;
-                      handleChange(updated);
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Button Text (Bengali)</Label>
-                  <Input
-                    value={banner.button_text_bn || "এখনই কিনুন"}
-                    onChange={(e) => {
-                      const updated = [...formData];
-                      updated[index].banners[bannerIndex].button_text_bn =
-                        e.target.value;
-                      handleChange(updated);
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Button Link</Label>
-                  <Input
-                    value={banner.link || ""}
-                    onChange={(e) => {
-                      const updated = [...formData];
-                      updated[index].banners[bannerIndex].link = e.target.value;
-                      handleChange(updated);
-                    }}
-                    placeholder="/category/sale"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Button Color</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="color"
-                      value={banner.button_color || "#3B82F6"}
-                      onChange={(e) => {
-                        const updated = [...formData];
-                        updated[index].banners[bannerIndex].button_color =
-                          e.target.value;
-                        handleChange(updated);
-                      }}
-                      className="w-12 p-1"
-                    />
-                    <Input
-                      value={banner.button_color || "#3B82F6"}
-                      onChange={(e) => {
-                        const updated = [...formData];
-                        updated[index].banners[bannerIndex].button_color =
-                          e.target.value;
-                        handleChange(updated);
-                      }}
-                      className="flex-1"
-                    />
+                    <div className="space-y-2">
+                      <Label>Subtitle (Bengali)</Label>
+                      <Input
+                        value={banner.subtitle_bn || ""}
+                        onChange={(e) => {
+                          const updated = [...formData];
+                          updated[index].banners[bannerIndex].subtitle_bn = e.target.value;
+                          handleChange(updated);
+                        }}
+                        placeholder="বাংলা সাবটাইটেল"
+                      />
+                    </div>
                   </div>
-                </div>
+                </TabsContent>
 
-                {/* Display Settings */}
-                <div className="space-y-2">
-                  <Label>Size</Label>
-                  <Select
-                    value={banner.size || "half"}
-                    onValueChange={(value) => {
-                      const updated = [...formData];
-                      updated[index].banners[bannerIndex].size = value;
-                      handleChange(updated);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="full">Full Width</SelectItem>
-                      <SelectItem value="half">Half Width</SelectItem>
-                      <SelectItem value="third">One Third</SelectItem>
-                      <SelectItem value="quarter">One Quarter</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Text Position</Label>
-                  <Select
-                    value={banner.text_position || "center"}
-                    onValueChange={(value) => {
-                      const updated = [...formData];
-                      updated[index].banners[bannerIndex].text_position = value;
-                      handleChange(updated);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="left">Left</SelectItem>
-                      <SelectItem value="center">Center</SelectItem>
-                      <SelectItem value="right">Right</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Text Color</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="color"
-                      value={banner.text_color || "#FFFFFF"}
-                      onChange={(e) => {
-                        const updated = [...formData];
-                        updated[index].banners[bannerIndex].text_color =
-                          e.target.value;
-                        handleChange(updated);
-                      }}
-                      className="w-12 p-1"
-                    />
-                    <Input
-                      value={banner.text_color || "#FFFFFF"}
-                      onChange={(e) => {
-                        const updated = [...formData];
-                        updated[index].banners[bannerIndex].text_color =
-                          e.target.value;
-                        handleChange(updated);
-                      }}
-                      className="flex-1"
-                    />
+                <TabsContent value="image" className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <Label>Banner Image</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={banner.image || ""}
+                        onChange={(e) => {
+                          const updated = [...formData];
+                          updated[index].banners[bannerIndex].image = e.target.value;
+                          handleChange(updated);
+                        }}
+                        placeholder="/images/banner.jpg"
+                        className="flex-1"
+                      />
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            disabled={
+                              uploading &&
+                              uploadingForBanner?.sectionIndex === index &&
+                              uploadingForBanner?.bannerIndex === bannerIndex
+                            }
+                          >
+                            <Upload className="w-4 h-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Upload Banner Image</DialogTitle>
+                          </DialogHeader>
+                          <div className="p-4">
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  handleBannerImageUpload(file, index, bannerIndex);
+                                }
+                              }}
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                    {banner.image && (
+                      <div className="relative w-full h-32 border rounded overflow-hidden">
+                        <img
+                          src={banner.image}
+                          alt="Banner"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
                   </div>
-                </div>
+                </TabsContent>
 
-                <div className="space-y-2">
-                  <Label>Overlay Opacity (%)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={banner.overlay_opacity || 40}
-                    onChange={(e) => {
-                      const updated = [...formData];
-                      updated[index].banners[bannerIndex].overlay_opacity =
-                        parseInt(e.target.value);
-                      handleChange(updated);
-                    }}
-                  />
-                </div>
+                <TabsContent value="button" className="space-y-4 mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Button Text (English)</Label>
+                      <Input
+                        value={banner.button_text || "Shop Now"}
+                        onChange={(e) => {
+                          const updated = [...formData];
+                          updated[index].banners[bannerIndex].button_text = e.target.value;
+                          handleChange(updated);
+                        }}
+                      />
+                    </div>
 
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={banner.show_button || true}
-                    onCheckedChange={(checked) => {
-                      const updated = [...formData];
-                      updated[index].banners[bannerIndex].show_button = checked;
-                      handleChange(updated);
-                    }}
-                  />
-                  <Label>Show Button</Label>
-                </div>
-              </div>
+                    <div className="space-y-2">
+                      <Label>Button Text (Bengali)</Label>
+                      <Input
+                        value={banner.button_text_bn || "এখনই কিনুন"}
+                        onChange={(e) => {
+                          const updated = [...formData];
+                          updated[index].banners[bannerIndex].button_text_bn = e.target.value;
+                          handleChange(updated);
+                        }}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Button Link</Label>
+                      <Input
+                        value={banner.link || ""}
+                        onChange={(e) => {
+                          const updated = [...formData];
+                          updated[index].banners[bannerIndex].link = e.target.value;
+                          handleChange(updated);
+                        }}
+                        placeholder="/category/sale"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Button Color</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={banner.button_color || "#3B82F6"}
+                          onChange={(e) => {
+                            const updated = [...formData];
+                            updated[index].banners[bannerIndex].button_color = e.target.value;
+                            handleChange(updated);
+                          }}
+                          className="w-12 p-1"
+                        />
+                        <Input
+                          value={banner.button_color || "#3B82F6"}
+                          onChange={(e) => {
+                            const updated = [...formData];
+                            updated[index].banners[bannerIndex].button_color = e.target.value;
+                            handleChange(updated);
+                          }}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </Card>
           ))}
         </div>
@@ -648,104 +560,112 @@ export default function SectionsSettings({
                 </Button>
               </div>
 
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label>Brand Name (English)</Label>
-                  <Input
-                    value={brand.name || ""}
-                    onChange={(e) => {
-                      const updated = [...formData];
-                      updated[index].brands[brandIndex].name = e.target.value;
-                      handleChange(updated);
-                    }}
-                    placeholder="Brand name"
-                  />
-                </div>
+              <Tabs defaultValue="details" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="details">Details</TabsTrigger>
+                  <TabsTrigger value="logo">Logo</TabsTrigger>
+                </TabsList>
 
-                <div className="space-y-2">
-                  <Label>Brand Name (Bengali)</Label>
-                  <Input
-                    value={brand.name_bn || ""}
-                    onChange={(e) => {
-                      const updated = [...formData];
-                      updated[index].brands[brandIndex].name_bn =
-                        e.target.value;
-                      handleChange(updated);
-                    }}
-                    placeholder="ব্র্যান্ডের নাম"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Logo</Label>
-                  <div className="flex gap-2">
+                <TabsContent value="details" className="space-y-3 mt-4">
+                  <div className="space-y-2">
+                    <Label>Brand Name (English)</Label>
                     <Input
-                      value={brand.logo || ""}
+                      value={brand.name || ""}
                       onChange={(e) => {
                         const updated = [...formData];
-                        updated[index].brands[brandIndex].logo = e.target.value;
+                        updated[index].brands[brandIndex].name = e.target.value;
                         handleChange(updated);
                       }}
-                      placeholder="Logo URL"
-                      className="flex-1"
+                      placeholder="Brand name"
                     />
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          disabled={
-                            uploading &&
-                            uploadingForBrand?.sectionIndex === index &&
-                            uploadingForBrand?.brandIndex === brandIndex
-                          }
-                        >
-                          <Upload className="w-4 h-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Upload Brand Logo</DialogTitle>
-                        </DialogHeader>
-                        <div className="p-4">
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                handleBrandLogoUpload(file, index, brandIndex);
-                              }
-                            }}
-                          />
-                        </div>
-                      </DialogContent>
-                    </Dialog>
                   </div>
-                  {brand.logo && (
-                    <div className="w-16 h-16 border rounded overflow-hidden">
-                      <img
-                        src={brand.logo}
-                        alt={brand.name}
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                  )}
-                </div>
 
-                <div className="space-y-2">
-                  <Label>Brand Link</Label>
-                  <Input
-                    value={brand.link || ""}
-                    onChange={(e) => {
-                      const updated = [...formData];
-                      updated[index].brands[brandIndex].link = e.target.value;
-                      handleChange(updated);
-                    }}
-                    placeholder="/brand/nike"
-                  />
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <Label>Brand Name (Bengali)</Label>
+                    <Input
+                      value={brand.name_bn || ""}
+                      onChange={(e) => {
+                        const updated = [...formData];
+                        updated[index].brands[brandIndex].name_bn = e.target.value;
+                        handleChange(updated);
+                      }}
+                      placeholder="ব্র্যান্ডের নাম"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Brand Link</Label>
+                    <Input
+                      value={brand.link || ""}
+                      onChange={(e) => {
+                        const updated = [...formData];
+                        updated[index].brands[brandIndex].link = e.target.value;
+                        handleChange(updated);
+                      }}
+                      placeholder="/brand/nike"
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="logo" className="space-y-3 mt-4">
+                  <div className="space-y-2">
+                    <Label>Logo</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={brand.logo || ""}
+                        onChange={(e) => {
+                          const updated = [...formData];
+                          updated[index].brands[brandIndex].logo = e.target.value;
+                          handleChange(updated);
+                        }}
+                        placeholder="Logo URL"
+                        className="flex-1"
+                      />
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            disabled={
+                              uploading &&
+                              uploadingForBrand?.sectionIndex === index &&
+                              uploadingForBrand?.brandIndex === brandIndex
+                            }
+                          >
+                            <Upload className="w-4 h-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Upload Brand Logo</DialogTitle>
+                          </DialogHeader>
+                          <div className="p-4">
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  handleBrandLogoUpload(file, index, brandIndex);
+                                }
+                              }}
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                    {brand.logo && (
+                      <div className="w-16 h-16 border rounded overflow-hidden">
+                        <img
+                          src={brand.logo}
+                          alt={brand.name}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
             </Card>
           ))}
         </div>
@@ -952,285 +872,392 @@ export default function SectionsSettings({
     }
   };
 
+  // Filter sections by type category
+  const getFilteredSections = (category: string) => {
+    if (category === "all") return formData;
+    return formData.filter((section: any) => {
+      const sectionType = SECTION_TYPES.find(t => t.value === section.type);
+      return sectionType?.category === category;
+    });
+  };
+
+  // Group sections by category for the tabs
+  const sectionsByCategory = {
+    all: formData,
+    products: formData.filter((s: any) => {
+      const type = SECTION_TYPES.find(t => t.value === s.type);
+      return type?.category === "products";
+    }),
+    categories: formData.filter((s: any) => {
+      const type = SECTION_TYPES.find(t => t.value === s.type);
+      return type?.category === "categories";
+    }),
+    content: formData.filter((s: any) => {
+      const type = SECTION_TYPES.find(t => t.value === s.type);
+      return type?.category === "content";
+    }),
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Sections Settings</CardTitle>
-        <Button
-          onClick={onSave}
-          disabled={saving || uploading}
-          className="gap-2"
-        >
-          <Save className="w-4 h-4" />
-          {saving ? "Saving..." : "Save Changes"}
-        </Button>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h3 className="font-medium">Page Sections</h3>
-          <Button onClick={addSection} variant="outline" size="sm">
-            <Plus className="w-4 h-4 mr-2" /> Add Section
+        <div className="flex gap-2">
+          <Select onValueChange={(value) => addSection(value)}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Add section..." />
+            </SelectTrigger>
+            <SelectContent>
+              {SECTION_TYPES.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  <div className="flex items-center gap-2">
+                    <type.icon className="w-4 h-4" />
+                    {type.label}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            onClick={onSave}
+            disabled={saving || uploading}
+            className="gap-2 btn-bw-primary"
+          >
+            <Save className="w-4 h-4" />
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <Tabs defaultValue="all" className="w-full" onValueChange={setActiveSectionTab}>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="all" className="gap-2">
+              <Layout className="w-4 h-4" />
+              All ({sectionsByCategory.all.length})
+            </TabsTrigger>
+            <TabsTrigger value="products" className="gap-2">
+              <Star className="w-4 h-4" />
+              Products ({sectionsByCategory.products.length})
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="gap-2">
+              <Tag className="w-4 h-4" />
+              Categories ({sectionsByCategory.categories.length})
+            </TabsTrigger>
+            <TabsTrigger value="content" className="gap-2">
+              <Image className="w-4 h-4" />
+              Content ({sectionsByCategory.content.length})
+            </TabsTrigger>
+          </TabsList>
 
-        <div className="space-y-4">
-          {formData.map((section: any, index: number) => (
-            <Card key={section.id || index} className="p-4">
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-medium">
-                    {section.title || `Section ${index + 1}`}
-                  </h4>
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                    {section.type}
-                  </span>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => moveSection(index, "up")}
-                    disabled={index === 0}
-                  >
-                    <MoveUp className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => moveSection(index, "down")}
-                    disabled={index === formData.length - 1}
-                  >
-                    <MoveDown className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => removeSection(index)}
-                  >
-                    <Trash className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Section Type</Label>
-                  <Select
-                    value={section.type || "featured_products"}
-                    onValueChange={(value) =>
-                      updateSection(index, "type", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
+          {["all", "products", "categories", "content"].map((tabValue) => (
+            <TabsContent key={tabValue} value={tabValue} className="space-y-4 mt-6">
+              {getFilteredSections(tabValue).length === 0 ? (
+                <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                  <Layout className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-500 mb-4">No sections in this category</p>
+                  <Select onValueChange={(value) => addSection(value)}>
+                    <SelectTrigger className="w-[200px] mx-auto">
+                      <SelectValue placeholder="Add a section..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="featured_products">
-                        Featured Products
-                      </SelectItem>
-                      <SelectItem value="category_grid">
-                        Category Grid
-                      </SelectItem>
-                      <SelectItem value="banner">Banner</SelectItem>
-                      <SelectItem value="featured_brands">
-                        Featured Brands
-                      </SelectItem>
-                      <SelectItem value="recent_products">
-                        Recent Products
-                      </SelectItem>
-                      <SelectItem value="best_sellers">Best Sellers</SelectItem>
+                      {SECTION_TYPES.filter(t => tabValue === "all" || t.category === tabValue).map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          <div className="flex items-center gap-2">
+                            <type.icon className="w-4 h-4" />
+                            {type.label}
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
+              ) : (
+                getFilteredSections(tabValue).map((section: any, index: number) => {
+                  // Get the actual index in the original formData array
+                  const originalIndex = formData.findIndex((s: any) => s.id === section.id);
+                  const sectionType = SECTION_TYPES.find(t => t.value === section.type);
+                  const TypeIcon = sectionType?.icon || Layout;
 
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={section.status}
-                      onCheckedChange={(checked) =>
-                        updateSection(index, "status", checked)
-                      }
-                    />
-                    <span className="text-sm text-gray-500">
-                      {section.status ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                </div>
+                  return (
+                    <Card key={section.id || originalIndex} className="p-4">
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-gray-100 rounded">
+                            <TypeIcon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium flex items-center gap-2">
+                              {section.title || `Section ${originalIndex + 1}`}
+                              <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                {sectionType?.label || section.type}
+                              </span>
+                            </h4>
+                            <p className="text-xs text-gray-500">
+                              Status: {section.status ? "Active" : "Inactive"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => moveSection(originalIndex, "up")}
+                            disabled={originalIndex === 0}
+                          >
+                            <MoveUp className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => moveSection(originalIndex, "down")}
+                            disabled={originalIndex === formData.length - 1}
+                          >
+                            <MoveDown className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => removeSection(originalIndex)}
+                          >
+                            <Trash className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
 
-                <div className="space-y-2">
-                  <Label>Title (English)</Label>
-                  <Input
-                    value={section.title || ""}
-                    onChange={(e) =>
-                      updateSection(index, "title", e.target.value)
-                    }
-                  />
-                </div>
+                      <Tabs defaultValue="general" className="w-full">
+                        <TabsList className="grid w-full grid-cols-3">
+                          <TabsTrigger value="general">General</TabsTrigger>
+                          <TabsTrigger value="content">Content</TabsTrigger>
+                          <TabsTrigger value="styling">Styling</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="general" className="space-y-4 mt-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label>Section Type</Label>
+                              <Select
+                                value={section.type || "featured_products"}
+                                onValueChange={(value) =>
+                                  updateSection(originalIndex, "type", value)
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {SECTION_TYPES.map((type) => (
+                                    <SelectItem key={type.value} value={type.value}>
+                                      <div className="flex items-center gap-2">
+                                        <type.icon className="w-4 h-4" />
+                                        {type.label}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
 
-                <div className="space-y-2">
-                  <Label>Title (Bengali)</Label>
-                  <Input
-                    value={section.title_bn || ""}
-                    onChange={(e) =>
-                      updateSection(index, "title_bn", e.target.value)
-                    }
-                    placeholder="বাংলা টাইটেল"
-                  />
-                </div>
+                            <div className="space-y-2">
+                              <Label>Status</Label>
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  checked={section.status}
+                                  onCheckedChange={(checked) =>
+                                    updateSection(originalIndex, "status", checked)
+                                  }
+                                />
+                                <span className="text-sm text-gray-500">
+                                  {section.status ? "Active" : "Inactive"}
+                                </span>
+                              </div>
+                            </div>
 
-                <div className="space-y-2">
-                  <Label>Layout</Label>
-                  <Select
-                    value={section.layout || "grid"}
-                    onValueChange={(value) =>
-                      updateSection(index, "layout", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="grid">Grid</SelectItem>
-                      <SelectItem value="slider">Slider</SelectItem>
-                      <SelectItem value="list">List</SelectItem>
-                      <SelectItem value="masonry">Masonry</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                            <div className="space-y-2">
+                              <Label>Title (English)</Label>
+                              <Input
+                                value={section.title || ""}
+                                onChange={(e) =>
+                                  updateSection(originalIndex, "title", e.target.value)
+                                }
+                              />
+                            </div>
 
-                <div className="space-y-2">
-                  <Label>Columns</Label>
-                  <Select
-                    value={section.columns?.toString() || "4"}
-                    onValueChange={(value) =>
-                      updateSection(index, "columns", parseInt(value))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2">2 Columns</SelectItem>
-                      <SelectItem value="3">3 Columns</SelectItem>
-                      <SelectItem value="4">4 Columns</SelectItem>
-                      <SelectItem value="5">5 Columns</SelectItem>
-                      <SelectItem value="6">6 Columns</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                            <div className="space-y-2">
+                              <Label>Title (Bengali)</Label>
+                              <Input
+                                value={section.title_bn || ""}
+                                onChange={(e) =>
+                                  updateSection(originalIndex, "title_bn", e.target.value)
+                                }
+                                placeholder="বাংলা টাইটেল"
+                              />
+                            </div>
 
-                {/* Background Settings */}
-                <div className="space-y-2">
-                  <Label>Background Color</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="color"
-                      value={section.bg_color || "#FFFFFF"}
-                      onChange={(e) =>
-                        updateSection(index, "bg_color", e.target.value)
-                      }
-                      className="w-12 p-1"
-                    />
-                    <Input
-                      value={section.bg_color || "#FFFFFF"}
-                      onChange={(e) =>
-                        updateSection(index, "bg_color", e.target.value)
-                      }
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
+                            <div className="space-y-2">
+                              <Label>Layout</Label>
+                              <Select
+                                value={section.layout || "grid"}
+                                onValueChange={(value) =>
+                                  updateSection(originalIndex, "layout", value)
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="grid">Grid</SelectItem>
+                                  <SelectItem value="slider">Slider</SelectItem>
+                                  <SelectItem value="list">List</SelectItem>
+                                  <SelectItem value="masonry">Masonry</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
 
-                <div className="space-y-2">
-                  <Label>Text Color</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="color"
-                      value={section.text_color || "#000000"}
-                      onChange={(e) =>
-                        updateSection(index, "text_color", e.target.value)
-                      }
-                      className="w-12 p-1"
-                    />
-                    <Input
-                      value={section.text_color || "#000000"}
-                      onChange={(e) =>
-                        updateSection(index, "text_color", e.target.value)
-                      }
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
+                            <div className="space-y-2">
+                              <Label>Columns</Label>
+                              <Select
+                                value={section.columns?.toString() || "4"}
+                                onValueChange={(value) =>
+                                  updateSection(originalIndex, "columns", parseInt(value))
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="2">2 Columns</SelectItem>
+                                  <SelectItem value="3">3 Columns</SelectItem>
+                                  <SelectItem value="4">4 Columns</SelectItem>
+                                  <SelectItem value="5">5 Columns</SelectItem>
+                                  <SelectItem value="6">6 Columns</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </TabsContent>
 
-                <div className="space-y-2">
-                  <Label>Padding</Label>
-                  <Select
-                    value={section.padding || "p-6"}
-                    onValueChange={(value) =>
-                      updateSection(index, "padding", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="p-0">None</SelectItem>
-                      <SelectItem value="p-2">Small</SelectItem>
-                      <SelectItem value="p-4">Medium</SelectItem>
-                      <SelectItem value="p-6">Large</SelectItem>
-                      <SelectItem value="p-8">Extra Large</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                        <TabsContent value="content" className="space-y-4 mt-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            {getSectionFields(section.type, originalIndex, section)}
+                          </div>
+                        </TabsContent>
 
-                <div className="space-y-2">
-                  <Label>Margin Bottom</Label>
-                  <Select
-                    value={section.margin || "mb-8"}
-                    onValueChange={(value) =>
-                      updateSection(index, "margin", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="mb-0">None</SelectItem>
-                      <SelectItem value="mb-2">Small</SelectItem>
-                      <SelectItem value="mb-4">Medium</SelectItem>
-                      <SelectItem value="mb-8">Large</SelectItem>
-                      <SelectItem value="mb-12">Extra Large</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                        <TabsContent value="styling" className="space-y-4 mt-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label>Background Color</Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  type="color"
+                                  value={section.bg_color || "#FFFFFF"}
+                                  onChange={(e) =>
+                                    updateSection(originalIndex, "bg_color", e.target.value)
+                                  }
+                                  className="w-12 p-1"
+                                />
+                                <Input
+                                  value={section.bg_color || "#FFFFFF"}
+                                  onChange={(e) =>
+                                    updateSection(originalIndex, "bg_color", e.target.value)
+                                  }
+                                  className="flex-1"
+                                />
+                              </div>
+                            </div>
 
-                <div className="space-y-2">
-                  <Label>Border Radius</Label>
-                  <Select
-                    value={section.border_radius || "rounded-lg"}
-                    onValueChange={(value) =>
-                      updateSection(index, "border_radius", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="rounded-none">None</SelectItem>
-                      <SelectItem value="rounded">Small</SelectItem>
-                      <SelectItem value="rounded-lg">Medium</SelectItem>
-                      <SelectItem value="rounded-xl">Large</SelectItem>
-                      <SelectItem value="rounded-full">Full</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                            <div className="space-y-2">
+                              <Label>Text Color</Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  type="color"
+                                  value={section.text_color || "#000000"}
+                                  onChange={(e) =>
+                                    updateSection(originalIndex, "text_color", e.target.value)
+                                  }
+                                  className="w-12 p-1"
+                                />
+                                <Input
+                                  value={section.text_color || "#000000"}
+                                  onChange={(e) =>
+                                    updateSection(originalIndex, "text_color", e.target.value)
+                                  }
+                                  className="flex-1"
+                                />
+                              </div>
+                            </div>
 
-                {getSectionFields(section.type, index, section)}
-              </div>
-            </Card>
+                            <div className="space-y-2">
+                              <Label>Padding</Label>
+                              <Select
+                                value={section.padding || "p-6"}
+                                onValueChange={(value) =>
+                                  updateSection(originalIndex, "padding", value)
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="p-0">None</SelectItem>
+                                  <SelectItem value="p-2">Small</SelectItem>
+                                  <SelectItem value="p-4">Medium</SelectItem>
+                                  <SelectItem value="p-6">Large</SelectItem>
+                                  <SelectItem value="p-8">Extra Large</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Margin Bottom</Label>
+                              <Select
+                                value={section.margin || "mb-8"}
+                                onValueChange={(value) =>
+                                  updateSection(originalIndex, "margin", value)
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="mb-0">None</SelectItem>
+                                  <SelectItem value="mb-2">Small</SelectItem>
+                                  <SelectItem value="mb-4">Medium</SelectItem>
+                                  <SelectItem value="mb-8">Large</SelectItem>
+                                  <SelectItem value="mb-12">Extra Large</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Border Radius</Label>
+                              <Select
+                                value={section.border_radius || "rounded-lg"}
+                                onValueChange={(value) =>
+                                  updateSection(originalIndex, "border_radius", value)
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="rounded-none">None</SelectItem>
+                                  <SelectItem value="rounded">Small</SelectItem>
+                                  <SelectItem value="rounded-lg">Medium</SelectItem>
+                                  <SelectItem value="rounded-xl">Large</SelectItem>
+                                  <SelectItem value="rounded-full">Full</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    </Card>
+                  );
+                })
+              )}
+            </TabsContent>
           ))}
-        </div>
+        </Tabs>
       </CardContent>
     </Card>
   );

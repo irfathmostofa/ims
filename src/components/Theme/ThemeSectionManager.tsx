@@ -1100,7 +1100,7 @@ const ConfigEditorModal: React.FC<ConfigEditorModalProps> = ({
           >
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={loading}>
+          <Button onClick={handleSave} disabled={loading} className="btn-bw-primary">
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -32,7 +32,7 @@ export default function CompanyProfilePage() {
         {
           method: "GET",
           tokenType: "jwt",
-        }
+        },
       );
 
       if (data.data && data.data.length > 0) {
@@ -73,7 +73,7 @@ export default function CompanyProfilePage() {
           method: "POST",
           data: updateData,
           tokenType: "jwt",
-        }
+        },
       );
 
       toast.success("Company profile updated successfully!");
@@ -182,7 +182,7 @@ export default function CompanyProfilePage() {
             >
               Cancel
             </Button>
-            <Button className="btn-peach" onClick={handleUpdate}>
+            <Button className="btn-peach " onClick={handleUpdate}>
               Save Changes
             </Button>
           </div>

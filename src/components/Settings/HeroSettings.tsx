@@ -387,7 +387,7 @@ export default function HeroSettings({
         <Button
           onClick={onSave}
           disabled={saving || uploading}
-          className="gap-2"
+          className="gap-2 btn-bw-primary"
         >
           <Save className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}

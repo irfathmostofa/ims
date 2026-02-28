@@ -11,15 +11,16 @@ import ColorSettings from "@/components/Settings/ColorSettings";
 import TypographySettings from "@/components/Settings/TypographySettings";
 import HeaderSettings from "@/components/Settings/HeaderSettings";
 import HeroSettings from "@/components/Settings/HeroSettings";
-import SideMenuSettings from "@/components/Settings/SideMenuSettings";
-import CarouselSettings from "@/components/Settings/CarouselSettings";
-import BannerSettings from "@/components/Settings/BannerSettings";
+// import SideMenuSettings from "@/components/Settings/SideMenuSettings";
+// import CarouselSettings from "@/components/Settings/CarouselSettings";
+// import BannerSettings from "@/components/Settings/BannerSettings";
 import SectionsSettings from "@/components/Settings/SectionsSettings";
 import ProductSettings from "@/components/Settings/ProductSettings";
 import ProductCardSettings from "@/components/Settings/ProductCardSettings";
 import FooterSettings from "@/components/Settings/FooterSettings";
 import PaymentSettings from "@/components/Settings/PaymentSettings";
 import FloatingButtonSettings from "@/components/Settings/FloatingButtonSettings";
+import LogisticSettings from "@/components/Settings/LogisticSettings";
 
 type SetupData = {
   id?: number;
@@ -270,7 +271,7 @@ export default function WebsiteSetupPage() {
           <TabsTrigger value="hero" className="px-4 py-2">
             Hero
           </TabsTrigger>
-          <TabsTrigger value="sidemenu" className="px-4 py-2">
+          {/* <TabsTrigger value="sidemenu" className="px-4 py-2">
             Side Menu
           </TabsTrigger>
           <TabsTrigger value="carousel" className="px-4 py-2">
@@ -278,7 +279,7 @@ export default function WebsiteSetupPage() {
           </TabsTrigger>
           <TabsTrigger value="banner" className="px-4 py-2">
             Banner
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value="sections" className="px-4 py-2">
             Sections
           </TabsTrigger>
@@ -296,6 +297,9 @@ export default function WebsiteSetupPage() {
           </TabsTrigger>
           <TabsTrigger value="payment" className="px-4 py-2">
             Payment
+          </TabsTrigger>
+          <TabsTrigger value="logistics" className="px-4 py-2">
+            Logistics
           </TabsTrigger>
         </TabsList>
 
@@ -345,7 +349,7 @@ export default function WebsiteSetupPage() {
             />
           </TabsContent>
 
-          <TabsContent value="sidemenu">
+          {/* <TabsContent value="sidemenu">
             <SideMenuSettings
               data={configData.sidemenu?.value}
               onChange={(data) => handleSectionChange("sidemenu", data)}
@@ -370,7 +374,7 @@ export default function WebsiteSetupPage() {
               onSave={() => handleSaveSection("banner")}
               saving={saving}
             />
-          </TabsContent>
+          </TabsContent> */}
 
           <TabsContent value="sections">
             <SectionsSettings
@@ -421,6 +425,14 @@ export default function WebsiteSetupPage() {
               data={configData.payment?.value}
               onChange={(data) => handleSectionChange("payment", data)}
               onSave={() => handleSaveSection("payment")}
+              saving={saving}
+            />
+          </TabsContent>
+          <TabsContent value="logistics">
+            <LogisticSettings
+              data={configData.logistics?.value}
+              onChange={(data) => handleSectionChange("logistics", data)}
+              onSave={() => handleSaveSection("logistics")}
               saving={saving}
             />
           </TabsContent>

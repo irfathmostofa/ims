@@ -124,7 +124,7 @@ export default function GeneralSettings({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>General Settings</CardTitle>
-        <Button onClick={handleSave} disabled={saving} className="gap-2">
+        <Button onClick={handleSave} disabled={saving} className="gap-2 btn-bw-primary">
           <Save className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>

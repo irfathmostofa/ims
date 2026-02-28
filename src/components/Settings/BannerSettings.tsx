@@ -41,7 +41,9 @@ export default function BannerSettings({
     data || { status: true, banners: [] },
   );
   const [uploading, setUploading] = useState(false);
-  const [uploadingForBanner, setUploadingForBanner] = useState<number | null>(null);
+  const [uploadingForBanner, setUploadingForBanner] = useState<number | null>(
+    null,
+  );
 
   useEffect(() => {
     if (data) {
@@ -60,11 +62,14 @@ export default function BannerSettings({
       setUploading(true);
       setUploadingForBanner(bannerIndex);
       const imageUrl = await uploadImageToCloudinary(file);
-      
+
       const updatedBanners = [...(formData.banners || [])];
-      updatedBanners[bannerIndex] = { ...updatedBanners[bannerIndex], image: imageUrl };
+      updatedBanners[bannerIndex] = {
+        ...updatedBanners[bannerIndex],
+        image: imageUrl,
+      };
       handleChange("banners", updatedBanners);
-      
+
       toast.success("Image uploaded successfully");
     } catch (error) {
       toast.error("Failed to upload image");
@@ -103,7 +108,11 @@ export default function BannerSettings({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Banner Settings</CardTitle>
-        <Button onClick={onSave} disabled={saving || uploading} className="gap-2">
+        <Button
+          onClick={onSave}
+          disabled={saving || uploading}
+          className="gap-2 btn-bw-primary"
+        >
           <Save className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>
@@ -187,10 +196,12 @@ export default function BannerSettings({
                           />
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="icon"
-                                disabled={uploading && uploadingForBanner === index}
+                                disabled={
+                                  uploading && uploadingForBanner === index
+                                }
                               >
                                 <Upload className="w-4 h-4" />
                               </Button>

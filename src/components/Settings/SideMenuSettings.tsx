@@ -106,7 +106,7 @@ export default function SideMenuSettings({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Side Menu Settings</CardTitle>
-        <Button onClick={onSave} disabled={saving} className="gap-2">
+        <Button onClick={onSave} disabled={saving} className="gap-2 btn-bw-primary">
           <Save className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>

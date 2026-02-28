@@ -11,8 +11,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCrud } from "@/hook/crudHelper";
 import { toast } from "sonner";
+import ImageUploader2 from "@/hook/ImageUploader2";
 
 type Category = {
   id: number;
@@ -31,7 +41,7 @@ type Category = {
 
 function flattenCategories(
   categories: Category[],
-  parentPath = ""
+  parentPath = "",
 ): (Category & { Parent: string })[] {
   let result: (Category & { Parent: string })[] = [];
 
@@ -53,7 +63,7 @@ export default function CategoryPage() {
   const [form, setForm] = useState<Partial<Category>>({});
   const [loading, setLoading] = useState(false);
   const [update, setUpdate] = useState(0);
-  // Reusable CRUD hook
+
   const { fetchAll, save, remove } = useCrud<Category>({
     listUrl: `${import.meta.env.VITE_SERVER}/product/get-product-cat`,
     createUrl: `${import.meta.env.VITE_SERVER}/product/create-product-cat`,
@@ -62,22 +72,22 @@ export default function CategoryPage() {
     formatCreate: (data) => ({
       name: data.name,
       slug: data.slug,
+      image: data.image,
       parent_id: data.parent_id,
     }),
     formatUpdate: (data) => ({
       code: data.code,
       name: data.name,
       slug: data.slug,
+      image: data.image,
       parent_id: data.parent_id,
     }),
   });
 
-  // Fetch categories
   useEffect(() => {
     fetchAll(setCategories, setLoading);
   }, [update]);
 
-  // Save (Create / Update)
   const handleSave = async () => {
     if (!form.name) {
       toast.error("Category name is required");
@@ -90,20 +100,24 @@ export default function CategoryPage() {
     setUpdate((prev) => prev + 1);
   };
 
-  // Edit category
   const handleEdit = (c: Category) => {
     setForm(c);
     setOpen(true);
   };
 
-  // Delete category
   const handleDelete = async (c: Category) => {
     if (!confirm(`Delete Category "${c.name}"?`)) return;
     await remove(c.id!);
     setUpdate((prev) => prev + 1);
   };
 
-  // Flattened categories for table & parent select
+  const handleDialogChange = (open: boolean) => {
+    setOpen(open);
+    if (!open) {
+      setTimeout(() => setForm({}), 200);
+    }
+  };
+
   const flattened = flattenCategories(categories);
 
   return (
@@ -111,64 +125,110 @@ export default function CategoryPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Category Management</h1>
 
-        {/* Add/Edit Dialog */}
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger>
-            <Button className="btn-bw-primary flex gap-1">
-              <Plus size={16} /> Add Category
+        <Dialog open={open} onOpenChange={handleDialogChange}>
+          <DialogTrigger asChild>
+            <Button className="btn-bw-primary">
+              <Plus size={16} className="mr-2" /> Add Category
             </Button>
           </DialogTrigger>
 
-          <DialogContent className="max-w-lg bg-amber-50">
+          <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>
-                {form.id ? "Edit Category" : "Add Category"}
+              <DialogTitle className="text-xl">
+                {form.id ? "Edit Category" : "Create New Category"}
               </DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-3">
+            <div className="space-y-5 py-4">
               {/* Category Name */}
-              <input
-                type="text"
-                placeholder="Category Name"
-                className="border px-3 py-2 rounded w-full"
-                value={form.name || ""}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-              <input
-                type="text"
-                placeholder="Slug (Optional)"
-                className="border px-3 py-2 rounded w-full"
-                value={form.slug || ""}
-                onChange={(e) => setForm({ ...form, slug: e.target.value })}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Category Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="name"
+                  placeholder="e.g., Electronics, Clothing, Books"
+                  value={form.name || ""}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Slug */}
+              <div className="space-y-2">
+                <Label htmlFor="slug" className="text-sm font-medium">
+                  Slug (URL-friendly name)
+                </Label>
+                <Input
+                  id="slug"
+                  placeholder="e.g., electronics-clothing-books"
+                  value={form.slug || ""}
+                  onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                  className="w-full"
+                />
+                <p className="text-xs text-gray-500">
+                  Auto-generated from name if left empty
+                </p>
+              </div>
 
               {/* Parent Category */}
-              <select
-                className="border px-3 py-2 rounded w-full"
-                value={form.parent_id ?? ""}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    parent_id: e.target.value ? Number(e.target.value) : null,
-                  })
-                }
-              >
-                <option value="">No Parent</option>
-                {flattened.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.Parent} {/* shows hierarchy: Men > Clothing */}
-                  </option>
-                ))}
-              </select>
+              <div className="space-y-2">
+                <Label htmlFor="parent" className="text-sm font-medium">
+                  Parent Category
+                </Label>
+                <Select
+                  value={form.parent_id?.toString() || "none"} // Change empty string to "none"
+                  onValueChange={(value) =>
+                    setForm({
+                      ...form,
+                      parent_id: value === "none" ? null : Number(value), // Handle "none" case
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a parent category (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None (Top Level)</SelectItem>{" "}
+                    {/* Use "none" instead of empty string */}
+                    {flattened.map((c) => (
+                      <SelectItem key={c.id} value={c.id.toString()}>
+                        {c.Parent}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Category Image */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Category Image</Label>
+
+                {/* Single ImageUploader component that handles everything */}
+                <ImageUploader2
+                  initialImage={form.image}
+                  onUploadComplete={(url) => {
+                    setForm({ ...form, image: url });
+                  }}
+                  onRemove={() => {
+                    setForm({ ...form, image: null });
+                  }}
+                  showPreview={true}
+                  buttonText="Choose Image"
+                />
+              </div>
             </div>
 
-            <div className="flex justify-end gap-2 mt-4">
+            <div className="flex justify-end gap-3 mt-4">
               <Button variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} className="btn-bw-primary">
-                {form.id ? "Update" : "Add"}
+              <Button
+                onClick={handleSave}
+                className="btn-bw-primary"
+                disabled={!form.name}
+              >
+                {form.id ? "Update Category" : "Create Category"}
               </Button>
             </div>
           </DialogContent>
@@ -179,10 +239,9 @@ export default function CategoryPage() {
       <DataTable
         data={flattened}
         label="Category List"
-        showColumns={["code", "name", "Parent"]}
+        showColumns={["code", "name", "Parent", "image"]}
         selectable
         rowsPerPage={10}
-        printHead={[{ label: "Name", value: "Parent" }]} // show hierarchy
         loading={loading}
         actions={[
           {
