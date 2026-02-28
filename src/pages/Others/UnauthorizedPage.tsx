@@ -1,7 +1,7 @@
 // pages/Others/UnauthorizedPage.tsx
 export default function UnauthorizedPage() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center  p-4">
       <div className="text-center max-w-md">
         <div className="mb-6">
           <div className="w-20 h-20 mx-auto bg-red-100 rounded-full flex items-center justify-center">
@@ -21,8 +21,8 @@ export default function UnauthorizedPage() {
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Access Denied</h1>
-        <p className="text-gray-600 mb-6">
+        <h1 className="text-3xl font-bold  mb-2">Access Denied</h1>
+        <p className=" mb-6">
           You don't have permission to access this page. Please contact your
           administrator if you believe this is an error.
         </p>
@@ -30,7 +30,7 @@ export default function UnauthorizedPage() {
         <div className="space-y-3">
           <a
             href="/dashboard"
-            className="block w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="block w-full py-3 btn-bw-primary transition-colors font-medium"
           >
             Go to Dashboard
           </a>

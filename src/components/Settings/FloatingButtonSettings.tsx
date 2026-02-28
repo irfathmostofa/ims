@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Plus, Trash, MoveUp, MoveDown, Upload } from "lucide-react";
+import { Save, Trash, MoveUp, MoveDown, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,37 +93,37 @@ export default function FloatingButtonSettings({
     }
   };
 
-  const addButton = () => {
-    const newButton = {
-      id: `button-${Date.now()}`,
-      type: "whatsapp",
-      label: "WhatsApp",
-      label_bn: "হোয়াটসঅ্যাপ",
-      icon: "whatsapp",
-      icon_type: "fontawesome", // fontawesome, custom
-      phone_number: "",
-      message: "Hello, I need help",
-      url: "",
-      color: "#25D366",
-      hover_color: "#128C7E",
-      text_color: "#FFFFFF",
-      size: "md", // sm, md, lg
-      shape: "rounded", // circle, rounded, square
-      status: true,
-      order: (formData.buttons?.length || 0) + 1,
-      tooltip: true,
-      tooltip_text: "Chat with us",
-      tooltip_text_bn: "আমাদের সাথে কথা বলুন",
-      open_in_new_tab: true,
-      schedule: {
-        enabled: false,
-        start_time: "09:00",
-        end_time: "18:00",
-        timezone: "Asia/Dhaka",
-      },
-    };
-    handleChange("buttons", [...(formData.buttons || []), newButton]);
-  };
+  // const addButton = () => {
+  //   const newButton = {
+  //     id: `button-${Date.now()}`,
+  //     type: "whatsapp",
+  //     label: "WhatsApp",
+  //     label_bn: "হোয়াটসঅ্যাপ",
+  //     icon: "whatsapp",
+  //     icon_type: "fontawesome", // fontawesome, custom
+  //     phone_number: "",
+  //     message: "Hello, I need help",
+  //     url: "",
+  //     color: "#25D366",
+  //     hover_color: "#128C7E",
+  //     text_color: "#FFFFFF",
+  //     size: "md", // sm, md, lg
+  //     shape: "rounded", // circle, rounded, square
+  //     status: true,
+  //     order: (formData.buttons?.length || 0) + 1,
+  //     tooltip: true,
+  //     tooltip_text: "Chat with us",
+  //     tooltip_text_bn: "আমাদের সাথে কথা বলুন",
+  //     open_in_new_tab: true,
+  //     schedule: {
+  //       enabled: false,
+  //       start_time: "09:00",
+  //       end_time: "18:00",
+  //       timezone: "Asia/Dhaka",
+  //     },
+  //   };
+  //   handleChange("buttons", [...(formData.buttons || []), newButton]);
+  // };
 
   const updateButton = (index: number, field: string, value: any) => {
     const updatedButtons = [...(formData.buttons || [])];

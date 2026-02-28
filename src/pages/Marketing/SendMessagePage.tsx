@@ -132,9 +132,9 @@ export default function SendMessagePage() {
     setNewPhone("");
   };
 
-  const handleRemovePhone = (index: number) => {
-    setBulkPhones(bulkPhones.filter((_, i) => i !== index));
-  };
+  // const handleRemovePhone = (index: number) => {
+  //   setBulkPhones(bulkPhones.filter((_, i) => i !== index));
+  // };
 
   // Remove phone chip
   const handleRemovePhoneChip = (phoneToRemove: string) => {
@@ -186,7 +186,9 @@ export default function SendMessagePage() {
   const handleClearAllCustomers = () => {
     // Remove all customer phones from bulk list
     const customerPhones = selectedCustomers.map((c) => c.phone);
-    setBulkPhones(bulkPhones.filter((phone) => !customerPhones.includes(phone)));
+    setBulkPhones(
+      bulkPhones.filter((phone) => !customerPhones.includes(phone)),
+    );
     setSelectedCustomers([]);
     toast.info("Cleared all selected customers");
   };
@@ -200,9 +202,9 @@ export default function SendMessagePage() {
 
     // Combine bulk phones and selected customer phones
     let allPhones = [...bulkPhones];
-    
+
     // Add phones from selected customers that aren't already in bulkPhones
-    selectedCustomers.forEach(customer => {
+    selectedCustomers.forEach((customer) => {
       if (!allPhones.includes(customer.phone)) {
         allPhones.push(customer.phone);
       }
@@ -237,9 +239,15 @@ export default function SendMessagePage() {
     if (partyId) {
       payload.party_id = partyId;
     }
-    
-    console.log("Sending to phones:", sendMode === "bulk" ? allPhones : singlePhone);
-    console.log("Total recipients:", sendMode === "bulk" ? allPhones.length : 1);
+
+    console.log(
+      "Sending to phones:",
+      sendMode === "bulk" ? allPhones : singlePhone,
+    );
+    console.log(
+      "Total recipients:",
+      sendMode === "bulk" ? allPhones.length : 1,
+    );
 
     try {
       setSending(true);
@@ -507,8 +515,8 @@ export default function SendMessagePage() {
                     !selectedCampaign ||
                     selectedCampaign?.status !== "active" ||
                     (sendMode === "single" && !singlePhone) ||
-                    (sendMode === "bulk" && 
-                      bulkPhones.length === 0 && 
+                    (sendMode === "bulk" &&
+                      bulkPhones.length === 0 &&
                       selectedCustomers.length === 0)
                   }
                 >
@@ -527,19 +535,20 @@ export default function SendMessagePage() {
 
                 {selectedCampaign?.status !== "active" && (
                   <p className="text-center text-sm text-red-500 mt-2">
-                    Only active campaigns can be sent. Please select an active campaign.
+                    Only active campaigns can be sent. Please select an active
+                    campaign.
                   </p>
                 )}
 
                 {sendMode === "bulk" && (
                   <p className="text-center text-sm text-gray-500 mt-2">
-                    {selectedCustomers.length > 0 && bulkPhones.length > 0 
+                    {selectedCustomers.length > 0 && bulkPhones.length > 0
                       ? `This will send the message to ${selectedCustomers.length} selected customer(s) and ${bulkPhones.length} additional phone number(s)`
                       : selectedCustomers.length > 0
-                      ? `This will send the message to ${selectedCustomers.length} selected customer(s)`
-                      : bulkPhones.length > 0
-                      ? `This will send the message to ${bulkPhones.length} recipient(s)`
-                      : "Add phone numbers or select customers to send messages"}
+                        ? `This will send the message to ${selectedCustomers.length} selected customer(s)`
+                        : bulkPhones.length > 0
+                          ? `This will send the message to ${bulkPhones.length} recipient(s)`
+                          : "Add phone numbers or select customers to send messages"}
                   </p>
                 )}
               </div>
@@ -638,7 +647,8 @@ export default function SendMessagePage() {
                       ))}
                     </div>
                     <p className="text-sm text-gray-500 mt-2">
-                      These customers' phone numbers are automatically added to the recipients list.
+                      These customers' phone numbers are automatically added to
+                      the recipients list.
                     </p>
                   </div>
                 )}

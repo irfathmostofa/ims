@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/dialog";
 import { apiClient } from "@/hook/apiClient";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
 // Types
 interface SeoMeta {

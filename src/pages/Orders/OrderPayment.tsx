@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Eye, Search, Filter, ChevronDown, Calendar } from "lucide-react";
+import { Eye, Search, Filter, Calendar } from "lucide-react";
 import { apiClient } from "@/hook/apiClient";
 import { toast } from "sonner";
 import { formatDate, formatCurrency } from "@/components/utils/formatter";
@@ -783,7 +783,7 @@ export const OrderPayment = () => {
                     </td>
                   </tr>
                 ) : (
-                  payments.map((payment, index) => (
+                  payments.map((payment) => (
                     <tr
                       key={payment.id}
                       className="hover:bg-gray-50 transition-colors"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Plus, Trash, Eye, EyeOff } from "lucide-react";
+import { Save, Trash, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+// import { toast } from "sonner";
 
 interface PaymentSettingsProps {
   data?: any;
@@ -56,29 +56,29 @@ export default function PaymentSettings({
   };
 
   // Online Payment Gateway Functions
-  const addGateway = () => {
-    const newGateway = {
-      id: `gateway-${Date.now()}`,
-      name: "SSLCommerz",
-      status: true,
-      environment: "sandbox", // sandbox or live
-      store_id: "",
-      store_password: "",
-      api_key: "",
-      api_secret: "",
-      merchant_id: "",
-      sandbox_url: "https://sandbox.sslcommerz.com",
-      live_url: "https://secure.sslcommerz.com",
-      success_url: "/payment/success",
-      fail_url: "/payment/fail",
-      cancel_url: "/payment/cancel",
-      ipn_url: "/payment/ipn",
-    };
-    handleChange("online_payment", {
-      ...(formData.online_payment || { status: true, gateways: [] }),
-      gateways: [...(formData.online_payment?.gateways || []), newGateway],
-    });
-  };
+  // const addGateway = () => {
+  //   const newGateway = {
+  //     id: `gateway-${Date.now()}`,
+  //     name: "SSLCommerz",
+  //     status: true,
+  //     environment: "sandbox", // sandbox or live
+  //     store_id: "",
+  //     store_password: "",
+  //     api_key: "",
+  //     api_secret: "",
+  //     merchant_id: "",
+  //     sandbox_url: "https://sandbox.sslcommerz.com",
+  //     live_url: "https://secure.sslcommerz.com",
+  //     success_url: "/payment/success",
+  //     fail_url: "/payment/fail",
+  //     cancel_url: "/payment/cancel",
+  //     ipn_url: "/payment/ipn",
+  //   };
+  //   handleChange("online_payment", {
+  //     ...(formData.online_payment || { status: true, gateways: [] }),
+  //     gateways: [...(formData.online_payment?.gateways || []), newGateway],
+  //   });
+  // };
 
   const updateGateway = (index: number, field: string, value: any) => {
     const updated = { ...formData };

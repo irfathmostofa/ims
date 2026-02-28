@@ -1,7 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Plus, Trash, MoveUp, MoveDown, Upload, Settings, Layout, Image, Tag, Star, Clock, TrendingUp } from "lucide-react";
+import {
+  Save,
+  Plus,
+  Trash,
+  MoveUp,
+  MoveDown,
+  Upload,
+  // Settings,
+  Layout,
+  Image,
+  Tag,
+  Star,
+  Clock,
+  TrendingUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,12 +56,37 @@ interface Category {
 
 // Section type definitions with icons and labels
 const SECTION_TYPES = [
-  { value: "featured_products", label: "Featured Products", icon: Star, category: "products" },
-  { value: "recent_products", label: "Recent Products", icon: Clock, category: "products" },
-  { value: "best_sellers", label: "Best Sellers", icon: TrendingUp, category: "products" },
-  { value: "category_grid", label: "Category Grid", icon: Tag, category: "categories" },
+  {
+    value: "featured_products",
+    label: "Featured Products",
+    icon: Star,
+    category: "products",
+  },
+  {
+    value: "recent_products",
+    label: "Recent Products",
+    icon: Clock,
+    category: "products",
+  },
+  {
+    value: "best_sellers",
+    label: "Best Sellers",
+    icon: TrendingUp,
+    category: "products",
+  },
+  {
+    value: "category_grid",
+    label: "Category Grid",
+    icon: Tag,
+    category: "categories",
+  },
   { value: "banner", label: "Banner", icon: Image, category: "content" },
-  { value: "featured_brands", label: "Featured Brands", icon: Layout, category: "content" },
+  {
+    value: "featured_brands",
+    label: "Featured Brands",
+    icon: Layout,
+    category: "content",
+  },
 ];
 
 export default function SectionsSettings({
@@ -331,7 +370,7 @@ export default function SectionsSettings({
                   <TabsTrigger value="image">Image</TabsTrigger>
                   <TabsTrigger value="button">Button</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="content" className="space-y-4 mt-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -340,7 +379,8 @@ export default function SectionsSettings({
                         value={banner.title || ""}
                         onChange={(e) => {
                           const updated = [...formData];
-                          updated[index].banners[bannerIndex].title = e.target.value;
+                          updated[index].banners[bannerIndex].title =
+                            e.target.value;
                           handleChange(updated);
                         }}
                       />
@@ -352,7 +392,8 @@ export default function SectionsSettings({
                         value={banner.title_bn || ""}
                         onChange={(e) => {
                           const updated = [...formData];
-                          updated[index].banners[bannerIndex].title_bn = e.target.value;
+                          updated[index].banners[bannerIndex].title_bn =
+                            e.target.value;
                           handleChange(updated);
                         }}
                         placeholder="বাংলা টাইটেল"
@@ -365,7 +406,8 @@ export default function SectionsSettings({
                         value={banner.subtitle || ""}
                         onChange={(e) => {
                           const updated = [...formData];
-                          updated[index].banners[bannerIndex].subtitle = e.target.value;
+                          updated[index].banners[bannerIndex].subtitle =
+                            e.target.value;
                           handleChange(updated);
                         }}
                       />
@@ -377,7 +419,8 @@ export default function SectionsSettings({
                         value={banner.subtitle_bn || ""}
                         onChange={(e) => {
                           const updated = [...formData];
-                          updated[index].banners[bannerIndex].subtitle_bn = e.target.value;
+                          updated[index].banners[bannerIndex].subtitle_bn =
+                            e.target.value;
                           handleChange(updated);
                         }}
                         placeholder="বাংলা সাবটাইটেল"
@@ -394,7 +437,8 @@ export default function SectionsSettings({
                         value={banner.image || ""}
                         onChange={(e) => {
                           const updated = [...formData];
-                          updated[index].banners[bannerIndex].image = e.target.value;
+                          updated[index].banners[bannerIndex].image =
+                            e.target.value;
                           handleChange(updated);
                         }}
                         placeholder="/images/banner.jpg"
@@ -425,7 +469,11 @@ export default function SectionsSettings({
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  handleBannerImageUpload(file, index, bannerIndex);
+                                  handleBannerImageUpload(
+                                    file,
+                                    index,
+                                    bannerIndex,
+                                  );
                                 }
                               }}
                             />
@@ -453,7 +501,8 @@ export default function SectionsSettings({
                         value={banner.button_text || "Shop Now"}
                         onChange={(e) => {
                           const updated = [...formData];
-                          updated[index].banners[bannerIndex].button_text = e.target.value;
+                          updated[index].banners[bannerIndex].button_text =
+                            e.target.value;
                           handleChange(updated);
                         }}
                       />
@@ -465,7 +514,8 @@ export default function SectionsSettings({
                         value={banner.button_text_bn || "এখনই কিনুন"}
                         onChange={(e) => {
                           const updated = [...formData];
-                          updated[index].banners[bannerIndex].button_text_bn = e.target.value;
+                          updated[index].banners[bannerIndex].button_text_bn =
+                            e.target.value;
                           handleChange(updated);
                         }}
                       />
@@ -477,7 +527,8 @@ export default function SectionsSettings({
                         value={banner.link || ""}
                         onChange={(e) => {
                           const updated = [...formData];
-                          updated[index].banners[bannerIndex].link = e.target.value;
+                          updated[index].banners[bannerIndex].link =
+                            e.target.value;
                           handleChange(updated);
                         }}
                         placeholder="/category/sale"
@@ -492,7 +543,8 @@ export default function SectionsSettings({
                           value={banner.button_color || "#3B82F6"}
                           onChange={(e) => {
                             const updated = [...formData];
-                            updated[index].banners[bannerIndex].button_color = e.target.value;
+                            updated[index].banners[bannerIndex].button_color =
+                              e.target.value;
                             handleChange(updated);
                           }}
                           className="w-12 p-1"
@@ -501,7 +553,8 @@ export default function SectionsSettings({
                           value={banner.button_color || "#3B82F6"}
                           onChange={(e) => {
                             const updated = [...formData];
-                            updated[index].banners[bannerIndex].button_color = e.target.value;
+                            updated[index].banners[bannerIndex].button_color =
+                              e.target.value;
                             handleChange(updated);
                           }}
                           className="flex-1"
@@ -586,7 +639,8 @@ export default function SectionsSettings({
                       value={brand.name_bn || ""}
                       onChange={(e) => {
                         const updated = [...formData];
-                        updated[index].brands[brandIndex].name_bn = e.target.value;
+                        updated[index].brands[brandIndex].name_bn =
+                          e.target.value;
                         handleChange(updated);
                       }}
                       placeholder="ব্র্যান্ডের নাম"
@@ -615,7 +669,8 @@ export default function SectionsSettings({
                         value={brand.logo || ""}
                         onChange={(e) => {
                           const updated = [...formData];
-                          updated[index].brands[brandIndex].logo = e.target.value;
+                          updated[index].brands[brandIndex].logo =
+                            e.target.value;
                           handleChange(updated);
                         }}
                         placeholder="Logo URL"
@@ -646,7 +701,11 @@ export default function SectionsSettings({
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  handleBrandLogoUpload(file, index, brandIndex);
+                                  handleBrandLogoUpload(
+                                    file,
+                                    index,
+                                    brandIndex,
+                                  );
                                 }
                               }}
                             />
@@ -876,7 +935,7 @@ export default function SectionsSettings({
   const getFilteredSections = (category: string) => {
     if (category === "all") return formData;
     return formData.filter((section: any) => {
-      const sectionType = SECTION_TYPES.find(t => t.value === section.type);
+      const sectionType = SECTION_TYPES.find((t) => t.value === section.type);
       return sectionType?.category === category;
     });
   };
@@ -885,15 +944,15 @@ export default function SectionsSettings({
   const sectionsByCategory = {
     all: formData,
     products: formData.filter((s: any) => {
-      const type = SECTION_TYPES.find(t => t.value === s.type);
+      const type = SECTION_TYPES.find((t) => t.value === s.type);
       return type?.category === "products";
     }),
     categories: formData.filter((s: any) => {
-      const type = SECTION_TYPES.find(t => t.value === s.type);
+      const type = SECTION_TYPES.find((t) => t.value === s.type);
       return type?.category === "categories";
     }),
     content: formData.filter((s: any) => {
-      const type = SECTION_TYPES.find(t => t.value === s.type);
+      const type = SECTION_TYPES.find((t) => t.value === s.type);
       return type?.category === "content";
     }),
   };
@@ -908,6 +967,7 @@ export default function SectionsSettings({
               <SelectValue placeholder="Add section..." />
             </SelectTrigger>
             <SelectContent>
+              {activeSectionTab}
               {SECTION_TYPES.map((type) => (
                 <SelectItem key={type.value} value={type.value}>
                   <div className="flex items-center gap-2">
@@ -929,7 +989,11 @@ export default function SectionsSettings({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Tabs defaultValue="all" className="w-full" onValueChange={setActiveSectionTab}>
+        <Tabs
+          defaultValue="all"
+          className="w-full"
+          onValueChange={setActiveSectionTab}
+        >
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="all" className="gap-2">
               <Layout className="w-4 h-4" />
@@ -950,17 +1014,25 @@ export default function SectionsSettings({
           </TabsList>
 
           {["all", "products", "categories", "content"].map((tabValue) => (
-            <TabsContent key={tabValue} value={tabValue} className="space-y-4 mt-6">
+            <TabsContent
+              key={tabValue}
+              value={tabValue}
+              className="space-y-4 mt-6"
+            >
               {getFilteredSections(tabValue).length === 0 ? (
                 <div className="text-center py-12 border-2 border-dashed rounded-lg">
                   <Layout className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-500 mb-4">No sections in this category</p>
+                  <p className="text-gray-500 mb-4">
+                    No sections in this category
+                  </p>
                   <Select onValueChange={(value) => addSection(value)}>
                     <SelectTrigger className="w-[200px] mx-auto">
                       <SelectValue placeholder="Add a section..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {SECTION_TYPES.filter(t => tabValue === "all" || t.category === tabValue).map((type) => (
+                      {SECTION_TYPES.filter(
+                        (t) => tabValue === "all" || t.category === tabValue,
+                      ).map((type) => (
                         <SelectItem key={type.value} value={type.value}>
                           <div className="flex items-center gap-2">
                             <type.icon className="w-4 h-4" />
@@ -972,10 +1044,14 @@ export default function SectionsSettings({
                   </Select>
                 </div>
               ) : (
-                getFilteredSections(tabValue).map((section: any, index: number) => {
+                getFilteredSections(tabValue).map((section: any) => {
                   // Get the actual index in the original formData array
-                  const originalIndex = formData.findIndex((s: any) => s.id === section.id);
-                  const sectionType = SECTION_TYPES.find(t => t.value === section.type);
+                  const originalIndex = formData.findIndex(
+                    (s: any) => s.id === section.id,
+                  );
+                  const sectionType = SECTION_TYPES.find(
+                    (t) => t.value === section.type,
+                  );
                   const TypeIcon = sectionType?.icon || Layout;
 
                   return (
@@ -1030,7 +1106,7 @@ export default function SectionsSettings({
                           <TabsTrigger value="content">Content</TabsTrigger>
                           <TabsTrigger value="styling">Styling</TabsTrigger>
                         </TabsList>
-                        
+
                         <TabsContent value="general" className="space-y-4 mt-4">
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -1046,7 +1122,10 @@ export default function SectionsSettings({
                                 </SelectTrigger>
                                 <SelectContent>
                                   {SECTION_TYPES.map((type) => (
-                                    <SelectItem key={type.value} value={type.value}>
+                                    <SelectItem
+                                      key={type.value}
+                                      value={type.value}
+                                    >
                                       <div className="flex items-center gap-2">
                                         <type.icon className="w-4 h-4" />
                                         {type.label}
@@ -1063,7 +1142,11 @@ export default function SectionsSettings({
                                 <Switch
                                   checked={section.status}
                                   onCheckedChange={(checked) =>
-                                    updateSection(originalIndex, "status", checked)
+                                    updateSection(
+                                      originalIndex,
+                                      "status",
+                                      checked,
+                                    )
                                   }
                                 />
                                 <span className="text-sm text-gray-500">
@@ -1077,7 +1160,11 @@ export default function SectionsSettings({
                               <Input
                                 value={section.title || ""}
                                 onChange={(e) =>
-                                  updateSection(originalIndex, "title", e.target.value)
+                                  updateSection(
+                                    originalIndex,
+                                    "title",
+                                    e.target.value,
+                                  )
                                 }
                               />
                             </div>
@@ -1087,7 +1174,11 @@ export default function SectionsSettings({
                               <Input
                                 value={section.title_bn || ""}
                                 onChange={(e) =>
-                                  updateSection(originalIndex, "title_bn", e.target.value)
+                                  updateSection(
+                                    originalIndex,
+                                    "title_bn",
+                                    e.target.value,
+                                  )
                                 }
                                 placeholder="বাংলা টাইটেল"
                               />
@@ -1108,7 +1199,9 @@ export default function SectionsSettings({
                                   <SelectItem value="grid">Grid</SelectItem>
                                   <SelectItem value="slider">Slider</SelectItem>
                                   <SelectItem value="list">List</SelectItem>
-                                  <SelectItem value="masonry">Masonry</SelectItem>
+                                  <SelectItem value="masonry">
+                                    Masonry
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -1118,7 +1211,11 @@ export default function SectionsSettings({
                               <Select
                                 value={section.columns?.toString() || "4"}
                                 onValueChange={(value) =>
-                                  updateSection(originalIndex, "columns", parseInt(value))
+                                  updateSection(
+                                    originalIndex,
+                                    "columns",
+                                    parseInt(value),
+                                  )
                                 }
                               >
                                 <SelectTrigger>
@@ -1138,7 +1235,11 @@ export default function SectionsSettings({
 
                         <TabsContent value="content" className="space-y-4 mt-4">
                           <div className="grid grid-cols-2 gap-4">
-                            {getSectionFields(section.type, originalIndex, section)}
+                            {getSectionFields(
+                              section.type,
+                              originalIndex,
+                              section,
+                            )}
                           </div>
                         </TabsContent>
 
@@ -1151,14 +1252,22 @@ export default function SectionsSettings({
                                   type="color"
                                   value={section.bg_color || "#FFFFFF"}
                                   onChange={(e) =>
-                                    updateSection(originalIndex, "bg_color", e.target.value)
+                                    updateSection(
+                                      originalIndex,
+                                      "bg_color",
+                                      e.target.value,
+                                    )
                                   }
                                   className="w-12 p-1"
                                 />
                                 <Input
                                   value={section.bg_color || "#FFFFFF"}
                                   onChange={(e) =>
-                                    updateSection(originalIndex, "bg_color", e.target.value)
+                                    updateSection(
+                                      originalIndex,
+                                      "bg_color",
+                                      e.target.value,
+                                    )
                                   }
                                   className="flex-1"
                                 />
@@ -1172,14 +1281,22 @@ export default function SectionsSettings({
                                   type="color"
                                   value={section.text_color || "#000000"}
                                   onChange={(e) =>
-                                    updateSection(originalIndex, "text_color", e.target.value)
+                                    updateSection(
+                                      originalIndex,
+                                      "text_color",
+                                      e.target.value,
+                                    )
                                   }
                                   className="w-12 p-1"
                                 />
                                 <Input
                                   value={section.text_color || "#000000"}
                                   onChange={(e) =>
-                                    updateSection(originalIndex, "text_color", e.target.value)
+                                    updateSection(
+                                      originalIndex,
+                                      "text_color",
+                                      e.target.value,
+                                    )
                                   }
                                   className="flex-1"
                                 />
@@ -1202,7 +1319,9 @@ export default function SectionsSettings({
                                   <SelectItem value="p-2">Small</SelectItem>
                                   <SelectItem value="p-4">Medium</SelectItem>
                                   <SelectItem value="p-6">Large</SelectItem>
-                                  <SelectItem value="p-8">Extra Large</SelectItem>
+                                  <SelectItem value="p-8">
+                                    Extra Large
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -1223,7 +1342,9 @@ export default function SectionsSettings({
                                   <SelectItem value="mb-2">Small</SelectItem>
                                   <SelectItem value="mb-4">Medium</SelectItem>
                                   <SelectItem value="mb-8">Large</SelectItem>
-                                  <SelectItem value="mb-12">Extra Large</SelectItem>
+                                  <SelectItem value="mb-12">
+                                    Extra Large
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -1233,18 +1354,30 @@ export default function SectionsSettings({
                               <Select
                                 value={section.border_radius || "rounded-lg"}
                                 onValueChange={(value) =>
-                                  updateSection(originalIndex, "border_radius", value)
+                                  updateSection(
+                                    originalIndex,
+                                    "border_radius",
+                                    value,
+                                  )
                                 }
                               >
                                 <SelectTrigger>
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="rounded-none">None</SelectItem>
+                                  <SelectItem value="rounded-none">
+                                    None
+                                  </SelectItem>
                                   <SelectItem value="rounded">Small</SelectItem>
-                                  <SelectItem value="rounded-lg">Medium</SelectItem>
-                                  <SelectItem value="rounded-xl">Large</SelectItem>
-                                  <SelectItem value="rounded-full">Full</SelectItem>
+                                  <SelectItem value="rounded-lg">
+                                    Medium
+                                  </SelectItem>
+                                  <SelectItem value="rounded-xl">
+                                    Large
+                                  </SelectItem>
+                                  <SelectItem value="rounded-full">
+                                    Full
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>

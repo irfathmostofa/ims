@@ -179,7 +179,7 @@ export default function App() {
               <Route element={<MainLayout />}>
                 {/* Dashboard */}
                 <Route path="/dashboard" element={<DashboardPage />} />
-  <Route path="/seo" element={<SeoPage />} />
+                <Route path="/seo" element={<SeoPage />} />
                 {/* Inventory - Basic Access */}
                 <Route
                   path="/inventory/products"
