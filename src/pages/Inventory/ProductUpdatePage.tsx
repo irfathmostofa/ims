@@ -107,7 +107,7 @@ export default function ProductEditPage() {
           additional_price: v.additional_price || 0,
           images: v.images || [],
           barcodes: v.barcodes || [],
-        })) || []
+        })) || [],
       );
     } catch (err: any) {
       console.error(err);
@@ -123,7 +123,7 @@ export default function ProductEditPage() {
 
   const toggleCategory = (catId: number) => {
     setSelectedCategories((prev) =>
-      prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId]
+      prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId],
     );
   };
 
@@ -152,8 +152,8 @@ export default function ProductEditPage() {
                 },
               ],
             }
-          : v
-      )
+          : v,
+      ),
     );
   };
 
@@ -165,8 +165,8 @@ export default function ProductEditPage() {
               ...v,
               images: v.images?.filter((_, idx) => idx !== imgIndex),
             }
-          : v
-      )
+          : v,
+      ),
     );
   };
 
@@ -181,8 +181,8 @@ export default function ProductEditPage() {
                 is_primary: idx === imgIndex,
               })),
             }
-          : v
-      )
+          : v,
+      ),
     );
   };
 
@@ -245,7 +245,7 @@ export default function ProductEditPage() {
 
       const res = await apiClient(
         `${import.meta.env.VITE_SERVER}/product/update-products/${id}`,
-        { method: "POST", data: updatedProduct, tokenType: "jwt" }
+        { method: "POST", data: updatedProduct, tokenType: "jwt" },
       );
 
       if (res.success) {
@@ -312,7 +312,7 @@ export default function ProductEditPage() {
                     value={costPrice}
                     onChange={(e) =>
                       setCostPrice(
-                        e.target.value === "" ? "" : Number(e.target.value)
+                        e.target.value === "" ? "" : Number(e.target.value),
                       )
                     }
                     className="mt-1"
@@ -326,7 +326,7 @@ export default function ProductEditPage() {
                     value={sellingPrice}
                     onChange={(e) =>
                       setSellingPrice(
-                        e.target.value === "" ? "" : Number(e.target.value)
+                        e.target.value === "" ? "" : Number(e.target.value),
                       )
                     }
                     className="mt-1"
@@ -340,7 +340,7 @@ export default function ProductEditPage() {
                     value={regularPrice}
                     onChange={(e) =>
                       setRegularPrice(
-                        e.target.value === "" ? "" : Number(e.target.value)
+                        e.target.value === "" ? "" : Number(e.target.value),
                       )
                     }
                     className="mt-1"
@@ -353,7 +353,7 @@ export default function ProductEditPage() {
                     value={selectedUom}
                     onChange={(e) =>
                       setSelectedUom(
-                        e.target.value ? Number(e.target.value) : ""
+                        e.target.value ? Number(e.target.value) : "",
                       )
                     }
                   >
@@ -407,7 +407,7 @@ export default function ProductEditPage() {
                           )}
                         </h4>
                         <Button
-                          variant="destructive"
+                          variant="default"
                           size="sm"
                           onClick={() => removeVariation(vIndex)}
                         >
@@ -427,8 +427,8 @@ export default function ProductEditPage() {
                                 prev.map((x, i) =>
                                   i === vIndex
                                     ? { ...x, name: e.target.value }
-                                    : x
-                                )
+                                    : x,
+                                ),
                               )
                             }
                             className="mt-1"
@@ -447,11 +447,11 @@ export default function ProductEditPage() {
                                     ? {
                                         ...x,
                                         additional_price: Number(
-                                          e.target.value
+                                          e.target.value,
                                         ),
                                       }
-                                    : x
-                                )
+                                    : x,
+                                ),
                               )
                             }
                             className="mt-1"

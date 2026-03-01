@@ -350,7 +350,7 @@ export default function SectionsSettings({
               <div className="flex justify-between items-center mb-4">
                 <h5 className="font-medium">Banner {bannerIndex + 1}</h5>
                 <Button
-                  variant="destructive"
+                  variant="default"
                   size="sm"
                   onClick={() => {
                     const updated = [...formData];
@@ -1091,7 +1091,7 @@ export default function SectionsSettings({
                             <MoveDown className="w-4 h-4" />
                           </Button>
                           <Button
-                            variant="destructive"
+                            variant="default"
                             size="sm"
                             onClick={() => removeSection(originalIndex)}
                           >

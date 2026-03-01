@@ -136,8 +136,8 @@ const navItems: NavItem[] = [
     name: "Website Setup",
     icon: Globe2,
     children: [
-      { name: "Config", path: "/config" },
-      { name: "Setting", path: "/web-setting" },
+      // { name: "Config", path: "/config" },
+      { name: "Settings", path: "/web-setting" },
       { name: "Theme", path: "/theme" },
       { name: "Visit Website", path: "https://inventory-mart.netlify.app/" },
     ],
@@ -257,14 +257,14 @@ export default function Sidebar({
                             `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
                               isActive
                                 ? "bg-[#f68826] text-[#1d2226] font-medium"
-                                : "text-bw-100 hover:bg-[#f68826] hover:text-[#1d2226] hover:transition"
+                                : "text-bw-100 hover:bg-[#f687267c] hover:text-[#1d2226] hover:transition"
                             }`
                           }
                           onClick={() => setSidebarOpen(false)}
                         >
                           <ChevronRight
                             size={14}
-                            className="opacity-60 text-[#f68826] hover:text-[#000]"
+                            className="hover:text-[#1d2226]"
                           />
                           {child.name}
                         </NavLink>

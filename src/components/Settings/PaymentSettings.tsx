@@ -493,7 +493,11 @@ export default function PaymentSettings({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Payment Settings</CardTitle>
-        <Button onClick={onSave} disabled={saving} className="gap-2 btn-bw-primary">
+        <Button
+          onClick={onSave}
+          disabled={saving}
+          className="gap-2 btn-bw-primary"
+        >
           <Save className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>
@@ -762,7 +766,7 @@ export default function PaymentSettings({
                               }
                             />
                             <Button
-                              variant="destructive"
+                              variant="default"
                               size="sm"
                               onClick={() => removeGateway(index)}
                             >

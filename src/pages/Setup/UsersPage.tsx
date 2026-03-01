@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { useCrud } from "@/hook/crudHelper";
 import { getData } from "@/hook/getData";
 import { formatStatus } from "@/components/utils/formatter";
-// import LogoUploader from "@/hook/uploadImageFile";
+import ImageUploader2 from "@/hook/ImageUploader2";
 
 type User = {
   id: number;
@@ -24,7 +24,7 @@ type User = {
   username: string;
   phone: string;
   address?: string;
-  image?: string;
+  image?: string | null;
   password_hash?: string;
   role_id: number;
   created_at: string;
@@ -60,10 +60,10 @@ export default function UsersPage() {
   // Fetch roles and branches
   useEffect(() => {
     getData<Role>(`${import.meta.env.VITE_SERVER}/setup/get-roles`).then(
-      setRoles
+      setRoles,
     );
     getData<Branch>(`${import.meta.env.VITE_SERVER}/setup/get-branches`).then(
-      setBranches
+      setBranches,
     );
   }, []);
 
@@ -80,6 +80,7 @@ export default function UsersPage() {
       address: data.address,
       password_hash: data.password_hash,
       role_id: data.role_id,
+      image: data.image,
     }),
     formatUpdate: (data) => ({
       id: data.id,
@@ -87,6 +88,7 @@ export default function UsersPage() {
       phone: data.phone,
       branch_id: data.branch_id,
       role_id: data.role_id,
+      image: data.image,
       status: data.status,
     }),
   });
@@ -201,11 +203,19 @@ export default function UsersPage() {
                   </option>
                 ))}
               </select>
-              {/* <LogoUploader
-                initialLogo={users.image}
-                disabled={!open}
-                onChange={(newLogo) => setForm({ ...users, image: newLogo })}
-              /> */}
+              <div className="space-y-2">
+                <ImageUploader2
+                  initialImage={form.image}
+                  onUploadComplete={(url) => {
+                    setForm({ ...form, image: url });
+                  }}
+                  onRemove={() => {
+                    setForm({ ...form, image: null });
+                  }}
+                  showPreview={true}
+                  buttonText="Choose Image"
+                />
+              </div>
 
               <Button className="w-full btn-bw-primary" onClick={handleSave}>
                 {form.id ? "Update" : "Add User"}

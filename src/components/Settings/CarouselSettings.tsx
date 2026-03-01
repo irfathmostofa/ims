@@ -58,11 +58,11 @@ export default function CarouselSettings({
       setUploading(true);
       setUploadingForItem(itemIndex);
       const imageUrl = await uploadImageToCloudinary(file);
-      
+
       const updatedItems = [...(formData.items || [])];
       updatedItems[itemIndex] = { ...updatedItems[itemIndex], image: imageUrl };
       handleChange("items", updatedItems);
-      
+
       toast.success("Image uploaded successfully");
     } catch (error) {
       toast.error("Failed to upload image");
@@ -101,7 +101,11 @@ export default function CarouselSettings({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Carousel Settings</CardTitle>
-        <Button onClick={onSave} disabled={saving || uploading} className="gap-2 btn-bw-primary">
+        <Button
+          onClick={onSave}
+          disabled={saving || uploading}
+          className="gap-2 btn-bw-primary"
+        >
           <Save className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>
@@ -211,7 +215,7 @@ export default function CarouselSettings({
                     <div className="flex justify-between items-center mb-4">
                       <h4 className="font-medium">Item {index + 1}</h4>
                       <Button
-                        variant="destructive"
+                        variant="default"
                         size="sm"
                         onClick={() => removeItem(index)}
                       >
@@ -250,10 +254,12 @@ export default function CarouselSettings({
                           />
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="icon"
-                                disabled={uploading && uploadingForItem === index}
+                                disabled={
+                                  uploading && uploadingForItem === index
+                                }
                               >
                                 <Upload className="w-4 h-4" />
                               </Button>
@@ -278,9 +284,9 @@ export default function CarouselSettings({
                           </Dialog>
                         </div>
                         {item.image && (
-                          <img 
-                            src={item.image} 
-                            alt={item.title} 
+                          <img
+                            src={item.image}
+                            alt={item.title}
                             className="w-full h-24 object-cover rounded border"
                           />
                         )}

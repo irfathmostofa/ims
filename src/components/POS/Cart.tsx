@@ -272,7 +272,7 @@ export default function Cart({
               <DialogFooter className="mt-4 pt-4 border-t">
                 {savedCarts.length > 0 && (
                   <Button
-                    variant="destructive"
+                    variant="default"
                     onClick={deleteAll}
                     className="w-full"
                   >

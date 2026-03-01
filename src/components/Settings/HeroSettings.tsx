@@ -201,7 +201,7 @@ export default function HeroSettings({
               <div className="flex justify-between items-center mb-4">
                 <h4 className="font-medium">Slide {index + 1} Settings</h4>
                 <Button
-                  variant="destructive"
+                  variant="default"
                   size="sm"
                   onClick={() => removeSlide(index)}
                 >

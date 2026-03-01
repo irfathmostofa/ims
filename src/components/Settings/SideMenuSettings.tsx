@@ -106,7 +106,11 @@ export default function SideMenuSettings({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Side Menu Settings</CardTitle>
-        <Button onClick={onSave} disabled={saving} className="gap-2 btn-bw-primary">
+        <Button
+          onClick={onSave}
+          disabled={saving}
+          className="gap-2 btn-bw-primary"
+        >
           <Save className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>
@@ -174,7 +178,7 @@ export default function SideMenuSettings({
                       <div className="flex justify-between items-center mb-4">
                         <h4 className="font-medium">Category {catIndex + 1}</h4>
                         <Button
-                          variant="destructive"
+                          variant="default"
                           size="sm"
                           onClick={() => removeCategory(catIndex)}
                         >

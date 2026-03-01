@@ -73,11 +73,11 @@ export default function ProductAddPage() {
     try {
       const datauom = await apiClient(
         `${import.meta.env.VITE_SERVER}/product/get-uom`,
-        { method: "GET", tokenType: "jwt" }
+        { method: "GET", tokenType: "jwt" },
       );
       const datacat = await apiClient(
         `${import.meta.env.VITE_SERVER}/product/get-product-cat`,
-        { method: "GET", tokenType: "jwt" }
+        { method: "GET", tokenType: "jwt" },
       );
       setUoms(datauom.data);
       setCategories(datacat.data);
@@ -92,7 +92,7 @@ export default function ProductAddPage() {
   }, []);
   const toggleCategory = (catId: number) => {
     setSelectedCategories((prev) =>
-      prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId]
+      prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId],
     );
   };
 
@@ -132,8 +132,8 @@ export default function ProductAddPage() {
                 },
               ],
             }
-          : v
-      )
+          : v,
+      ),
     );
   };
 
@@ -146,8 +146,8 @@ export default function ProductAddPage() {
               ...v,
               images: v.images?.filter((_, idx) => idx !== imgIndex),
             }
-          : v
-      )
+          : v,
+      ),
     );
   };
 
@@ -163,8 +163,8 @@ export default function ProductAddPage() {
                 is_primary: idx === imgIndex,
               })),
             }
-          : v
-      )
+          : v,
+      ),
     );
   };
 
@@ -230,7 +230,7 @@ export default function ProductAddPage() {
 
       const data = await apiClient(
         `${import.meta.env.VITE_SERVER}/product/products`,
-        { method: "POST", data: product, tokenType: "jwt" }
+        { method: "POST", data: product, tokenType: "jwt" },
       );
 
       toast.success(data.message || "Product published successfully! 🎉");
@@ -238,7 +238,7 @@ export default function ProductAddPage() {
     } catch (error: any) {
       console.error(error);
       toast.error(
-        error.message || "Failed to publish product. Please try again."
+        error.message || "Failed to publish product. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -305,7 +305,7 @@ export default function ProductAddPage() {
                     value={costPrice}
                     onChange={(e) =>
                       setCostPrice(
-                        e.target.value === "" ? "" : Number(e.target.value)
+                        e.target.value === "" ? "" : Number(e.target.value),
                       )
                     }
                     className="mt-1"
@@ -319,7 +319,7 @@ export default function ProductAddPage() {
                     value={sellingPrice}
                     onChange={(e) =>
                       setSellingPrice(
-                        e.target.value === "" ? "" : Number(e.target.value)
+                        e.target.value === "" ? "" : Number(e.target.value),
                       )
                     }
                     className="mt-1"
@@ -336,7 +336,7 @@ export default function ProductAddPage() {
                     value={regularPrice}
                     onChange={(e) =>
                       setRegularPrice(
-                        e.target.value === "" ? "" : Number(e.target.value)
+                        e.target.value === "" ? "" : Number(e.target.value),
                       )
                     }
                     className="mt-1"
@@ -349,7 +349,7 @@ export default function ProductAddPage() {
                     value={selectedUom}
                     onChange={(e) =>
                       setSelectedUom(
-                        e.target.value ? Number(e.target.value) : ""
+                        e.target.value ? Number(e.target.value) : "",
                       )
                     }
                   >
@@ -398,7 +398,7 @@ export default function ProductAddPage() {
                           Variation #{vIndex + 1}
                         </h4>
                         <Button
-                          variant="destructive"
+                          variant="default"
                           size="sm"
                           onClick={() => removeVariation(v.id)}
                         >
@@ -417,8 +417,8 @@ export default function ProductAddPage() {
                                 prev.map((x) =>
                                   x.id === v.id
                                     ? { ...x, name: e.target.value }
-                                    : x
-                                )
+                                    : x,
+                                ),
                               )
                             }
                             className="mt-1"
@@ -437,11 +437,11 @@ export default function ProductAddPage() {
                                     ? {
                                         ...x,
                                         additional_price: Number(
-                                          e.target.value
+                                          e.target.value,
                                         ),
                                       }
-                                    : x
-                                )
+                                    : x,
+                                ),
                               )
                             }
                             className="mt-1"
@@ -461,8 +461,8 @@ export default function ProductAddPage() {
                                         ...x,
                                         weight: Number(e.target.value),
                                       }
-                                    : x
-                                )
+                                    : x,
+                                ),
                               )
                             }
                           />
@@ -482,8 +482,8 @@ export default function ProductAddPage() {
                                 prev.map((x) =>
                                   x.id === v.id
                                     ? { ...x, weight_unit: String(value) }
-                                    : x
-                                )
+                                    : x,
+                                ),
                               )
                             }
                           />
@@ -498,8 +498,8 @@ export default function ProductAddPage() {
                                 prev.map((x) =>
                                   x.id === v.id
                                     ? { ...x, sku: e.target.value }
-                                    : x
-                                )
+                                    : x,
+                                ),
                               )
                             }
                           />
@@ -517,8 +517,8 @@ export default function ProductAddPage() {
                                           ...x,
                                           is_replaceable: e.target.checked,
                                         }
-                                      : x
-                                  )
+                                      : x,
+                                  ),
                                 )
                               }
                               className="mr-2"

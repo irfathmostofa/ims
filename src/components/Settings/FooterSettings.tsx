@@ -215,7 +215,7 @@ export default function FooterSettings({
         <Button
           onClick={onSave}
           disabled={saving || uploading}
-        className="gap-2 btn-bw-primary"
+          className="gap-2 btn-bw-primary"
         >
           <Save className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}
@@ -326,7 +326,7 @@ export default function FooterSettings({
                     <div className="flex justify-between items-center mb-4">
                       <h4 className="font-medium">Box {boxIndex + 1}</h4>
                       <Button
-                        variant="destructive"
+                        variant="default"
                         size="sm"
                         onClick={() => removeBox(boxIndex)}
                       >

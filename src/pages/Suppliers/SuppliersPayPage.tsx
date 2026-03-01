@@ -82,7 +82,7 @@ export default function SuppliersPayPage() {
           method: "POST",
           tokenType: "jwt",
           data: params,
-        }
+        },
       );
 
       if (response.success) {
@@ -134,7 +134,7 @@ export default function SuppliersPayPage() {
             amount: paymentAmount,
             reference_no: selectedInvoice.code,
           },
-        }
+        },
       );
 
       if (response.success) {
@@ -173,9 +173,9 @@ export default function SuppliersPayPage() {
       case "PARTIAL":
         return <Badge variant="warning">Partial</Badge>;
       case "PENDING":
-        return <Badge variant="destructive">Pending</Badge>;
+        return <Badge variant="default">Pending</Badge>;
       case "OVERDUE":
-        return <Badge variant="destructive">Overdue</Badge>;
+        return <Badge variant="default">Overdue</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -316,7 +316,7 @@ export default function SuppliersPayPage() {
                       </td>
                       <td className="py-3 px-4 font-semibold text-gray-800">
                         {formatCurrency(
-                          item.quantity * item.unit_price - item.discount
+                          item.quantity * item.unit_price - item.discount,
                         )}
                       </td>
                     </tr>
@@ -493,7 +493,7 @@ export default function SuppliersPayPage() {
                         <td className="py-4 px-6">
                           <div className="font-semibold text-gray-800">
                             {formatCurrency(
-                              item.quantity * item.unit_price - item.discount
+                              item.quantity * item.unit_price - item.discount,
                             )}
                           </div>
                         </td>
@@ -525,7 +525,7 @@ export default function SuppliersPayPage() {
           <p className="text-gray-600">
             {getRemainingAmount(invoice) > 0
               ? `Payment of ${formatCurrency(
-                  getRemainingAmount(invoice)
+                  getRemainingAmount(invoice),
                 )} is pending. Please make payment to clear this invoice.`
               : "This invoice has been fully paid. Thank you for your payment."}
           </p>
@@ -721,7 +721,7 @@ export default function SuppliersPayPage() {
                       <span>New Paid Total:</span>
                       <span className="font-bold">
                         {formatCurrency(
-                          selectedInvoice.paid_amount + paymentAmount
+                          selectedInvoice.paid_amount + paymentAmount,
                         )}
                       </span>
                     </div>

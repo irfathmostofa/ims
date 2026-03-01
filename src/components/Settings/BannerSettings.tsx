@@ -174,7 +174,7 @@ export default function BannerSettings({
                     <div className="flex justify-between items-center mb-4">
                       <h4 className="font-medium">Banner {index + 1}</h4>
                       <Button
-                        variant="destructive"
+                        variant="default"
                         size="sm"
                         onClick={() => removeBanner(index)}
                       >

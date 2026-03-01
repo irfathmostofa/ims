@@ -191,8 +191,12 @@ export default function LogisticSettings({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Logistic & Delivery Settings</CardTitle>
-        <Button onClick={onSave} disabled={saving} className="gap-2">
-          <Save className="w-4 h-4" />
+        <Button
+          onClick={onSave}
+          disabled={saving}
+          className="gap-2 btn-bw-primary"
+        >
+          <Save className="w-4 h-4 " />
           {saving ? "Saving..." : "Save Changes"}
         </Button>
       </CardHeader>
@@ -1035,11 +1039,11 @@ export default function LogisticSettings({
                             {method.name || `Method ${index + 1}`}
                           </h4>
                           <Button
-                            variant="destructive"
+                            variant="default"
                             size="sm"
                             onClick={() => removeShippingMethod(index)}
                           >
-                            <Trash className="w-4 h-4" />
+                            <Trash className="w-4 h-4 " />
                           </Button>
                         </div>
 

@@ -340,7 +340,7 @@ export default function FloatingButtonSettings({
         <Button
           onClick={onSave}
           disabled={saving || uploading}
-         className="gap-2 btn-bw-primary"
+          className="gap-2 btn-bw-primary"
         >
           <Save className="w-4 h-4" />
           {saving ? "Saving..." : "Save Changes"}
@@ -592,7 +592,7 @@ export default function FloatingButtonSettings({
                         <MoveDown className="w-4 h-4" />
                       </Button>
                       <Button
-                        variant="destructive"
+                        variant="default"
                         size="sm"
                         onClick={() => removeButton(index)}
                       >

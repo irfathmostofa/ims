@@ -1,4 +1,4 @@
-import  { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -46,7 +46,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
- 
   Calculator,
   Package,
   Plus,
@@ -142,15 +141,15 @@ export const CreateParcelTab = () => {
   const parcelTotals = useMemo(() => {
     const subtotal = selectedProducts.reduce(
       (sum, item) => sum + item.value * item.quantity,
-      0
+      0,
     );
     const totalWeight = selectedProducts.reduce(
       (sum, item) => sum + item.weight * item.quantity,
-      0
+      0,
     );
     const totalItems = selectedProducts.reduce(
       (sum, item) => sum + item.quantity,
-      0
+      0,
     );
 
     return {
@@ -220,12 +219,11 @@ export const CreateParcelTab = () => {
         prev.map((item) =>
           item.id === productId
             ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
+            : item,
+        ),
       );
     } else {
       const price = parsePrice(product.selling_price);
-
 
       const newItem: ParcelItem = {
         id: productId,
@@ -256,7 +254,9 @@ export const CreateParcelTab = () => {
     }
 
     setSelectedProducts((prev) =>
-      prev.map((item) => (item.id === productId ? { ...item, quantity } : item))
+      prev.map((item) =>
+        item.id === productId ? { ...item, quantity } : item,
+      ),
     );
   };
 
@@ -319,7 +319,7 @@ export const CreateParcelTab = () => {
             <Copy size={14} className="mr-2" />
             Copy Tracking ID
           </Button>
-        </div>
+        </div>,
       );
 
       // Reset form
@@ -364,7 +364,7 @@ export const CreateParcelTab = () => {
         product.display_name.toLowerCase().includes(searchLower) ||
         product.product_name.toLowerCase().includes(searchLower) ||
         product.code.toLowerCase().includes(searchLower) ||
-        product.category_name.toLowerCase().includes(searchLower)
+        product.category_name.toLowerCase().includes(searchLower),
     );
   }, [storeProducts, productSearch]);
 
@@ -719,7 +719,7 @@ export const CreateParcelTab = () => {
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
-                          variant="destructive"
+                          variant="default"
                           size="sm"
                           className="bg-red-600 hover:bg-red-700"
                         >
@@ -820,7 +820,7 @@ export const CreateParcelTab = () => {
                                   onClick={() =>
                                     handleUpdateQuantity(
                                       item.id,
-                                      item.quantity - 1
+                                      item.quantity - 1,
                                     )
                                   }
                                 >
@@ -836,7 +836,7 @@ export const CreateParcelTab = () => {
                                   onClick={() =>
                                     handleUpdateQuantity(
                                       item.id,
-                                      item.quantity + 1
+                                      item.quantity + 1,
                                     )
                                   }
                                 >

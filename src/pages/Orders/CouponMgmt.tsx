@@ -412,7 +412,7 @@ export const CouponMgmt = () => {
 
     if (!coupon) {
       return (
-        <Badge variant="destructive" className="text-xs">
+        <Badge variant="default" className="text-xs">
           <XCircle size={12} className="mr-1" />
           Inactive
         </Badge>
@@ -693,7 +693,7 @@ export const CouponMgmt = () => {
               Cancel
             </Button>
             <Button
-              variant="destructive"
+              variant="default"
               onClick={handleDeleteCoupon}
               disabled={!!processingCouponId}
             >

@@ -377,7 +377,7 @@ export default function DeliveryMethodPage() {
                 Cancel
               </Button>
               <Button
-                variant="destructive"
+                variant="default"
                 onClick={confirmDelete}
                 className="btn-bw-primary"
               >

@@ -36,6 +36,15 @@ interface OrderItem {
   unit_price: number;
   discount: number;
   subtotal: number;
+  weight?: number;
+  weight_unit?: string;
+  categories?: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    code: string;
+    is_primary: boolean;
+  }>;
 }
 
 interface Order {
@@ -59,6 +68,12 @@ interface Order {
   delivery_method_name: string;
   payment_method_name: string;
   items: OrderItem[];
+  tracking_id?: string;
+  address_line?: string;
+  area?: string;
+  city?: string;
+  postal_code?: string;
+  label?: string;
 }
 
 type OrderStatusTab =
@@ -163,6 +178,7 @@ interface OrderTableProps {
   loader: boolean;
   handleQuickView: (order: Order) => void;
   handleUpdateOrderStatus: (orderId: number, status: string) => Promise<void>;
+  handleCreateParcel: (order: Order) => Promise<void>;
   processingOrderId: number | null;
   router: (path: string) => void;
   getOrderStatusBadge: (status: string) => JSX.Element;
@@ -177,8 +193,8 @@ const OrderTable = ({
   loader,
   handleQuickView,
   handleUpdateOrderStatus,
+  handleCreateParcel,
   processingOrderId,
-
   formatDate,
   formatCurrency,
   status,
@@ -216,6 +232,15 @@ const OrderTable = ({
       onClick: (row: Order) => handleUpdateOrderStatus(row.id, "PROCESSING"),
     },
     {
+      label: <Package size={16} />,
+      className: "text-blue-600 hover:text-blue-800",
+      title: "Create Parcel",
+      disabled: (row: Order) => processingOrderId === row.id,
+      hide: (row: Order) =>
+        row.order_status !== "CONFIRMED" || !!row.tracking_id,
+      onClick: (row: Order) => handleCreateParcel(row),
+    },
+    {
       label: <Send size={16} />,
       className: "text-purple-600 hover:text-purple-800",
       title: "Ship Order (Confirmed)",
@@ -247,7 +272,6 @@ const OrderTable = ({
       hide: (row: Order) => row.order_status !== "PROCESSING",
       onClick: (row: Order) => handleUpdateOrderStatus(row.id, "CANCELLED"),
     },
-    // SHIPPED order actions
     {
       label: <CheckCircle size={16} />,
       className: "text-green-600 hover:text-green-800",
@@ -256,7 +280,6 @@ const OrderTable = ({
       hide: (row: Order) => row.order_status !== "SHIPPED",
       onClick: (row: Order) => handleUpdateOrderStatus(row.id, "DELIVERED"),
     },
-    // DELIVERED order actions
     {
       label: <AlertCircle size={16} />,
       className: "text-gray-600 hover:text-gray-800",
@@ -281,6 +304,7 @@ const OrderTable = ({
           { key: "net_amount", label: "Total Amount" },
           { key: "order_status", label: "Status" },
           { key: "payment_status", label: "Payment" },
+          { key: "tracking_id", label: "Tracking ID" },
           { key: "created_at", label: "Order Date" },
         ]}
         columnFormats={{
@@ -292,6 +316,11 @@ const OrderTable = ({
             </div>
           ),
           net_amount: (val: string) => formatCurrency(parseFloat(val)),
+          tracking_id: (val: string) => (
+            <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
+              {val || "-"}
+            </span>
+          ),
         }}
         printHead={[
           { label: "Order Code", value: "code" },
@@ -361,15 +390,13 @@ export const OrderList = () => {
   const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showQuickView, setShowQuickView] = useState(false);
-  // const [pagination, setPagination] = useState({
-  //   page: 1,
-  //   limit: 10,
-  //   total: 0,
-  //   totalPages: 1,
-  // });
   const [activeTab, setActiveTab] = useState<OrderStatusTab>(
     (searchParams.get("status")?.toUpperCase() as OrderStatusTab) || "ALL",
   );
+
+  // Get Redx configuration from environment variables
+  const REDX_BASE_URL = import.meta.env.VITE_REDX_BASE_URL;
+  const REDX_TOKEN = import.meta.env.VITE_REDX_TOKEN;
 
   const [statusCounts, setStatusCounts] = useState<StatusCounts>({
     ALL: 0,
@@ -407,15 +434,6 @@ export const OrderList = () => {
           setOrders(fetchedOrders);
           calculateStatusCounts(fetchedOrders);
         }
-
-        // setPagination(
-        //   response.pagination || {
-        //     page,
-        //     limit: 100,
-        //     total: 0,
-        //     totalPages: 1,
-        //   },
-        // );
       } else {
         toast.error(response.message || "Failed to fetch orders");
       }
@@ -426,6 +444,7 @@ export const OrderList = () => {
       setLoading(false);
     }
   };
+
   const calculateStatusCounts = (ordersList: Order[]) => {
     const counts: StatusCounts = {
       ALL: ordersList.length,
@@ -471,6 +490,7 @@ export const OrderList = () => {
   useEffect(() => {
     fetchData(1);
   }, []);
+
   useEffect(() => {
     const status = searchParams.get("status")?.toUpperCase();
     if (status && status in statusConfigs) {
@@ -478,13 +498,191 @@ export const OrderList = () => {
     }
   }, [searchParams]);
 
+  const createParcel = async (order: Order) => {
+    try {
+      setProcessingOrderId(order.id);
+
+      if (!REDX_BASE_URL || !REDX_TOKEN) {
+        toast.error(
+          "Redx configuration is missing. Please check environment variables.",
+        );
+        return null;
+      }
+
+      // Step 1: Get area ID using postal code
+      let areaId = 1; // Default fallback
+      try {
+        const areasResponse = await fetch(
+          `${REDX_BASE_URL}/areas?post_code=${order.postal_code}`,
+          {
+            method: "GET",
+            headers: {
+              "API-ACCESS-TOKEN": `Bearer ${REDX_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        const areasData = await areasResponse.json();
+
+        if (areasResponse.ok && areasData.areas && areasData.areas.length > 0) {
+          // Try to find matching area by name
+          const matchingArea = areasData.areas.find(
+            (area: any) =>
+              area.name.toLowerCase() === order.area?.toLowerCase(),
+          );
+
+          // Use matching area or first area in the list
+          areaId = matchingArea?.id || areasData.areas[0].id;
+
+          console.log("Found area:", { areaId, areas: areasData.areas });
+        } else {
+          console.warn("No areas found for postal code:", order.postal_code);
+        }
+      } catch (error) {
+        console.error("Error fetching areas:", error);
+      }
+
+      // Step 2: Get pickup store ID
+      let pickupStoreId = 1; // Default fallback
+      try {
+        const storesResponse = await fetch(`${REDX_BASE_URL}/pickup/stores`, {
+          method: "GET",
+          headers: {
+            "API-ACCESS-TOKEN": `Bearer ${REDX_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        const storesData = await storesResponse.json();
+
+        if (
+          storesResponse.ok &&
+          storesData.pickup_stores &&
+          storesData.pickup_stores.length > 0
+        ) {
+          // Use the first available pickup store
+          pickupStoreId = storesData.pickup_stores[0].id;
+          console.log("Using pickup store:", storesData.pickup_stores[0]);
+        } else {
+          console.warn("No pickup stores found");
+        }
+      } catch (error) {
+        console.error("Error fetching pickup stores:", error);
+      }
+
+      // Calculate total weight from items (convert from grams to kg)
+      const totalWeight = order.items.reduce((sum, item) => {
+        const weightInKg = item.weight ? item.weight / 1000 : 0.5;
+        return sum + weightInKg * item.quantity;
+      }, 0);
+
+      // Prepare parcel details items with category from product categories
+      const parcelDetailsItems = order.items.map((item) => ({
+        name: item.product_name,
+        category: item.categories?.[0]?.name || "General",
+        value: item.unit_price,
+      }));
+
+      // Prepare the parcel data according to Redx API specification
+      const parcelData = {
+        customer_name: order.customer_name,
+        customer_phone: order.customer_phone,
+        delivery_area: order.area || "Chittagong",
+        delivery_area_id: areaId,
+        customer_address:
+          order.address_line ||
+          `${order.area || ""}, ${order.city || ""}, ${order.postal_code || ""}`.trim(),
+        merchant_invoice_id: order.code,
+        cash_collection_amount: order.is_cod
+          ? parseFloat(order.net_amount).toString()
+          : "0",
+        parcel_weight: Math.max(totalWeight, 0.5), // Minimum 0.5kg
+        instruction: "Handle with care",
+        value: parseFloat(order.net_amount).toString(),
+        is_closed_box: false, // Changed from "No" to false (boolean)
+        pickup_store_id: pickupStoreId,
+        parcel_details_json: parcelDetailsItems,
+      };
+
+      console.log("Sending parcel data to Redx:", parcelData);
+
+      const response = await fetch(`${REDX_BASE_URL}/parcel`, {
+        method: "POST",
+        headers: {
+          "API-ACCESS-TOKEN": `Bearer ${REDX_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(parcelData),
+      });
+
+      const data = await response.json();
+      console.log("Redx API Response:", data);
+
+      if (!response.ok) {
+        // Log validation errors if any
+        if (data.validation_errors) {
+          console.error("Validation errors:", data.validation_errors);
+          throw new Error(
+            data.validation_errors
+              .map((e: any) => Object.values(e)[0])
+              .join(", "),
+          );
+        }
+        throw new Error(data.message || "Failed to create parcel");
+      }
+
+      // Update order with tracking ID in your database
+      if (data.tracking_id) {
+        const updateResponse = await apiClient(
+          `${import.meta.env.VITE_SERVER}/order/update-delivery-status`,
+          {
+            method: "POST",
+            tokenType: "jwt",
+            data: {
+              id: order.id,
+              tracking_id: data.tracking_id,
+              delivery_status: "ASSIGNED",
+              courier_response: data,
+            },
+          },
+        );
+
+        if (updateResponse.success) {
+          toast.success(
+            `Parcel created successfully! Tracking ID: ${data.tracking_id}`,
+          );
+
+          // Refresh orders to show tracking ID
+          await fetchData(1);
+        } else {
+          toast.error("Failed to update order with tracking ID");
+        }
+      }
+
+      return data.tracking_id;
+    } catch (error: any) {
+      console.error("Parcel creation error:", error);
+      toast.error(error.message || "Failed to create parcel");
+      return null;
+    } finally {
+      setProcessingOrderId(null);
+    }
+  };
+
+  const handleCreateParcel = async (order: Order) => {
+    await createParcel(order);
+  };
+
   const handleUpdateOrderStatus = async (
     orderId: number,
     newStatus: string,
   ) => {
-    console.log(orderId, newStatus);
     try {
       setProcessingOrderId(orderId);
+
+      const currentOrder = allOrders.find((o) => o.id === orderId);
+
       const response = await apiClient(
         `${import.meta.env.VITE_SERVER}/order/update-order-status`,
         {
@@ -496,9 +694,9 @@ export const OrderList = () => {
           },
         },
       );
-      console.log(response);
+
       if (response.success) {
-        const statusMessages = {
+        const statusMessages: Record<string, string> = {
           CONFIRMED: "Order accepted successfully!",
           PROCESSING: "Order marked as processing!",
           SHIPPED: "Order shipped successfully!",
@@ -508,17 +706,20 @@ export const OrderList = () => {
         };
 
         toast.success(
-          statusMessages[newStatus as keyof typeof statusMessages] ||
-            "Order status updated successfully!",
+          statusMessages[newStatus] || "Order status updated successfully!",
         );
 
-        // Refresh orders list
-        fetchData(1);
+        // Refresh orders list first
+        await fetchData(1);
 
-        // Navigate to logistics page only for CONFIRMED status
-        // if (newStatus === "CONFIRMED") {
-        //   router(`/order/logistics/${orderId}`);
-        // }
+        // Create parcel when order is confirmed and delivery method is Redx
+        if (newStatus === "CONFIRMED" && currentOrder) {
+          if (currentOrder.delivery_method_name?.toLowerCase() === "redx") {
+            await createParcel(currentOrder);
+          } else {
+            toast.info("Parcel creation skipped: Not a Redx delivery");
+          }
+        }
       } else {
         toast.error(response.message || "Failed to update order status");
       }
@@ -573,7 +774,6 @@ export const OrderList = () => {
     setShowQuickView(true);
   };
 
-  // Get status-specific actions for Quick View Dialog
   const getQuickViewActions = (order: Order) => {
     switch (order.order_status) {
       case "PENDING":
@@ -593,6 +793,19 @@ export const OrderList = () => {
       case "CONFIRMED":
         return (
           <div className="flex flex-col sm:flex-row gap-2">
+            {!order.tracking_id &&
+              order.delivery_method_name?.toLowerCase() === "redx" && (
+                <Button
+                  onClick={async () => {
+                    setShowQuickView(false);
+                    await createParcel(order);
+                  }}
+                  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Package size={16} className="mr-2" />
+                  Create Parcel
+                </Button>
+              )}
             <Button
               onClick={() => {
                 setShowQuickView(false);
@@ -702,6 +915,7 @@ export const OrderList = () => {
                   loader={loader}
                   handleQuickView={handleQuickView}
                   handleUpdateOrderStatus={handleUpdateOrderStatus}
+                  handleCreateParcel={handleCreateParcel}
                   processingOrderId={processingOrderId}
                   router={router}
                   getOrderStatusBadge={getOrderStatusBadge}
@@ -731,6 +945,7 @@ export const OrderList = () => {
                     loader={loader}
                     handleQuickView={handleQuickView}
                     handleUpdateOrderStatus={handleUpdateOrderStatus}
+                    handleCreateParcel={handleCreateParcel}
                     processingOrderId={processingOrderId}
                     router={router}
                     getOrderStatusBadge={getOrderStatusBadge}
@@ -752,6 +967,11 @@ export const OrderList = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               Order Quick View: #{selectedOrder?.code}
+              {selectedOrder?.tracking_id && (
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                  Tracking: {selectedOrder.tracking_id}
+                </span>
+              )}
             </DialogTitle>
           </DialogHeader>
 
@@ -812,6 +1032,17 @@ export const OrderList = () => {
                     {getPaymentStatusBadge(selectedOrder.payment_status)}
                   </div>
                 </div>
+              </div>
+
+              {/* Delivery Address */}
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm text-black">
+                  Delivery Address
+                </h4>
+                <p className="text-sm">
+                  {selectedOrder.address_line ||
+                    `${selectedOrder.area || ""}, ${selectedOrder.city || ""}, ${selectedOrder.postal_code || ""}`}
+                </p>
               </div>
 
               {/* Order Items */}
