@@ -641,7 +641,7 @@ export const OrderList = () => {
             tokenType: "jwt",
             data: {
               id: order.id,
-              tracking_id: data.tracking_id,
+              tracking_code: data.tracking_id,
               delivery_status: "ASSIGNED",
               courier_response: data,
             },
