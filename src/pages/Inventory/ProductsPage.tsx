@@ -58,7 +58,7 @@ export default function AllProductsPage() {
           method: "POST",
           data: { page: 1, limit: 10 },
           tokenType: "jwt",
-        }
+        },
       );
 
       setProducts(data.data.data || []);
@@ -85,7 +85,7 @@ export default function AllProductsPage() {
           method: "POST",
           data: { id: p.id },
           tokenType: "jwt",
-        }
+        },
       );
       toast.success(result.message || "Product deleted!");
       setUpdate((prev) => prev + 1);
@@ -96,7 +96,7 @@ export default function AllProductsPage() {
       setLoading(false);
     }
   };
-
+  console.log(products);
   return (
     <div className="p-6">
       <Breadcrumbs

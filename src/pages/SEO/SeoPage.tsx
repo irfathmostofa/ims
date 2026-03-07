@@ -1173,7 +1173,7 @@ export default function SeoPage() {
         {/* Add Button */}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="flex items-center gap-2 btn-bw-primary">
               <Plus size={18} /> {getAddButtonText()}
             </Button>
           </DialogTrigger>

@@ -127,6 +127,7 @@ const navItems: NavItem[] = [
     icon: LineChart,
 
     children: [
+      { name: "SEO", path: "/seo" },
       { name: "Campaign", path: "/campaign" },
       { name: "Send WhatsApp Message ", path: "/send-whatsapp-sms" },
       { name: "Send Mobile Message", path: "/send-mobile-sms" },

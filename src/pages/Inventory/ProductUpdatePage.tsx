@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,7 +10,7 @@ import { apiClient } from "@/hook/apiClient";
 import SimpleImageUploader from "@/hook/imageUploader";
 import CategoryTree from "@/components/ui/CategoryTree";
 import { useNavigate, useParams } from "react-router-dom";
-import { Trash2, Info } from "lucide-react";
+import { Trash2, Info, Search } from "lucide-react";
 
 type Category = {
   id: number;
@@ -50,6 +50,25 @@ type Variation = {
   barcodes?: Barcode[];
 };
 
+type SeoMeta = {
+  id?: number;
+  entity_type: string;
+  entity_id?: number;
+  meta_title: string;
+  meta_description: string;
+  meta_keywords?: string;
+  canonical_url?: string;
+  og_title?: string;
+  og_description?: string;
+  og_image?: string;
+  twitter_title?: string;
+  twitter_description?: string;
+  twitter_image?: string;
+  schema_json?: any;
+  is_index: boolean;
+  is_follow: boolean;
+};
+
 export default function ProductEditPage() {
   const { id } = useParams<{ id: string }>();
   const router = useNavigate();
@@ -67,6 +86,102 @@ export default function ProductEditPage() {
   const [sellingPrice, setSellingPrice] = useState<number | "">("");
   const [regularPrice, setRegularPrice] = useState<number | "">("");
   const [variations, setVariations] = useState<Variation[]>([]);
+
+  // SEO States
+  const [seoMeta, setSeoMeta] = useState<SeoMeta>({
+    entity_type: "product",
+    entity_id: id ? parseInt(id) : undefined,
+    meta_title: "",
+    meta_description: "",
+    meta_keywords: "",
+    canonical_url: "",
+    og_title: "",
+    og_description: "",
+    og_image: "",
+    twitter_title: "",
+    twitter_description: "",
+    twitter_image: "",
+    is_index: true,
+    is_follow: true,
+  });
+  const [showSeoModal, setShowSeoModal] = useState(false);
+  const [seoLoading, setSeoLoading] = useState(false);
+  const [productSlug, setProductSlug] = useState("");
+
+  // Refs to track if SEO has been manually edited
+  const hasManuallyEditedTitle = useRef(false);
+  const hasManuallyEditedDesc = useRef(false);
+
+  // Function to generate slug from product name
+  const generateSlug = (text: string) => {
+    return text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  };
+
+  // Update slug when name changes
+  useEffect(() => {
+    if (name) {
+      const slug = generateSlug(name);
+      setProductSlug(slug);
+    } else {
+      setProductSlug("");
+    }
+  }, [name]);
+
+  // Update SEO meta when product name changes (only if not manually edited)
+  useEffect(() => {
+    if (name && !hasManuallyEditedTitle.current) {
+      setSeoMeta((prev) => ({
+        ...prev,
+        meta_title: prev.meta_title || name,
+        og_title: prev.og_title || name,
+        twitter_title: prev.twitter_title || name,
+      }));
+    }
+  }, [name]);
+
+  // Update SEO meta when description changes (only if not manually edited)
+  useEffect(() => {
+    if (description && !hasManuallyEditedDesc.current) {
+      const truncatedDesc =
+        description.length > 160
+          ? description.substring(0, 157) + "..."
+          : description;
+
+      setSeoMeta((prev) => ({
+        ...prev,
+        meta_description: prev.meta_description || truncatedDesc,
+        og_description: prev.og_description || truncatedDesc,
+        twitter_description: prev.twitter_description || truncatedDesc,
+      }));
+    }
+  }, [description]);
+
+  // Fetch SEO data
+  const fetchSeoData = async (productId: number) => {
+    try {
+      const seoRes = await apiClient(
+        `${import.meta.env.VITE_SERVER}/seo/meta/entity/product/${productId}`,
+        { method: "GET", tokenType: "jwt" }
+      );
+      
+      if (seoRes.data) {
+        setSeoMeta(seoRes.data);
+        // Mark as manually edited if SEO data exists
+        if (seoRes.data.meta_title && seoRes.data.meta_title !== name) {
+          hasManuallyEditedTitle.current = true;
+        }
+        if (seoRes.data.meta_description && seoRes.data.meta_description !== description) {
+          hasManuallyEditedDesc.current = true;
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch SEO data:", err);
+      // 404 is expected if no SEO data exists yet
+    }
+  };
 
   // Fetch data
   const fetchData = async () => {
@@ -109,6 +224,11 @@ export default function ProductEditPage() {
           barcodes: v.barcodes || [],
         })) || [],
       );
+
+      // Fetch SEO data after product data is loaded
+      if (product.id) {
+        await fetchSeoData(product.id);
+      }
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Failed to load product details");
@@ -186,6 +306,69 @@ export default function ProductEditPage() {
     );
   };
 
+  // Handle SEO save
+  const handleSaveSeo = async () => {
+    setSeoLoading(true);
+    try {
+      // Mark as manually edited
+      if (seoMeta.meta_title !== name) {
+        hasManuallyEditedTitle.current = true;
+      }
+      if (seoMeta.meta_description !== description) {
+        hasManuallyEditedDesc.current = true;
+      }
+
+      const seoData = {
+        ...seoMeta,
+        entity_id: parseInt(id!),
+        entity_type: "product",
+      };
+
+      let response;
+      if (seoMeta.id) {
+        // Update existing SEO
+        response = await apiClient(
+          `${import.meta.env.VITE_SERVER}/seo/meta/${seoMeta.id}`,
+          { method: "PUT", data: seoData, tokenType: "jwt" }
+        );
+      } else {
+        // Create new SEO
+        response = await apiClient(
+          `${import.meta.env.VITE_SERVER}/seo/meta`,
+          { method: "POST", data: seoData, tokenType: "jwt" }
+        );
+      }
+
+      if (response.data?.id) {
+        setSeoMeta(prev => ({ ...prev, id: response.data.id }));
+      }
+      
+      setShowSeoModal(false);
+      toast.success("SEO data saved successfully");
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Failed to save SEO data");
+    } finally {
+      setSeoLoading(false);
+    }
+  };
+
+  // Handle reset to product defaults
+  const handleResetToDefaults = () => {
+    setSeoMeta((prev) => ({
+      ...prev,
+      meta_title: name || "",
+      meta_description: description ? (description.length > 160 ? description.substring(0, 157) + "..." : description) : "",
+      og_title: name || "",
+      og_description: description ? (description.length > 160 ? description.substring(0, 157) + "..." : description) : "",
+      twitter_title: name || "",
+      twitter_description: description ? (description.length > 160 ? description.substring(0, 157) + "..." : description) : "",
+    }));
+    hasManuallyEditedTitle.current = false;
+    hasManuallyEditedDesc.current = false;
+    toast.success("Reset to product defaults");
+  };
+
   // Validation
   const validateForm = () => {
     if (!name.trim()) {
@@ -249,6 +432,31 @@ export default function ProductEditPage() {
       );
 
       if (res.success) {
+        // Save SEO data after product update
+        if (seoMeta) {
+          try {
+            const seoData = {
+              ...seoMeta,
+              entity_id: parseInt(id!),
+              entity_type: "product",
+            };
+
+            if (seoMeta.id) {
+              await apiClient(
+                `${import.meta.env.VITE_SERVER}/seo/meta/${seoMeta.id}`,
+                { method: "PUT", data: seoData, tokenType: "jwt" }
+              );
+            } else {
+              await apiClient(
+                `${import.meta.env.VITE_SERVER}/seo/meta`,
+                { method: "POST", data: seoData, tokenType: "jwt" }
+              );
+            }
+          } catch (seoError) {
+            console.error("Failed to save SEO data:", seoError);
+          }
+        }
+
         toast.success("Product updated successfully! 🎉");
         router("/inventory/products");
       } else {
@@ -300,6 +508,10 @@ export default function ProductEditPage() {
             <TabsList className="rounded-lg p-1 bg-gray-100">
               <TabsTrigger value="general">General Info</TabsTrigger>
               <TabsTrigger value="variations">Variations & Images</TabsTrigger>
+              <TabsTrigger value="seo" className="gap-2">
+                <Search className="w-4 h-4" />
+                SEO
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="general" className="space-y-4 mt-6">
@@ -538,6 +750,71 @@ export default function ProductEditPage() {
                 </>
               )}
             </TabsContent>
+
+            {/* SEO Tab */}
+            <TabsContent value="seo" className="space-y-4 mt-6">
+              <div className="border rounded-lg p-6 bg-white">
+                {/* Preview Card */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-3">
+                    Search Engine Preview
+                  </h3>
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <p className="text-sm text-green-700 mb-1 break-all">
+                      {window.location.origin}/product/
+                      {productSlug || "product-slug"}
+                    </p>
+                    <p className="text-lg text-blue-600 font-medium hover:underline cursor-pointer mb-1 break-words">
+                      {seoMeta.meta_title || name || "Product Title"}
+                    </p>
+                    <p className="text-sm text-gray-600 break-words">
+                      {seoMeta.meta_description ||
+                        description ||
+                        "Product description will appear here..."}
+                    </p>
+                  </div>
+                </div>
+
+                {/* SEO Summary */}
+                <div className="space-y-4">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-medium mb-2">Current SEO Settings</h4>
+                    <div className="space-y-2 text-sm">
+                      <p>
+                        <span className="font-medium">Meta Title:</span>{" "}
+                        {seoMeta.meta_title || "Not set"}
+                        {seoMeta.meta_title && seoMeta.meta_title !== name && (
+                          <span className="ml-2 text-xs text-amber-600">
+                            (Customized)
+                          </span>
+                        )}
+                      </p>
+                      <p>
+                        <span className="font-medium">Meta Description:</span>{" "}
+                        {seoMeta.meta_description || "Not set"}
+                        {seoMeta.meta_description && seoMeta.meta_description !== description && (
+                          <span className="ml-2 text-xs text-amber-600">
+                            (Customized)
+                          </span>
+                        )}
+                      </p>
+                      {seoMeta.id && (
+                        <p className="text-xs text-gray-500">
+                          SEO ID: {seoMeta.id}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => setShowSeoModal(true)}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Edit SEO
+                  </button>
+                </div>
+              </div>
+            </TabsContent>
           </Tabs>
         </div>
 
@@ -556,7 +833,7 @@ export default function ProductEditPage() {
               <button
                 onClick={handleUpdate}
                 disabled={loading}
-                className="px-4 py-2 bw-primary rounded-lg disabled:opacity-50"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 {loading ? "Updating..." : "Update Product"}
               </button>
@@ -600,6 +877,322 @@ export default function ProductEditPage() {
           </div>
         </div>
       </div>
+
+      {/* SEO Modal */}
+      {showSeoModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b sticky top-0 bg-white">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold">Edit SEO Meta Data</h2>
+                <button
+                  onClick={() => setShowSeoModal(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  &times;
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Reset to Defaults Button */}
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  onClick={handleResetToDefaults}
+                  className="text-sm"
+                >
+                  Reset to Product Defaults
+                </Button>
+              </div>
+
+              {/* Basic SEO */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">
+                  Basic SEO
+                </h3>
+
+                <div>
+                  <Label>Meta Title</Label>
+                  <Input
+                    value={seoMeta.meta_title}
+                    onChange={(e) => {
+                      setSeoMeta((prev) => ({
+                        ...prev,
+                        meta_title: e.target.value,
+                      }));
+                      hasManuallyEditedTitle.current = true;
+                    }}
+                    placeholder="Enter meta title"
+                    maxLength={60}
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {seoMeta.meta_title?.length || 0}/60 characters
+                    {seoMeta.meta_title !== name && (
+                      <span className="ml-2 text-amber-600">
+                        (Customized)
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                <div>
+                  <Label>Meta Description</Label>
+                  <textarea
+                    value={seoMeta.meta_description}
+                    onChange={(e) => {
+                      setSeoMeta((prev) => ({
+                        ...prev,
+                        meta_description: e.target.value,
+                      }));
+                      hasManuallyEditedDesc.current = true;
+                    }}
+                    placeholder="Enter meta description"
+                    maxLength={160}
+                    rows={3}
+                    className="w-full border rounded-md p-3 mt-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {seoMeta.meta_description?.length || 0}/160 characters
+                    {seoMeta.meta_description !== description && (
+                      <span className="ml-2 text-amber-600">
+                        (Customized)
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                <div>
+                  <Label>Meta Keywords</Label>
+                  <Input
+                    value={seoMeta.meta_keywords}
+                    onChange={(e) =>
+                      setSeoMeta((prev) => ({
+                        ...prev,
+                        meta_keywords: e.target.value,
+                      }))
+                    }
+                    placeholder="keyword1, keyword2, keyword3"
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Separate keywords with commas
+                  </p>
+                </div>
+
+                <div>
+                  <Label>Canonical URL</Label>
+                  <Input
+                    value={seoMeta.canonical_url}
+                    onChange={(e) =>
+                      setSeoMeta((prev) => ({
+                        ...prev,
+                        canonical_url: e.target.value,
+                      }))
+                    }
+                    placeholder="https://example.com/canonical-url"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Open Graph (Facebook) */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">
+                  Open Graph (Facebook)
+                </h3>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>OG Title</Label>
+                    <Input
+                      value={seoMeta.og_title}
+                      onChange={(e) =>
+                        setSeoMeta((prev) => ({
+                          ...prev,
+                          og_title: e.target.value,
+                        }))
+                      }
+                      placeholder="Open Graph title"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label>OG Description</Label>
+                    <Input
+                      value={seoMeta.og_description}
+                      onChange={(e) =>
+                        setSeoMeta((prev) => ({
+                          ...prev,
+                          og_description: e.target.value,
+                        }))
+                      }
+                      placeholder="Open Graph description"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label>OG Image URL</Label>
+                  <Input
+                    value={seoMeta.og_image}
+                    onChange={(e) =>
+                      setSeoMeta((prev) => ({
+                        ...prev,
+                        og_image: e.target.value,
+                      }))
+                    }
+                    placeholder="https://example.com/image.jpg"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Twitter Card */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">
+                  Twitter Card
+                </h3>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Twitter Title</Label>
+                    <Input
+                      value={seoMeta.twitter_title}
+                      onChange={(e) =>
+                        setSeoMeta((prev) => ({
+                          ...prev,
+                          twitter_title: e.target.value,
+                        }))
+                      }
+                      placeholder="Twitter title"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label>Twitter Description</Label>
+                    <Input
+                      value={seoMeta.twitter_description}
+                      onChange={(e) =>
+                        setSeoMeta((prev) => ({
+                          ...prev,
+                          twitter_description: e.target.value,
+                        }))
+                      }
+                      placeholder="Twitter description"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Twitter Image URL</Label>
+                  <Input
+                    value={seoMeta.twitter_image}
+                    onChange={(e) =>
+                      setSeoMeta((prev) => ({
+                        ...prev,
+                        twitter_image: e.target.value,
+                      }))
+                    }
+                    placeholder="https://example.com/twitter-image.jpg"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Indexing Options */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">
+                  Indexing Options
+                </h3>
+
+                <div className="flex gap-6">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="is-index"
+                      checked={seoMeta.is_index}
+                      onChange={(e) =>
+                        setSeoMeta((prev) => ({
+                          ...prev,
+                          is_index: e.target.checked,
+                        }))
+                      }
+                      className="w-4 h-4"
+                    />
+                    <Label htmlFor="is-index">
+                      Allow search engines to index this page
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="is-follow"
+                      checked={seoMeta.is_follow}
+                      onChange={(e) =>
+                        setSeoMeta((prev) => ({
+                          ...prev,
+                          is_follow: e.target.checked,
+                        }))
+                      }
+                      className="w-4 h-4"
+                    />
+                    <Label htmlFor="is-follow">Follow links on this page</Label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Schema JSON (Optional advanced field) */}
+              <div className="space-y-2">
+                <Label>Schema JSON (Advanced)</Label>
+                <textarea
+                  value={
+                    seoMeta.schema_json
+                      ? JSON.stringify(seoMeta.schema_json, null, 2)
+                      : ""
+                  }
+                  onChange={(e) => {
+                    try {
+                      const parsed = e.target.value
+                        ? JSON.parse(e.target.value)
+                        : null;
+                      setSeoMeta((prev) => ({ ...prev, schema_json: parsed }));
+                    } catch {
+                      // Invalid JSON, don't update
+                    }
+                  }}
+                  placeholder={`{
+  "@context": "https://schema.org",
+  "@type": "Product"
+}`}
+                  rows={6}
+                  className="w-full border rounded-md p-3 font-mono text-sm"
+                />
+                <p className="text-xs text-gray-500">
+                  Enter valid JSON-LD schema markup
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowSeoModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveSeo}
+                disabled={seoLoading}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {seoLoading ? "Saving..." : "Save SEO Data"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
