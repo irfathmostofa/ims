@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,8 +14,6 @@ import {
   Info,
   Image as ImageIcon,
   Package,
-  Target,
-  Share2,
   Search,
 } from "lucide-react";
 import CustomInput from "@/components/ui/custom/customInput";

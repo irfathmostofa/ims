@@ -96,7 +96,13 @@ export default function AllProductsPage() {
       setLoading(false);
     }
   };
-  console.log(products);
+  const transformedProducts = products.map((product) => ({
+    ...product,
+    primaryImage:
+      product.images?.find((img) => img.is_primary)?.url ||
+      product.images?.[0]?.url ||
+      null,
+  }));
   return (
     <div className="p-6">
       <Breadcrumbs
@@ -126,15 +132,16 @@ export default function AllProductsPage() {
       </div>
 
       <DataTable
-        data={products}
+        data={transformedProducts}
         label="Products List"
         selectable
         showColumns={[
           { key: "code", label: "ID" },
           { key: "name", label: "Product Name" },
-          { key: "uom_name", label: "Unit of Measurement" },
+          { key: "uom_name", label: "UOM" },
           { key: "cost_price", label: "Cost Amount" },
           { key: "selling_price", label: "Selling Price" },
+          { key: "primaryImage", label: "Image" },
           { key: "total_stock", label: "Total Stock" },
           { key: "status", label: "Status" },
         ]}
