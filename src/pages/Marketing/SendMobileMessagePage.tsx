@@ -68,7 +68,7 @@ export default function SendMobileMessagePage() {
   const [singlePhone, setSinglePhone] = useState("");
 
   // Store hooks
-  const { fetchParty, Party } = useQuickStore();
+  const { fetchParty, party } = useQuickStore();
 
   // Load campaigns and customers on mount
   useEffect(() => {
@@ -76,12 +76,12 @@ export default function SendMobileMessagePage() {
     fetchParty();
   }, []);
 
-  // Fix: Properly handle Party data (Party might be an array directly)
+  // Fix: Properly handle party data (party might be an array directly)
   useEffect(() => {
-    if (Party) {
-      // Check if Party is an array
-      if (Array.isArray(Party)) {
-        const formattedCustomers: Customer[] = Party.map((party: any) => ({
+    if (party) {
+      // Check if party is an array
+      if (Array.isArray(party)) {
+        const formattedCustomers: Customer[] = party.map((party: any) => ({
           id: party.id,
           name: party.name || "Unnamed Customer",
           phone: party.phone || "",
@@ -89,9 +89,9 @@ export default function SendMobileMessagePage() {
         }));
         setCustomers(formattedCustomers);
       }
-      // Check if Party has data property that is an array
+      // Check if party has data property that is an array
     }
-  }, [Party]);
+  }, [party]);
 
   // Fetch campaigns
   const fetchCampaigns = async () => {

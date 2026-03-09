@@ -42,7 +42,7 @@ export default function SendMessagePage() {
     null,
   );
   const [selectedCustomers, setSelectedCustomers] = useState<Customer[]>([]);
-  const { fetchParty, Party } = useQuickStore();
+  const { fetchParty, party } = useQuickStore();
 
   // Send mode: 'single' or 'bulk'
   const [sendMode, setSendMode] = useState<"single" | "bulk">("single");
@@ -55,7 +55,7 @@ export default function SendMessagePage() {
   const [newPhone, setNewPhone] = useState("");
 
   // Common fields
-  const [partyId, setPartyId] = useState("");
+  const [partyId, setpartyId] = useState("");
 
   // Load campaigns and customers
   useEffect(() => {
@@ -162,12 +162,12 @@ export default function SendMessagePage() {
 
   // Add all customers to bulk list
   const handleAddAllCustomers = () => {
-    if (!Party || Party.length === 0) {
+    if (!party || party.length === 0) {
       toast.error("No customers available");
       return;
     }
 
-    const allCustomerPhones = Party.map((customer) => customer.phone);
+    const allCustomerPhones = party.map((customer) => customer.phone);
     const uniqueNewPhones = allCustomerPhones.filter(
       (phone) => !bulkPhones.includes(phone),
     );
@@ -178,7 +178,7 @@ export default function SendMessagePage() {
     }
 
     setBulkPhones([...bulkPhones, ...uniqueNewPhones]);
-    setSelectedCustomers([...Party]); // Select all customers
+    setSelectedCustomers([...party]); // Select all customers
     toast.success(`Added ${uniqueNewPhones.length} customer(s) to recipients`);
   };
 
@@ -271,7 +271,7 @@ export default function SendMessagePage() {
         setSinglePhone("");
         setBulkPhones([]);
         setNewPhone("");
-        setPartyId("");
+        setpartyId("");
         setSelectedCustomers([]);
       } else {
         throw new Error(response.message || "Failed to send message");
@@ -556,7 +556,7 @@ export default function SendMessagePage() {
           </Card>
 
           {/* Customer Selection Card */}
-          {Party && Party.length > 0 && (
+          {party && party.length > 0 && (
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Select Customers</CardTitle>
@@ -566,7 +566,7 @@ export default function SendMessagePage() {
                       variant="outline"
                       size="sm"
                       onClick={handleAddAllCustomers}
-                      disabled={selectedCustomers.length === Party.length}
+                      disabled={selectedCustomers.length === party.length}
                     >
                       <Users size={14} className="mr-1" />
                       Select All
@@ -595,7 +595,7 @@ export default function SendMessagePage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {Party.map((customer) => (
+                      {party.map((customer) => (
                         <tr
                           key={customer.id}
                           className={`hover:bg-gray-50 cursor-pointer ${
