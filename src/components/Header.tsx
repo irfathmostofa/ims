@@ -21,8 +21,9 @@ import {
   Package,
   Users,
   Truck,
-  BarChart3,
-  FileText,
+  // BarChart3,
+  // FileText,
+  Globe2,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -222,28 +223,35 @@ export default function Header({
                 <QuickActionLink
                   icon={<Package />}
                   label="Add Product"
-                  link="/products/new"
+                  link="/inventory/products/add"
                 />
                 <QuickActionLink
                   icon={<Users />}
                   label="Add Customer"
-                  link="/customers/new"
+                  link="/customers/customer-list"
                 />
-                <QuickActionLink
+
+                {/* <QuickActionLink
                   icon={<FileText />}
                   label="Create Invoice"
                   link="/invoices/new"
-                />
+                /> */}
+
                 <QuickActionLink
                   icon={<Truck />}
                   label="New Purchase"
-                  link="/purchases/new"
+                  link="/procurement/purchase-orders"
                 />
                 <QuickActionLink
+                  icon={<Globe2 />}
+                  label="Website Configuration"
+                  link="/web-setting"
+                />
+                {/* <QuickActionLink
                   icon={<BarChart3 />}
                   label="View Reports"
                   link="/reports"
-                />
+                /> */}
               </div>
             </div>
           )}
@@ -402,7 +410,7 @@ export default function Header({
                       }`}
                       onClick={() => {
                         markAsRead(notif.id);
-                        if (notif.link) navigate(notif.link);
+                        if (notif.link) navigate("#");
                         setNotifOpen(false);
                       }}
                     >
@@ -414,7 +422,7 @@ export default function Header({
                           <p className="text-sm font-medium text-bw-100">
                             {notif.title}
                           </p>
-                          <p className="text-xs text-bw-400 mt-0.5">
+                          <p className="text-xs text-bw-200 mt-0.5">
                             {notif.message}
                           </p>
                           <p className="text-xs text-bw-500 mt-1">
