@@ -40,6 +40,7 @@ interface Invoice {
   status: "PENDING" | "PARTIAL" | "PAID" | "OVERDUE" | "CANCELLED";
   created_at: string;
   items?: InvoiceItem[];
+  payment_history?: any[];
 }
 
 interface InvoiceItem {
@@ -97,7 +98,6 @@ export default function SuppliersPayPage() {
       setLoading(false);
     }
   };
-
   // Apply filters
   const filteredInvoices = invoices.filter((invoice) => {
     // Search filter
@@ -232,6 +232,7 @@ export default function SuppliersPayPage() {
   }, [selectedStatus]);
 
   // Render formatted invoice details
+  // Render formatted invoice details
   const renderInvoiceDetails = (invoice: Invoice) => (
     <>
       {/* Hidden print section */}
@@ -325,6 +326,56 @@ export default function SuppliersPayPage() {
               </table>
             </div>
           </div>
+
+          {/* Payment History for Print */}
+          {invoice?.payment_history && (
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                Payment History
+              </h3>
+              <div className="border rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="py-3 px-4 text-left font-semibold text-gray-700">
+                        Date
+                      </th>
+                      <th className="py-3 px-4 text-left font-semibold text-gray-700">
+                        Method
+                      </th>
+                      <th className="py-3 px-4 text-left font-semibold text-gray-700">
+                        Reference
+                      </th>
+                      <th className="py-3 px-4 text-left font-semibold text-gray-700">
+                        Amount
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invoice.payment_history.map((payment, index) => (
+                      <tr
+                        key={payment.id || index}
+                        className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                      >
+                        <td className="py-3 px-4 text-gray-700">
+                          {formatDate(payment.payment_date)}
+                        </td>
+                        <td className="py-3 px-4 text-gray-700">
+                          {payment.method}
+                        </td>
+                        <td className="py-3 px-4 text-gray-700">
+                          {payment.reference_no || "-"}
+                        </td>
+                        <td className="py-3 px-4 font-semibold text-gray-800">
+                          {formatCurrency(payment.amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Summary */}
           <div className="bg-gray-50 p-6 rounded-lg">
@@ -434,6 +485,81 @@ export default function SuppliersPayPage() {
           </div>
         </div>
 
+        {/* Payment History Section */}
+        {invoice.payment_history && invoice.payment_history.length > 0 && (
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <DollarSign size={20} className="text-green-600" />
+              Payment History
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="py-3 px-4 text-left font-semibold text-gray-700">
+                      Date
+                    </th>
+                    <th className="py-3 px-4 text-left font-semibold text-gray-700">
+                      Method
+                    </th>
+                    <th className="py-3 px-4 text-left font-semibold text-gray-700">
+                      Reference No.
+                    </th>
+                    <th className="py-3 px-4 text-left font-semibold text-gray-700">
+                      Amount
+                    </th>
+                    <th className="py-3 px-4 text-left font-semibold text-gray-700">
+                      Recorded By
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoice.payment_history.map((payment, index) => (
+                    <tr
+                      key={payment.id || index}
+                      className={`${
+                        index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      } hover:bg-gray-100 transition-colors`}
+                    >
+                      <td className="py-3 px-4">
+                        {formatDate(payment.payment_date)}
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge variant="outline" className="bg-blue-50">
+                          {payment.method}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4">
+                        {payment.reference_no || "-"}
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-green-600">
+                        {formatCurrency(payment.amount)}
+                      </td>
+                      <td className="py-3 px-4 text-gray-600">
+                        User #{payment.created_by}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-gray-50 border-t">
+                  <tr>
+                    <td
+                      colSpan={3}
+                      className="py-3 px-4 text-right font-semibold text-gray-700"
+                    >
+                      Total Payments:
+                    </td>
+                    <td className="py-3 px-4 font-bold text-green-600">
+                      {formatCurrency(invoice.paid_amount)}
+                    </td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Items Table */}
         {invoice.items && invoice.items.length > 0 && (
           <div>
@@ -519,7 +645,7 @@ export default function SuppliersPayPage() {
           </div>
         )}
 
-        {/* Notes (if any) */}
+        {/* Notes */}
         <div className="bg-gray-50 p-5 rounded-xl">
           <h4 className="font-semibold text-gray-700 mb-2">Notes</h4>
           <p className="text-gray-600">
