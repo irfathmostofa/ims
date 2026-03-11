@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
 import { apiClient } from "@/hook/apiClient";
 import { toast } from "sonner";
 import SimpleImageUploader from "@/hook/imageUploader";
@@ -15,6 +14,19 @@ import {
   Image as ImageIcon,
   Package,
   Search,
+  ChevronLeft,
+  Star,
+  Trash2,
+  Plus,
+  X,
+  Eye,
+  RotateCcw,
+  Globe,
+  Twitter,
+  Facebook,
+  FileText,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import CustomInput from "@/components/ui/custom/customInput";
 import CustomSelect from "@/components/ui/custom/customSelect";
@@ -76,6 +88,75 @@ type SeoMeta = {
   is_follow: boolean;
 };
 
+// ─── Small reusable field wrapper ───────────────────────────────────────────
+function Field({
+  label,
+  required,
+  hint,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-sm font-semibold text-gray-700">
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      {children}
+      {hint && <p className="text-xs text-gray-400">{hint}</p>}
+    </div>
+  );
+}
+
+// ─── Section card ────────────────────────────────────────────────────────────
+function Card({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`bg-white border border-gray-200 rounded-2xl shadow-sm ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ─── Section header inside card ──────────────────────────────────────────────
+function SectionHeader({
+  icon,
+  title,
+  subtitle,
+  action,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-gray-100">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-gray-900 flex items-center justify-center text-white flex-shrink-0">
+          {icon}
+        </div>
+        <div>
+          <h3 className="font-bold text-gray-900 text-sm">{title}</h3>
+          {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+        </div>
+      </div>
+      {action}
+    </div>
+  );
+}
+
 export default function ProductAddPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -91,7 +172,6 @@ export default function ProductAddPage() {
 
   const [variations, setVariations] = useState<Variation[]>([]);
 
-  // SEO States
   const [seoMeta, setSeoMeta] = useState<SeoMeta>({
     entity_type: "product",
     meta_title: "",
@@ -111,31 +191,21 @@ export default function ProductAddPage() {
   const [seoLoading, setSeoLoading] = useState(false);
   const [productSlug, setProductSlug] = useState("");
 
-  // Refs to track if SEO has been manually edited
   const hasManuallyEditedTitle = useRef(false);
   const hasManuallyEditedDesc = useRef(false);
 
   const router = useNavigate();
 
-  // Function to generate slug from product name
-  const generateSlug = (text: string) => {
-    return text
+  const generateSlug = (text: string) =>
+    text
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
-  };
 
-  // Update slug when name changes (always update slug regardless of manual edits)
   useEffect(() => {
-    if (name) {
-      const slug = generateSlug(name);
-      setProductSlug(slug);
-    } else {
-      setProductSlug("");
-    }
+    setProductSlug(name ? generateSlug(name) : "");
   }, [name]);
 
-  // Update SEO meta when product name changes (only if not manually edited)
   useEffect(() => {
     if (name && !hasManuallyEditedTitle.current) {
       setSeoMeta((prev) => ({
@@ -147,14 +217,12 @@ export default function ProductAddPage() {
     }
   }, [name]);
 
-  // Update SEO meta when description changes (only if not manually edited)
   useEffect(() => {
     if (description && !hasManuallyEditedDesc.current) {
       const truncatedDesc =
         description.length > 160
           ? description.substring(0, 157) + "..."
           : description;
-
       setSeoMeta((prev) => ({
         ...prev,
         meta_description: truncatedDesc,
@@ -164,40 +232,27 @@ export default function ProductAddPage() {
     }
   }, [description]);
 
-  // Reset manual edit flags when modal opens/closes
   useEffect(() => {
     if (!showSeoModal) {
-      // When closing modal, check if SEO fields match product fields
-      if (seoMeta.meta_title !== name) {
-        hasManuallyEditedTitle.current = true;
-      }
-      if (seoMeta.meta_description !== description) {
+      if (seoMeta.meta_title !== name) hasManuallyEditedTitle.current = true;
+      if (seoMeta.meta_description !== description)
         hasManuallyEditedDesc.current = true;
-      }
     }
-  }, [
-    showSeoModal,
-    seoMeta.meta_title,
-    seoMeta.meta_description,
-    name,
-    description,
-  ]);
+  }, [showSeoModal, seoMeta.meta_title, seoMeta.meta_description, name, description]);
 
-  // Fetch categories & uoms
   const fetchData = async () => {
     try {
       const datauom = await apiClient(
         `${import.meta.env.VITE_SERVER}/product/get-uom`,
-        { method: "GET", tokenType: "jwt" },
+        { method: "GET", tokenType: "jwt" }
       );
       const datacat = await apiClient(
         `${import.meta.env.VITE_SERVER}/product/get-product-cat`,
-        { method: "GET", tokenType: "jwt" },
+        { method: "GET", tokenType: "jwt" }
       );
       setUoms(datauom.data);
       setCategories(datacat.data);
     } catch (err: any) {
-      console.error(err);
       toast.error(err.message || "Failed to fetch product setup data");
     }
   };
@@ -208,7 +263,7 @@ export default function ProductAddPage() {
 
   const toggleCategory = (catId: number) => {
     setSelectedCategories((prev) =>
-      prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId],
+      prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId]
     );
   };
 
@@ -230,7 +285,6 @@ export default function ProductAddPage() {
   const removeVariation = (id: number) =>
     setVariations((prev) => prev.filter((v) => v.id !== id));
 
-  // Handle image upload for specific variation
   const handleAddImageToVariation = (varId: number, url: string) => {
     setVariations((prev) =>
       prev.map((v) =>
@@ -241,33 +295,26 @@ export default function ProductAddPage() {
                 ...(v.images || []),
                 {
                   url,
-                  alt_text: `${v.name || "Variant"} Image ${
-                    (v.images?.length || 0) + 1
-                  }`,
+                  alt_text: `${v.name || "Variant"} Image ${(v.images?.length || 0) + 1}`,
                   is_primary: (v.images?.length || 0) === 0,
                 },
               ],
             }
-          : v,
-      ),
+          : v
+      )
     );
   };
 
-  // Remove image from variation
   const handleRemoveImage = (varId: number, imgIndex: number) => {
     setVariations((prev) =>
       prev.map((v) =>
         v.id === varId
-          ? {
-              ...v,
-              images: v.images?.filter((_, idx) => idx !== imgIndex),
-            }
-          : v,
-      ),
+          ? { ...v, images: v.images?.filter((_, idx) => idx !== imgIndex) }
+          : v
+      )
     );
   };
 
-  // Make image primary for variation
   const handleMakePrimary = (varId: number, imgIndex: number) => {
     setVariations((prev) =>
       prev.map((v) =>
@@ -279,95 +326,60 @@ export default function ProductAddPage() {
                 is_primary: idx === imgIndex,
               })),
             }
-          : v,
-      ),
+          : v
+      )
     );
   };
 
-  // Handle SEO save
   const handleSaveSeo = async () => {
     setSeoLoading(true);
     try {
-      // Mark as manually edited
-      if (seoMeta.meta_title !== name) {
-        hasManuallyEditedTitle.current = true;
-      }
-      if (seoMeta.meta_description !== description) {
+      if (seoMeta.meta_title !== name) hasManuallyEditedTitle.current = true;
+      if (seoMeta.meta_description !== description)
         hasManuallyEditedDesc.current = true;
-      }
-
       setShowSeoModal(false);
-      toast.success("SEO data saved successfully");
+      toast.success("SEO data saved");
     } catch (error: any) {
-      console.error(error);
       toast.error(error.message || "Failed to save SEO data");
     } finally {
       setSeoLoading(false);
     }
   };
 
-  // Handle reset to product defaults
   const handleResetToDefaults = () => {
+    const truncated =
+      description.length > 160
+        ? description.substring(0, 157) + "..."
+        : description;
     setSeoMeta((prev) => ({
       ...prev,
       meta_title: name || "",
-      meta_description: description
-        ? description.length > 160
-          ? description.substring(0, 157) + "..."
-          : description
-        : "",
+      meta_description: truncated,
       og_title: name || "",
-      og_description: description
-        ? description.length > 160
-          ? description.substring(0, 157) + "..."
-          : description
-        : "",
+      og_description: truncated,
       twitter_title: name || "",
-      twitter_description: description
-        ? description.length > 160
-          ? description.substring(0, 157) + "..."
-          : description
-        : "",
+      twitter_description: truncated,
     }));
     hasManuallyEditedTitle.current = false;
     hasManuallyEditedDesc.current = false;
     toast.success("Reset to product defaults");
   };
 
-  // Validation
   const validateForm = () => {
-    if (!name.trim()) {
-      toast.error("Please enter a product name");
-      return false;
-    }
-    if (!selectedUom) {
-      toast.error("Please select a unit of measure (UOM)");
-      return false;
-    }
-    if (costPrice === "" || costPrice <= 0) {
-      toast.error("Please enter a valid cost price");
-      return false;
-    }
-    if (sellingPrice === "" || sellingPrice <= 0) {
-      toast.error("Please enter a valid selling price");
-      return false;
-    }
-    if (selectedCategories.length === 0) {
-      toast.error("Please select at least one category");
-      return false;
-    }
+    if (!name.trim()) { toast.error("Please enter a product name"); return false; }
+    if (!selectedUom) { toast.error("Please select a unit of measure"); return false; }
+    if (costPrice === "" || costPrice <= 0) { toast.error("Please enter a valid cost price"); return false; }
+    if (sellingPrice === "" || sellingPrice <= 0) { toast.error("Please enter a valid selling price"); return false; }
+    if (selectedCategories.length === 0) { toast.error("Please select at least one category"); return false; }
     return true;
   };
 
-  // publish
   const handlePublish = async () => {
     if (!validateForm()) return;
-
     setLoading(true);
     try {
-      // Prepare variants data
       const variantsData = variations.map((v) => ({
-        name: v.name || name, // Use product name if variant name is empty
+        name: v.name || name,
         additional_price: v.additional_price ?? 0,
         weight: v.weight ?? 0,
         weight_unit: v.weight_unit || "kg",
@@ -396,808 +408,835 @@ export default function ProductAddPage() {
 
       const data = await apiClient(
         `${import.meta.env.VITE_SERVER}/product/products`,
-        { method: "POST", data: product, tokenType: "jwt" },
+        { method: "POST", data: product, tokenType: "jwt" }
       );
 
-      // If product created successfully and we have SEO data, save SEO meta
       if (data.data?.id) {
         try {
           await apiClient(`${import.meta.env.VITE_SERVER}/seo/meta`, {
             method: "POST",
-            data: {
-              ...seoMeta,
-              entity_id: data.data.id,
-              entity_type: "product",
-            },
+            data: { ...seoMeta, entity_id: data.data.id, entity_type: "product" },
             tokenType: "jwt",
           });
         } catch (seoError) {
           console.error("Failed to save SEO data:", seoError);
-          // Don't block the success message, just log the error
         }
       }
 
-      toast.success(data.message || "Product published successfully! 🎉");
+      toast.success(data.message || "Product published! 🎉");
       router("/inventory/products");
     } catch (error: any) {
-      console.error(error);
-      toast.error(
-        error.message || "Failed to publish product. Please try again.",
-      );
+      toast.error(error.message || "Failed to publish product.");
     } finally {
       setLoading(false);
     }
   };
 
+  // Profit margin calc
+  const margin =
+    costPrice && sellingPrice && Number(costPrice) > 0
+      ? (((Number(sellingPrice) - Number(costPrice)) / Number(sellingPrice)) * 100).toFixed(1)
+      : null;
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Add New Product</h1>
-        <p className="text-gray-600 mt-1">
-          Create a new product with variants and images
-        </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Top bar */}
+      <div className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => router(-1)}
+            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-base font-bold text-gray-900 leading-tight">Add New Product</h1>
+            <p className="text-xs text-gray-400 hidden sm:block">Fill in the details below to create your product</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="hidden sm:flex text-xs border-gray-300 text-gray-600 hover:bg-gray-50"
+          >
+            Save Draft
+          </Button>
+          <button
+            onClick={handlePublish}
+            disabled={loading}
+            className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition-colors flex items-center gap-2"
+          >
+            {loading ? (
+              <>
+                <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                Publishing...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                Publish
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
-      <div className="flex gap-6">
-        {/* LEFT */}
-        <div className="flex-1 space-y-6">
-          {/* Title */}
-          <div>
-            <Label className="text-base font-semibold mb-2">
-              Product Name *
-            </Label>
-            <Input
-              placeholder="Enter product name..."
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="text-lg"
-            />
-          </div>
+      {/* Body */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        <div className="flex flex-col xl:flex-row gap-6">
 
-          {/* Description */}
-          <div>
-            <Label className="text-base font-semibold mb-2">Description</Label>
-            <textarea
-              placeholder="Write a detailed product description..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full border rounded-md p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              rows={4}
-            />
-          </div>
+          {/* ── LEFT COLUMN ───────────────────────────── */}
+          <div className="flex-1 min-w-0 space-y-5">
 
-          {/* Tabs */}
-          <Tabs defaultValue="general" className="mt-2">
-            <TabsList className="rounded-lg p-1 bg-gray-100">
-              <TabsTrigger value="general" className="gap-2">
-                <Package className="w-4 h-4" />
-                General Info
-              </TabsTrigger>
-              <TabsTrigger value="variations" className="gap-2">
-                <ImageIcon className="w-4 h-4" />
-                Variations & Images
-              </TabsTrigger>
-              <TabsTrigger value="seo" className="gap-2">
-                <Search className="w-4 h-4" />
-                SEO
-              </TabsTrigger>
-            </TabsList>
-
-            {/* General */}
-            <TabsContent value="general" className="space-y-4 mt-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Cost Price * ($)</Label>
+            {/* Basic info */}
+            <Card>
+              <SectionHeader
+                icon={<FileText className="w-4 h-4" />}
+                title="Product Information"
+                subtitle="Name and description shown to customers"
+              />
+              <div className="p-5 space-y-4">
+                <Field label="Product Name" required>
                   <Input
-                    type="number"
-                    placeholder="0.00"
-                    value={costPrice}
-                    onChange={(e) =>
-                      setCostPrice(
-                        e.target.value === "" ? "" : Number(e.target.value),
-                      )
-                    }
-                    className="mt-1"
+                    placeholder="e.g. Premium Cotton T-Shirt"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="h-11 rounded-xl border-gray-200 focus:border-gray-400 text-base"
                   />
-                </div>
-                <div>
-                  <Label>Selling Price * ($)</Label>
-                  <Input
-                    type="number"
-                    placeholder="0.00"
-                    value={sellingPrice}
-                    onChange={(e) =>
-                      setSellingPrice(
-                        e.target.value === "" ? "" : Number(e.target.value),
-                      )
-                    }
-                    className="mt-1"
+                  {productSlug && (
+                    <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                      <Globe className="w-3 h-3" />
+                      /product/<span className="text-gray-600 font-mono">{productSlug}</span>
+                    </p>
+                  )}
+                </Field>
+                <Field label="Description">
+                  <textarea
+                    placeholder="Write a detailed description of your product, including key features, materials, and specifications..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 resize-none transition-shadow"
+                    rows={5}
                   />
-                </div>
+                  <p className="text-xs text-gray-400">{description.length} characters</p>
+                </Field>
               </div>
+            </Card>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Regular Price ($)</Label>
-                  <Input
-                    type="number"
-                    placeholder="0.00"
-                    value={regularPrice}
-                    onChange={(e) =>
-                      setRegularPrice(
-                        e.target.value === "" ? "" : Number(e.target.value),
-                      )
-                    }
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label>Unit of Measure (UOM) *</Label>
-                  <select
-                    className="w-full border rounded-md p-2 mt-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    value={selectedUom}
-                    onChange={(e) =>
-                      setSelectedUom(
-                        e.target.value ? Number(e.target.value) : "",
-                      )
-                    }
-                  >
-                    <option value="">-- Select UOM --</option>
-                    {uoms?.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.name} ({u.symbol})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </TabsContent>
-
-            {/* Variations */}
-            <TabsContent value="variations" className="space-y-4 mt-2">
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex gap-3 mb-4">
-                <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-amber-800">
-                  <p className="font-medium mb-1">About Variations</p>
-                  <p className="text-xs">
-                    If you don't add variations, a default variant will be
-                    created automatically. Each variation can have its own
-                    images and additional price.
-                  </p>
-                </div>
-              </div>
-
-              {variations.length === 0 ? (
-                <div className="text-center py-12 border-2 border-dashed rounded-lg">
-                  <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600 mb-4">No variations yet</p>
-                  <Button onClick={addVariation} className="btn-bw-primary">
-                    Add First Variation
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  {variations.map((v, vIndex) => (
-                    <div
-                      key={v.id}
-                      className="p-4 border rounded-lg bg-white shadow-sm space-y-4"
+            {/* Tabs */}
+            <Card>
+              <Tabs defaultValue="general">
+                <div className="px-5 pt-4">
+                  <TabsList className="w-full sm:w-auto rounded-xl bg-gray-100 p-1 gap-1 flex flex-wrap sm:flex-nowrap">
+                    <TabsTrigger
+                      value="general"
+                      className="flex-1 sm:flex-none rounded-lg text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm gap-1.5 py-1.5"
                     >
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-semibold text-gray-900">
-                          Variation #{vIndex + 1}
-                        </h4>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => removeVariation(v.id)}
-                        >
-                          Remove
-                        </Button>
-                      </div>
+                      <Package className="w-3.5 h-3.5" />
+                      General
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="variations"
+                      className="flex-1 sm:flex-none rounded-lg text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm gap-1.5 py-1.5"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5" />
+                      Variations
+                      {variations.length > 0 && (
+                        <span className="ml-1 w-4 h-4 rounded-full bg-gray-900 text-white text-[10px] flex items-center justify-center">
+                          {variations.length}
+                        </span>
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="seo"
+                      className="flex-1 sm:flex-none rounded-lg text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm gap-1.5 py-1.5"
+                    >
+                      <Search className="w-3.5 h-3.5" />
+                      SEO
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
 
-                      <div className="grid grid-cols-3 gap-3 items-center">
-                        <div>
-                          <Label>Variation Name</Label>
-                          <Input
-                            placeholder="e.g., Small, Red, 500ml"
-                            value={v.name ?? ""}
-                            onChange={(e) =>
-                              setVariations((prev) =>
-                                prev.map((x) =>
-                                  x.id === v.id
-                                    ? { ...x, name: e.target.value }
-                                    : x,
-                                ),
-                              )
-                            }
-                            className="mt-1"
-                          />
-                        </div>
-                        <div>
-                          <Label>Additional Price ($)</Label>
+                {/* ── General ── */}
+                <TabsContent value="general" className="p-5 space-y-5">
+                  {/* Pricing */}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Pricing</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <Field label="Cost Price" required>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
                           <Input
                             type="number"
                             placeholder="0.00"
-                            value={v.additional_price ?? ""}
-                            onChange={(e) =>
-                              setVariations((prev) =>
-                                prev.map((x) =>
-                                  x.id === v.id
-                                    ? {
-                                        ...x,
-                                        additional_price: Number(
-                                          e.target.value,
-                                        ),
-                                      }
-                                    : x,
-                                ),
-                              )
-                            }
-                            className="mt-1"
+                            value={costPrice}
+                            onChange={(e) => setCostPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                            className="pl-7 h-11 rounded-xl border-gray-200"
                           />
                         </div>
-                        <div>
-                          <CustomInput
-                            label="Weight"
+                      </Field>
+                      <Field label="Selling Price" required>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                          <Input
                             type="number"
                             placeholder="0.00"
-                            value={v.weight ?? ""}
-                            onChange={(e) =>
-                              setVariations((prev) =>
-                                prev.map((x) =>
-                                  x.id === v.id
-                                    ? {
-                                        ...x,
-                                        weight: Number(e.target.value),
-                                      }
-                                    : x,
-                                ),
-                              )
-                            }
+                            value={sellingPrice}
+                            onChange={(e) => setSellingPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                            className="pl-7 h-11 rounded-xl border-gray-200"
                           />
                         </div>
-                        <div>
-                          <CustomSelect
-                            label="Weight Unit"
-                            options={[
-                              { value: "kg", label: "Kilogram (kg)" },
-                              { value: "g", label: "Gram (g)" },
-                              { value: "lb", label: "Pound (lb)" },
-                              { value: "oz", label: "Ounce (oz)" },
-                            ]}
-                            value={v.weight_unit ?? ""}
-                            onChange={(value) =>
-                              setVariations((prev) =>
-                                prev.map((x) =>
-                                  x.id === v.id
-                                    ? { ...x, weight_unit: String(value) }
-                                    : x,
-                                ),
-                              )
-                            }
+                      </Field>
+                      <Field label="Regular Price" hint="Strike-through / compare price">
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                          <Input
+                            type="number"
+                            placeholder="0.00"
+                            value={regularPrice}
+                            onChange={(e) => setRegularPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                            className="pl-7 h-11 rounded-xl border-gray-200"
                           />
                         </div>
-                        <div>
-                          <CustomInput
-                            label="SKU"
-                            placeholder="Enter SKU"
-                            value={v.sku ?? ""}
-                            onChange={(e) =>
-                              setVariations((prev) =>
-                                prev.map((x) =>
-                                  x.id === v.id
-                                    ? { ...x, sku: e.target.value }
-                                    : x,
-                                ),
-                              )
-                            }
-                          />
-                        </div>
-                        <div>
-                          <div className="mt-1 flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              id={`replaceable-${v.id}`}
-                              checked={v.is_replaceable || false}
-                              onChange={(e) =>
-                                setVariations((prev) =>
-                                  prev.map((x) =>
-                                    x.id === v.id
-                                      ? {
-                                          ...x,
-                                          is_replaceable: e.target.checked,
-                                        }
-                                      : x,
-                                  ),
-                                )
-                              }
-                              className="mr-2"
-                            />
-                            <Label
-                              htmlFor={`replaceable-${v.id}`}
-                              className="text-sm"
-                            >
-                              Allow replacement
-                            </Label>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Images for this variation */}
-                      <div className="border-t pt-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <Label className="text-sm font-semibold">
-                            Images for this variation
-                          </Label>
-                          <SimpleImageUploader
-                            onChange={(url: string) =>
-                              handleAddImageToVariation(v.id, url)
-                            }
-                          />
-                        </div>
-
-                        {!v.images || v.images.length === 0 ? (
-                          <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed">
-                            <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                            <p className="text-sm text-gray-600">
-                              No images yet
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-4 gap-3">
-                            {v.images.map((img, i) => (
-                              <div
-                                key={i}
-                                className={`relative group rounded-lg overflow-hidden border-2 ${
-                                  img.is_primary
-                                    ? "ring-2 ring-blue-500 border-blue-500"
-                                    : "border-gray-200"
-                                }`}
-                              >
-                                <img
-                                  src={img.url}
-                                  alt={img.alt_text}
-                                  className="h-24 w-full object-cover"
-                                />
-
-                                {/* Overlay actions */}
-                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col gap-1 items-center justify-center transition-opacity">
-                                  <button
-                                    onClick={() => handleRemoveImage(v.id, i)}
-                                    className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded"
-                                  >
-                                    Remove
-                                  </button>
-                                  {!img.is_primary && (
-                                    <button
-                                      onClick={() => handleMakePrimary(v.id, i)}
-                                      className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded"
-                                    >
-                                      Set Primary
-                                    </button>
-                                  )}
-                                </div>
-
-                                {/* Primary badge */}
-                                {img.is_primary && (
-                                  <span className="absolute top-1 left-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded">
-                                    Primary
-                                  </span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      </Field>
                     </div>
-                  ))}
 
-                  <Button
-                    onClick={addVariation}
-                    variant="outline"
-                    className="w-full border-dashed border-2"
+                    {/* Margin pill */}
+                    {margin !== null && (
+                      <div className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${Number(margin) >= 20 ? "bg-emerald-50 text-emerald-700" : Number(margin) >= 0 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
+                        {Number(margin) >= 0 ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                        Margin: {margin}%
+                      </div>
+                    )}
+                  </div>
+
+                  <hr className="border-gray-100" />
+
+                  {/* UOM */}
+                  <Field label="Unit of Measure (UOM)" required>
+                    <select
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white"
+                      value={selectedUom}
+                      onChange={(e) => setSelectedUom(e.target.value ? Number(e.target.value) : "")}
+                    >
+                      <option value="">— Select UOM —</option>
+                      {uoms?.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name} ({u.symbol})
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </TabsContent>
+
+                {/* ── Variations ── */}
+                <TabsContent value="variations" className="p-5 space-y-4">
+                  <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex gap-3">
+                    <Info className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-700 leading-relaxed">
+                      <span className="font-semibold">Variations</span> let you offer different sizes, colors, or styles. If you skip this, a default variant is created automatically.
+                    </p>
+                  </div>
+
+                  {variations.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-14 border-2 border-dashed border-gray-200 rounded-2xl text-center">
+                      <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+                        <ImageIcon className="w-6 h-6 text-gray-400" />
+                      </div>
+                      <p className="text-sm font-semibold text-gray-700 mb-1">No variations yet</p>
+                      <p className="text-xs text-gray-400 mb-4">Add variations like Size, Color, etc.</p>
+                      <button
+                        onClick={addVariation}
+                        className="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add First Variation
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {variations.map((v, vIndex) => (
+                        <div
+                          key={v.id}
+                          className="border border-gray-200 rounded-2xl overflow-hidden"
+                        >
+                          {/* Variation header */}
+                          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
+                            <span className="text-sm font-bold text-gray-800">
+                              Variation #{vIndex + 1}
+                              {v.name && <span className="ml-2 font-normal text-gray-500">— {v.name}</span>}
+                            </span>
+                            <button
+                              onClick={() => removeVariation(v.id)}
+                              className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                              title="Remove variation"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          <div className="p-4 space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                              <Field label="Variation Name">
+                                <Input
+                                  placeholder="e.g. Small, Red, 500ml"
+                                  value={v.name ?? ""}
+                                  onChange={(e) =>
+                                    setVariations((prev) =>
+                                      prev.map((x) =>
+                                        x.id === v.id ? { ...x, name: e.target.value } : x
+                                      )
+                                    )
+                                  }
+                                  className="h-10 rounded-xl border-gray-200"
+                                />
+                              </Field>
+                              <Field label="Additional Price ($)">
+                                <Input
+                                  type="number"
+                                  placeholder="0.00"
+                                  value={v.additional_price ?? ""}
+                                  onChange={(e) =>
+                                    setVariations((prev) =>
+                                      prev.map((x) =>
+                                        x.id === v.id ? { ...x, additional_price: Number(e.target.value) } : x
+                                      )
+                                    )
+                                  }
+                                  className="h-10 rounded-xl border-gray-200"
+                                />
+                              </Field>
+                              <CustomInput
+                                label="Weight"
+                                type="number"
+                                placeholder="0.00"
+                                value={v.weight ?? ""}
+                                onChange={(e: any) =>
+                                  setVariations((prev) =>
+                                    prev.map((x) =>
+                                      x.id === v.id ? { ...x, weight: Number(e.target.value) } : x
+                                    )
+                                  )
+                                }
+                              />
+                              <CustomSelect
+                                label="Weight Unit"
+                                options={[
+                                  { value: "kg", label: "Kilogram (kg)" },
+                                  { value: "g", label: "Gram (g)" },
+                                  { value: "lb", label: "Pound (lb)" },
+                                  { value: "oz", label: "Ounce (oz)" },
+                                ]}
+                                value={v.weight_unit ?? ""}
+                                onChange={(value: any) =>
+                                  setVariations((prev) =>
+                                    prev.map((x) =>
+                                      x.id === v.id ? { ...x, weight_unit: String(value) } : x
+                                    )
+                                  )
+                                }
+                              />
+                              <CustomInput
+                                label="SKU"
+                                placeholder="e.g. PROD-001-S"
+                                value={v.sku ?? ""}
+                                onChange={(e: any) =>
+                                  setVariations((prev) =>
+                                    prev.map((x) =>
+                                      x.id === v.id ? { ...x, sku: e.target.value } : x
+                                    )
+                                  )
+                                }
+                              />
+                              <Field label="Replacement">
+                                <label className="flex items-center gap-2.5 cursor-pointer h-10">
+                                  <div className="relative">
+                                    <input
+                                      type="checkbox"
+                                      id={`replaceable-${v.id}`}
+                                      checked={v.is_replaceable || false}
+                                      onChange={(e) =>
+                                        setVariations((prev) =>
+                                          prev.map((x) =>
+                                            x.id === v.id ? { ...x, is_replaceable: e.target.checked } : x
+                                          )
+                                        )
+                                      }
+                                      className="sr-only"
+                                    />
+                                    <div
+                                      className={`w-9 h-5 rounded-full transition-colors ${v.is_replaceable ? "bg-gray-900" : "bg-gray-200"}`}
+                                    >
+                                      <div
+                                        className={`w-3.5 h-3.5 bg-white rounded-full shadow transition-transform mt-0.75 mx-0.75 translate-y-[3px] ${v.is_replaceable ? "translate-x-4" : "translate-x-0.5"}`}
+                                      />
+                                    </div>
+                                  </div>
+                                  <span className="text-sm text-gray-600">Allow replacement</span>
+                                </label>
+                              </Field>
+                            </div>
+
+                            {/* Images */}
+                            <div className="pt-2 border-t border-gray-100">
+                              <div className="flex items-center justify-between mb-3">
+                                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Images</p>
+                                <SimpleImageUploader
+                                  onChange={(url: string) => handleAddImageToVariation(v.id, url)}
+                                />
+                              </div>
+
+                              {!v.images || v.images.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-6 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 text-center">
+                                  <ImageIcon className="w-5 h-5 text-gray-300 mb-1" />
+                                  <p className="text-xs text-gray-400">No images uploaded</p>
+                                </div>
+                              ) : (
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                                  {v.images.map((img, i) => (
+                                    <div
+                                      key={i}
+                                      className={`relative group aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                                        img.is_primary
+                                          ? "border-gray-900 ring-2 ring-gray-900/20"
+                                          : "border-gray-100 hover:border-gray-300"
+                                      }`}
+                                    >
+                                      <img
+                                        src={img.url}
+                                        alt={img.alt_text}
+                                        className="w-full h-full object-cover"
+                                      />
+                                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity p-1">
+                                        <button
+                                          onClick={() => handleRemoveImage(v.id, i)}
+                                          className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white text-[10px] rounded-lg w-full"
+                                        >
+                                          Remove
+                                        </button>
+                                        {!img.is_primary && (
+                                          <button
+                                            onClick={() => handleMakePrimary(v.id, i)}
+                                            className="px-2 py-1 bg-white text-gray-900 text-[10px] rounded-lg w-full font-semibold"
+                                          >
+                                            Primary
+                                          </button>
+                                        )}
+                                      </div>
+                                      {img.is_primary && (
+                                        <div className="absolute top-1 left-1">
+                                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      <button
+                        onClick={addVariation}
+                        className="w-full py-3 border-2 border-dashed border-gray-200 rounded-2xl text-sm text-gray-500 font-medium hover:border-gray-400 hover:text-gray-700 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Another Variation
+                      </button>
+                    </>
+                  )}
+                </TabsContent>
+
+                {/* ── SEO ── */}
+                <TabsContent value="seo" className="p-5 space-y-4">
+                  {/* Search preview */}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3 flex items-center gap-1.5">
+                      <Eye className="w-3 h-3" />
+                      Search Result Preview
+                    </p>
+                    <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50 space-y-1">
+                      <p className="text-xs text-emerald-600 font-mono break-all">
+                        {typeof window !== "undefined" ? window.location.origin : "https://yoursite.com"}/product/{productSlug || "product-slug"}
+                      </p>
+                      <p className="text-base text-blue-700 font-semibold hover:underline cursor-pointer">
+                        {seoMeta.meta_title || name || "Product Title"}
+                      </p>
+                      <p className="text-sm text-gray-500 leading-relaxed">
+                        {seoMeta.meta_description || description || "Your product description will appear here in search results…"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Score indicator */}
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { label: "Title", ok: !!seoMeta.meta_title },
+                      { label: "Description", ok: !!seoMeta.meta_description },
+                      { label: "Keywords", ok: !!seoMeta.meta_keywords },
+                      { label: "OG Tags", ok: !!seoMeta.og_title },
+                    ].map(({ label, ok }) => (
+                      <span
+                        key={label}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${ok ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-400"}`}
+                      >
+                        {ok ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => setShowSeoModal(true)}
+                    className="w-full py-3 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
                   >
-                    + Add Another Variation
-                  </Button>
-                </>
-              )}
-            </TabsContent>
+                    <Search className="w-4 h-4" />
+                    Edit Full SEO Settings
+                  </button>
+                </TabsContent>
+              </Tabs>
+            </Card>
+          </div>
 
-            {/* SEO Tab */}
-            <TabsContent value="seo" className="space-y-4 mt-2">
-              <div className="border rounded-lg p-6 bg-white">
-                {/* Preview Card */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3">
-                    Search Engine Preview
-                  </h3>
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    <p className="text-sm text-green-700 mb-1 break-all">
-                      {window.location.origin}/product/
-                      {productSlug || "product-slug"}
-                    </p>
-                    <p className="text-lg text-blue-600 font-medium hover:underline cursor-pointer mb-1 break-words">
-                      {seoMeta.meta_title || name || "Product Title"}
-                    </p>
-                    <p className="text-sm text-gray-600 break-words">
-                      {seoMeta.meta_description ||
-                        description ||
-                        "Product description will appear here..."}
-                    </p>
+          {/* ── RIGHT COLUMN ──────────────────────────── */}
+          <div className="xl:w-72 space-y-4 flex-shrink-0">
+
+            {/* Publish card */}
+            <Card>
+              <SectionHeader
+                icon={<CheckCircle2 className="w-4 h-4" />}
+                title="Publish"
+                subtitle="Make product live"
+              />
+              <div className="p-4 space-y-3">
+                <div className="text-xs text-gray-500 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span>Name</span>
+                    <span className={`font-medium ${name ? "text-emerald-600" : "text-gray-300"}`}>
+                      {name ? "✓" : "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>UOM</span>
+                    <span className={`font-medium ${selectedUom ? "text-emerald-600" : "text-gray-300"}`}>
+                      {selectedUom ? "✓" : "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Category</span>
+                    <span className={`font-medium ${selectedCategories.length > 0 ? "text-emerald-600" : "text-gray-300"}`}>
+                      {selectedCategories.length > 0 ? `✓ (${selectedCategories.length})` : "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Pricing</span>
+                    <span className={`font-medium ${costPrice && sellingPrice ? "text-emerald-600" : "text-gray-300"}`}>
+                      {costPrice && sellingPrice ? "✓" : "—"}
+                    </span>
                   </div>
                 </div>
 
-                {/* SEO Summary */}
-                <div className="space-y-4">
+                <hr className="border-gray-100" />
+
+                <button
+                  onClick={handlePublish}
+                  disabled={loading}
+                  className="w-full py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold rounded-xl disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      Publishing…
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      Publish Product
+                    </>
+                  )}
+                </button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full rounded-xl border-gray-200 text-gray-500 text-xs"
+                >
+                  Save as Draft
+                </Button>
+              </div>
+            </Card>
+
+            {/* Categories card */}
+            <Card>
+              <SectionHeader
+                icon={<Package className="w-4 h-4" />}
+                title="Categories"
+                subtitle={selectedCategories.length > 0 ? `${selectedCategories.length} selected` : "None selected"}
+                action={
                   <button
-                    onClick={() => setShowSeoModal(true)}
-                    className="w-full px-4 py-2 btn-bw-primary text-white rounded-lg transition-colors"
+                    onClick={() => router("/inventory/categories")}
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
                   >
-                    Edit SEO
+                    + New
                   </button>
+                }
+              />
+              <div className="p-3">
+                <div className="overflow-auto max-h-80 border border-gray-100 rounded-xl p-2">
+                  <CategoryTree
+                    categories={categories}
+                    selectedCategories={selectedCategories}
+                    toggleCategory={toggleCategory}
+                  />
                 </div>
               </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        {/* RIGHT */}
-        <div className="w-80 space-y-4">
-          {/* Publish */}
-          <div className="border rounded-lg p-4 bg-white shadow-sm">
-            <h3 className="font-semibold mb-3 text-gray-900">
-              Publish Product
-            </h3>
-
-            <div className="flex justify-between">
-              <Button variant="outline">Save Draft</Button>
-              <button
-                onClick={handlePublish}
-                disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-              >
-                {loading ? "Publishing..." : "Publish Product"}
-              </button>
-            </div>
-          </div>
-
-          {/* Categories */}
-          <div className="border rounded-lg p-4 bg-white shadow-sm">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-semibold text-gray-900">
-                Categories
-                {selectedCategories.length > 0 && (
-                  <span className="ml-2 text-sm font-normal text-gray-600">
-                    ({selectedCategories.length} selected)
-                  </span>
-                )}
-              </h3>
-              <p
-                onClick={() => router("/inventory/categories")}
-                className="text-sm font-bold cursor-pointer text-blue-600 hover:text-blue-800"
-              >
-                Add New
-              </p>
-            </div>
-
-            <div className="overflow-auto max-h-96 border rounded p-2">
-              <CategoryTree
-                categories={categories}
-                selectedCategories={selectedCategories}
-                toggleCategory={toggleCategory}
-              />
-            </div>
+            </Card>
           </div>
         </div>
       </div>
 
-      {/* SEO Modal */}
+      {/* ── SEO Modal ─────────────────────────────────── */}
       {showSeoModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b sticky top-0 bg-white">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Edit SEO Meta Data</h2>
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
+          onClick={() => setShowSeoModal(false)}
+        >
+          <div
+            className="bg-white w-full sm:rounded-2xl sm:max-w-3xl max-h-[95dvh] sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">SEO Settings</h2>
+                <p className="text-xs text-gray-400">Optimize how this product appears in search engines</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleResetToDefaults}
+                  className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+                  title="Reset to product defaults"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
                 <button
                   onClick={() => setShowSeoModal(false)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                  className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
                 >
-                  &times;
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
-              {/* Reset to Defaults Button */}
-              <div className="flex justify-end">
-                <Button
-                  variant="outline"
-                  onClick={handleResetToDefaults}
-                  className="text-sm"
-                >
-                  Reset to Product Defaults
-                </Button>
-              </div>
+            {/* Modal body */}
+            <div className="overflow-y-auto flex-1 p-6 space-y-6">
 
               {/* Basic SEO */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">
-                  Basic SEO
-                </h3>
-
-                <div>
-                  <Label>Meta Title</Label>
-                  <Input
-                    value={seoMeta.meta_title}
-                    onChange={(e) => {
-                      setSeoMeta((prev) => ({
-                        ...prev,
-                        meta_title: e.target.value,
-                      }));
-                      hasManuallyEditedTitle.current = true;
-                    }}
-                    placeholder="Enter meta title"
-                    maxLength={60}
-                    className="mt-1"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    {seoMeta.meta_title?.length || 0}/60 characters
-                    {seoMeta.meta_title !== name && (
-                      <span className="ml-2 text-amber-600">(Customized)</span>
-                    )}
-                  </p>
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Globe className="w-4 h-4 text-gray-400" />
+                  <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Basic SEO</h3>
                 </div>
-
-                <div>
-                  <Label>Meta Description</Label>
-                  <textarea
-                    value={seoMeta.meta_description}
-                    onChange={(e) => {
-                      setSeoMeta((prev) => ({
-                        ...prev,
-                        meta_description: e.target.value,
-                      }));
-                      hasManuallyEditedDesc.current = true;
-                    }}
-                    placeholder="Enter meta description"
-                    maxLength={160}
-                    rows={3}
-                    className="w-full border rounded-md p-3 mt-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    {seoMeta.meta_description?.length || 0}/160 characters
-                    {seoMeta.meta_description !== description && (
-                      <span className="ml-2 text-amber-600">(Customized)</span>
-                    )}
-                  </p>
-                </div>
-
-                <div>
-                  <Label>Meta Keywords</Label>
-                  <Input
-                    value={seoMeta.meta_keywords}
-                    onChange={(e) =>
-                      setSeoMeta((prev) => ({
-                        ...prev,
-                        meta_keywords: e.target.value,
-                      }))
-                    }
-                    placeholder="keyword1, keyword2, keyword3"
-                    className="mt-1"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Separate keywords with commas
-                  </p>
-                </div>
-
-                <div>
-                  <Label>Canonical URL</Label>
-                  <Input
-                    value={seoMeta.canonical_url}
-                    onChange={(e) =>
-                      setSeoMeta((prev) => ({
-                        ...prev,
-                        canonical_url: e.target.value,
-                      }))
-                    }
-                    placeholder="https://example.com/canonical-url"
-                    className="mt-1"
-                  />
+                <div className="space-y-4">
+                  <Field label="Meta Title" hint={`${seoMeta.meta_title?.length || 0}/60 — ${seoMeta.meta_title !== name ? "⚠ Customized" : "Synced with name"}`}>
+                    <Input
+                      value={seoMeta.meta_title}
+                      onChange={(e) => {
+                        setSeoMeta((prev) => ({ ...prev, meta_title: e.target.value }));
+                        hasManuallyEditedTitle.current = true;
+                      }}
+                      placeholder="Enter meta title"
+                      maxLength={60}
+                      className="h-10 rounded-xl border-gray-200"
+                    />
+                  </Field>
+                  <Field label="Meta Description" hint={`${seoMeta.meta_description?.length || 0}/160 characters`}>
+                    <textarea
+                      value={seoMeta.meta_description}
+                      onChange={(e) => {
+                        setSeoMeta((prev) => ({ ...prev, meta_description: e.target.value }));
+                        hasManuallyEditedDesc.current = true;
+                      }}
+                      placeholder="Enter meta description"
+                      maxLength={160}
+                      rows={3}
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 resize-none"
+                    />
+                  </Field>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Field label="Meta Keywords" hint="Comma-separated">
+                      <Input
+                        value={seoMeta.meta_keywords}
+                        onChange={(e) => setSeoMeta((prev) => ({ ...prev, meta_keywords: e.target.value }))}
+                        placeholder="keyword1, keyword2"
+                        className="h-10 rounded-xl border-gray-200"
+                      />
+                    </Field>
+                    <Field label="Canonical URL">
+                      <Input
+                        value={seoMeta.canonical_url}
+                        onChange={(e) => setSeoMeta((prev) => ({ ...prev, canonical_url: e.target.value }))}
+                        placeholder="https://…"
+                        className="h-10 rounded-xl border-gray-200"
+                      />
+                    </Field>
+                  </div>
                 </div>
               </div>
 
-              {/* Open Graph (Facebook) */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">
-                  Open Graph (Facebook)
-                </h3>
+              <hr className="border-gray-100" />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>OG Title</Label>
+              {/* Open Graph */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Facebook className="w-4 h-4 text-gray-400" />
+                  <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Open Graph</h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="OG Title">
                     <Input
                       value={seoMeta.og_title}
-                      onChange={(e) =>
-                        setSeoMeta((prev) => ({
-                          ...prev,
-                          og_title: e.target.value,
-                        }))
-                      }
+                      onChange={(e) => setSeoMeta((prev) => ({ ...prev, og_title: e.target.value }))}
                       placeholder="Open Graph title"
-                      className="mt-1"
+                      className="h-10 rounded-xl border-gray-200"
                     />
-                  </div>
-                  <div>
-                    <Label>OG Description</Label>
+                  </Field>
+                  <Field label="OG Description">
                     <Input
                       value={seoMeta.og_description}
-                      onChange={(e) =>
-                        setSeoMeta((prev) => ({
-                          ...prev,
-                          og_description: e.target.value,
-                        }))
-                      }
+                      onChange={(e) => setSeoMeta((prev) => ({ ...prev, og_description: e.target.value }))}
                       placeholder="Open Graph description"
-                      className="mt-1"
+                      className="h-10 rounded-xl border-gray-200"
                     />
-                  </div>
-                </div>
-
-                <div>
-                  <Label>OG Image URL</Label>
-                  <Input
-                    value={seoMeta.og_image}
-                    onChange={(e) =>
-                      setSeoMeta((prev) => ({
-                        ...prev,
-                        og_image: e.target.value,
-                      }))
-                    }
-                    placeholder="https://example.com/image.jpg"
-                    className="mt-1"
-                  />
+                  </Field>
+                  <Field label="OG Image URL" hint="Recommended: 1200×630px">
+                    <Input
+                      value={seoMeta.og_image}
+                      onChange={(e) => setSeoMeta((prev) => ({ ...prev, og_image: e.target.value }))}
+                      placeholder="https://…/image.jpg"
+                      className="h-10 rounded-xl border-gray-200"
+                    />
+                  </Field>
                 </div>
               </div>
 
-              {/* Twitter Card */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">
-                  Twitter Card
-                </h3>
+              <hr className="border-gray-100" />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Twitter Title</Label>
+              {/* Twitter */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Twitter className="w-4 h-4 text-gray-400" />
+                  <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Twitter Card</h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Twitter Title">
                     <Input
                       value={seoMeta.twitter_title}
-                      onChange={(e) =>
-                        setSeoMeta((prev) => ({
-                          ...prev,
-                          twitter_title: e.target.value,
-                        }))
-                      }
+                      onChange={(e) => setSeoMeta((prev) => ({ ...prev, twitter_title: e.target.value }))}
                       placeholder="Twitter title"
-                      className="mt-1"
+                      className="h-10 rounded-xl border-gray-200"
                     />
-                  </div>
-                  <div>
-                    <Label>Twitter Description</Label>
+                  </Field>
+                  <Field label="Twitter Description">
                     <Input
                       value={seoMeta.twitter_description}
-                      onChange={(e) =>
-                        setSeoMeta((prev) => ({
-                          ...prev,
-                          twitter_description: e.target.value,
-                        }))
-                      }
+                      onChange={(e) => setSeoMeta((prev) => ({ ...prev, twitter_description: e.target.value }))}
                       placeholder="Twitter description"
-                      className="mt-1"
+                      className="h-10 rounded-xl border-gray-200"
                     />
-                  </div>
+                  </Field>
+                  <Field label="Twitter Image URL">
+                    <Input
+                      value={seoMeta.twitter_image}
+                      onChange={(e) => setSeoMeta((prev) => ({ ...prev, twitter_image: e.target.value }))}
+                      placeholder="https://…/image.jpg"
+                      className="h-10 rounded-xl border-gray-200"
+                    />
+                  </Field>
                 </div>
+              </div>
 
-                <div>
-                  <Label>Twitter Image URL</Label>
-                  <Input
-                    value={seoMeta.twitter_image}
-                    onChange={(e) =>
-                      setSeoMeta((prev) => ({
-                        ...prev,
-                        twitter_image: e.target.value,
-                      }))
-                    }
-                    placeholder="https://example.com/twitter-image.jpg"
-                    className="mt-1"
+              <hr className="border-gray-100" />
+
+              {/* Indexing */}
+              <div>
+                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Indexing</h3>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {[
+                    { id: "is_index", label: "Index this page", sublabel: "Allow search engines to crawl", value: seoMeta.is_index, key: "is_index" as const },
+                    { id: "is_follow", label: "Follow links", sublabel: "Pass PageRank to linked pages", value: seoMeta.is_follow, key: "is_follow" as const },
+                  ].map((item) => (
+                    <label
+                      key={item.id}
+                      className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${item.value ? "border-gray-900 bg-gray-50" : "border-gray-100 hover:border-gray-200"}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={item.value}
+                        onChange={(e) => setSeoMeta((prev) => ({ ...prev, [item.key]: e.target.checked }))}
+                        className="mt-0.5 w-4 h-4 rounded"
+                      />
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">{item.label}</p>
+                        <p className="text-xs text-gray-400">{item.sublabel}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Schema */}
+              <div>
+                <Field label="Schema JSON (Advanced)" hint="Enter valid JSON-LD structured data">
+                  <textarea
+                    value={seoMeta.schema_json ? JSON.stringify(seoMeta.schema_json, null, 2) : ""}
+                    onChange={(e) => {
+                      try {
+                        const parsed = e.target.value ? JSON.parse(e.target.value) : null;
+                        setSeoMeta((prev) => ({ ...prev, schema_json: parsed }));
+                      } catch {
+                        // Invalid JSON
+                      }
+                    }}
+                    placeholder={`{\n  "@context": "https://schema.org",\n  "@type": "Product"\n}`}
+                    rows={5}
+                    className="w-full border border-gray-200 rounded-xl p-3 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-gray-200 resize-none"
                   />
-                </div>
-              </div>
-
-              {/* Indexing Options */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">
-                  Indexing Options
-                </h3>
-
-                <div className="flex gap-6">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="is-index"
-                      checked={seoMeta.is_index}
-                      onChange={(e) =>
-                        setSeoMeta((prev) => ({
-                          ...prev,
-                          is_index: e.target.checked,
-                        }))
-                      }
-                      className="w-4 h-4"
-                    />
-                    <Label htmlFor="is-index">
-                      Allow search engines to index this page
-                    </Label>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="is-follow"
-                      checked={seoMeta.is_follow}
-                      onChange={(e) =>
-                        setSeoMeta((prev) => ({
-                          ...prev,
-                          is_follow: e.target.checked,
-                        }))
-                      }
-                      className="w-4 h-4"
-                    />
-                    <Label htmlFor="is-follow">Follow links on this page</Label>
-                  </div>
-                </div>
-              </div>
-
-              {/* Schema JSON (Optional advanced field) */}
-              <div className="space-y-2">
-                <Label>Schema JSON (Advanced)</Label>
-                <textarea
-                  value={
-                    seoMeta.schema_json
-                      ? JSON.stringify(seoMeta.schema_json, null, 2)
-                      : ""
-                  }
-                  onChange={(e) => {
-                    try {
-                      const parsed = e.target.value
-                        ? JSON.parse(e.target.value)
-                        : null;
-                      setSeoMeta((prev) => ({ ...prev, schema_json: parsed }));
-                    } catch {
-                      // Invalid JSON, don't update
-                    }
-                  }}
-                  placeholder={`{
-  "@context": "https://schema.org",
-  "@type": "Product"
-}`}
-                  rows={6}
-                  className="w-full border rounded-md p-3 font-mono text-sm"
-                />
-                <p className="text-xs text-gray-500">
-                  Enter valid JSON-LD schema markup
-                </p>
+                </Field>
               </div>
             </div>
 
-            <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowSeoModal(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSaveSeo}
-                disabled={seoLoading}
-                className="bg-blue-600 hover:bg-blue-700"
+            {/* Modal footer */}
+            <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
+              <button
+                onClick={handleResetToDefaults}
+                className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1.5 transition-colors"
               >
-                {seoLoading ? "Saving..." : "Save SEO Data"}
-              </Button>
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reset to defaults
+              </button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl border-gray-200"
+                  onClick={() => setShowSeoModal(false)}
+                >
+                  Cancel
+                </Button>
+                <button
+                  onClick={handleSaveSeo}
+                  disabled={seoLoading}
+                  className="px-5 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold rounded-xl disabled:opacity-50 transition-colors flex items-center gap-2"
+                >
+                  {seoLoading ? (
+                    <><div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Saving…</>
+                  ) : (
+                    <><CheckCircle2 className="w-4 h-4" />Save SEO</>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

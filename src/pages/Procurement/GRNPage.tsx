@@ -325,6 +325,7 @@ export default function GRNPage() {
         showColumns={[
           "code",
           "received_date",
+          "purchase_order_id",
           "received_by_name",
           "status",
           "notes",
@@ -332,6 +333,7 @@ export default function GRNPage() {
         ]}
         printHead={[
           { label: "GRN Code", value: "code" },
+          { label: "Purchase Order", value: "purchase_order_id" },
           { label: "Received Date", value: "received_date" },
           { label: "Received By", value: "received_by_name" },
           { label: "Status", value: "status" },

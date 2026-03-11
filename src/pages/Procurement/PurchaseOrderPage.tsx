@@ -81,7 +81,7 @@ export default function PurchaseOrderPage() {
   const [openDetails, setOpenDetails] = useState(false);
   const [searchTerms, setSearchTerms] = useState<{ [key: number]: string }>({});
   const [showDropdown, setShowDropdown] = useState<{ [key: number]: boolean }>(
-    {}
+    {},
   );
   const [pagination, setPagination] = useState({
     page: 1,
@@ -135,7 +135,7 @@ export default function PurchaseOrderPage() {
           method: "POST",
           tokenType: "jwt",
           data: { limit: pagination.limit, page },
-        }
+        },
       );
       const order = result as any;
       setOrders(order.data.data || []);
@@ -147,7 +147,7 @@ export default function PurchaseOrderPage() {
           total_pages: 1,
           has_next: false,
           has_prev: false,
-        }
+        },
       );
 
       if (result.pagination) {
@@ -179,7 +179,7 @@ export default function PurchaseOrderPage() {
         p.display_name.toLowerCase().includes(search.toLowerCase()) ||
         (p.product_name + " " + (p.variant_name || ""))
           .toLowerCase()
-          .includes(search.toLowerCase())
+          .includes(search.toLowerCase()),
     );
   };
 
@@ -240,7 +240,7 @@ export default function PurchaseOrderPage() {
   const handleItemChange = (
     index: number,
     field: keyof PurchaseOrderItem,
-    value: string | number
+    value: string | number,
   ) => {
     setForm((prev) => {
       const items = [...prev.items];
@@ -311,11 +311,10 @@ export default function PurchaseOrderPage() {
         : `${import.meta.env.VITE_SERVER}/po/purchase-orders`;
 
       const response = await apiClient(url, {
-        method: "POST", // use POST for both create and update
+        method: "POST",
         tokenType: "jwt",
         data: payload,
       });
-
       if (response.success) {
         toast.success(response.message || "Purchase order saved successfully");
         setOpen(false);
@@ -324,7 +323,6 @@ export default function PurchaseOrderPage() {
         toast.error(response.message || "Failed to save purchase order");
       }
     } catch (error: any) {
-      console.error("Error saving order:", error);
       toast.error(error.message || "Failed to save purchase order");
     } finally {
       setLoading(false);
@@ -341,7 +339,7 @@ export default function PurchaseOrderPage() {
           method: "POST",
           data: { id: po.id },
           tokenType: "jwt",
-        }
+        },
       );
 
       if (response.success) {
@@ -543,7 +541,7 @@ export default function PurchaseOrderPage() {
                                 searchTerms[index] ??
                                 products.find(
                                   (p) =>
-                                    p.variant_id === item.product_variant_id
+                                    p.variant_id === item.product_variant_id,
                                 )?.display_name ??
                                 ""
                               }
@@ -615,7 +613,7 @@ export default function PurchaseOrderPage() {
                               handleItemChange(
                                 index,
                                 "quantity",
-                                Number(e.target.value)
+                                Number(e.target.value),
                               )
                             }
                           />
@@ -633,7 +631,7 @@ export default function PurchaseOrderPage() {
                               handleItemChange(
                                 index,
                                 "unit_price",
-                                Number(e.target.value)
+                                Number(e.target.value),
                               )
                             }
                           />
@@ -651,7 +649,7 @@ export default function PurchaseOrderPage() {
                               handleItemChange(
                                 index,
                                 "discount",
-                                Number(e.target.value)
+                                Number(e.target.value),
                               )
                             }
                           />
@@ -670,7 +668,7 @@ export default function PurchaseOrderPage() {
                               handleItemChange(
                                 index,
                                 "tax_rate",
-                                Number(e.target.value)
+                                Number(e.target.value),
                               )
                             }
                           />
@@ -814,7 +812,7 @@ export default function PurchaseOrderPage() {
                       {selectedRow.total_quantity ||
                         selectedRow.items?.reduce(
                           (sum, item) => sum + item.quantity,
-                          0
+                          0,
                         ) ||
                         0}
                     </div>
@@ -849,13 +847,13 @@ export default function PurchaseOrderPage() {
                           selectedRow.items.map((item, index) => {
                             const itemTotal = calculateItemTotal(item);
                             const product = products.find(
-                              (p) => p.variant_id === item.product_variant_id
+                              (p) => p.variant_id === item.product_variant_id,
                             );
                             const productName = product
                               ? product.display_name
                               : item.product_name
-                              ? item.product_name
-                              : `Product #${item.product_variant_id}`;
+                                ? item.product_name
+                                : `Product #${item.product_variant_id}`;
 
                             return (
                               <tr
@@ -924,8 +922,8 @@ export default function PurchaseOrderPage() {
                                     total +
                                     (item.quantity * item.unit_price -
                                       item.discount),
-                                  0
-                                )
+                                  0,
+                                ),
                               )}
                             </td>
                           </tr>
@@ -983,8 +981,8 @@ export default function PurchaseOrderPage() {
                                     selectedRow.items.reduce(
                                       (total, item) =>
                                         total + calculateItemTotal(item),
-                                      0
-                                    )
+                                      0,
+                                    ),
                                 )}
                               </div>
                             </td>
