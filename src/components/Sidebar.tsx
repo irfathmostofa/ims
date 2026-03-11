@@ -17,7 +17,6 @@ import {
   SendToBack,
   LineChart,
   Search,
-  LogOut,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import logo from "../../src/assets/logo.png";
@@ -410,7 +409,7 @@ export default function Sidebar({
               const hasChildren = !!item.children?.length;
               const isOpen = openMenus.includes(item.name);
               const hasActive = sectionHasActiveChild(item, location.pathname);
-              const isDashboard = item.path === "/dashboard";
+              // const isDashboard = item.path === "/dashboard";
 
               return (
                 <div key={item.name}>
