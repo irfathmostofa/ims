@@ -57,7 +57,7 @@ export default function BulkProductUpload() {
         !validTypes.some(
           (type) =>
             selectedFile.name.toLowerCase().endsWith(type) ||
-            selectedFile.type.includes(type)
+            selectedFile.type.includes(type),
         )
       ) {
         alert("Invalid file type. Please upload a CSV or Excel file.");
@@ -105,7 +105,7 @@ export default function BulkProductUpload() {
           tokenType: "jwt",
           data: formData,
           headers: {},
-        }
+        },
       )) as PreviewResponse;
 
       setPreview(res.preview || []);
@@ -113,14 +113,14 @@ export default function BulkProductUpload() {
 
       if (res.errors && res.errors.length > 0) {
         alert(
-          `Found ${res.errors.length} errors in the file. Please fix them before confirming.`
+          `Found ${res.errors.length} errors in the file. Please fix them before confirming.`,
         );
       }
     } catch (err: any) {
       console.error("Preview error:", err);
       alert(
         err.message ||
-          "Failed to preview file. Please check the format and try again."
+          "Failed to preview file. Please check the format and try again.",
       );
     } finally {
       setLoading(false);
@@ -176,7 +176,7 @@ export default function BulkProductUpload() {
       } else {
         // Check if variant already exists (by name)
         const existingVariant = groupedProducts[key].variants.find(
-          (v: Variant) => v.name === p.variant.name
+          (v: Variant) => v.name === p.variant.name,
         );
 
         if (!existingVariant) {
@@ -213,7 +213,7 @@ export default function BulkProductUpload() {
           method: "POST",
           tokenType: "jwt",
           data: { products: productsWithCategories },
-        }
+        },
       );
 
       console.log("Confirm response:", res);
@@ -224,7 +224,7 @@ export default function BulkProductUpload() {
             res.failed_count > 0
               ? `Failed to create ${res.failed_count} product(s). Check console for details.`
               : ""
-          }`
+          }`,
         );
 
         // Show failed products if any
@@ -261,7 +261,7 @@ export default function BulkProductUpload() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-full mx-auto">
       <h1 className="text-2xl font-bold mb-6 text-gray-800">
         Bulk Product Upload
       </h1>

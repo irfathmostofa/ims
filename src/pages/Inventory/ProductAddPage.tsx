@@ -479,7 +479,7 @@ export default function ProductAddPage() {
       </div>
 
       {/* Body */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-full mx-auto px-4 sm:px-6 py-6">
         <div className="flex flex-col xl:flex-row gap-6">
 
           {/* ── LEFT COLUMN ───────────────────────────── */}
