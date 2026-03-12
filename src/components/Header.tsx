@@ -21,9 +21,8 @@ import {
   Package,
   Users,
   Truck,
-  // BarChart3,
-  // FileText,
   Globe2,
+  Zap,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -33,7 +32,6 @@ import { useClockWithDate } from "@/hook/useClockwithDate";
 import { useQuickStore } from "@/store/quickStore";
 import { toast } from "sonner";
 
-// Types for notifications
 interface Notification {
   id: string;
   title: string;
@@ -44,6 +42,112 @@ interface Notification {
   link?: string;
 }
 
+const NOTIF_COLORS: Record<string, { bg: string; icon: string }> = {
+  success: { bg: "rgba(34,197,94,0.1)", icon: "#22c55e" },
+  warning: { bg: "rgba(234,179,8,0.1)", icon: "#eab308" },
+  error: { bg: "rgba(239,68,68,0.1)", icon: "#ef4444" },
+  info: { bg: "rgba(59,130,246,0.1)", icon: "#3b82f6" },
+};
+
+function NotifIcon({ type }: { type: string }) {
+  const color = NOTIF_COLORS[type]?.icon ?? "#3b82f6";
+  const Icon =
+    type === "success"
+      ? CheckCircle
+      : type === "warning"
+        ? AlertTriangle
+        : type === "error"
+          ? XCircle
+          : Info;
+  return <Icon size={15} style={{ color }} />;
+}
+
+// ── shared dropdown styles ─────────────────────────────────────────────
+const dropdownStyle: React.CSSProperties = {
+  background: "#111c2b",
+  border: "1px solid rgba(246,136,38,0.15)",
+  boxShadow: "0 16px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)",
+  borderRadius: "14px",
+  overflow: "hidden",
+};
+
+const dropdownHeaderStyle: React.CSSProperties = {
+  background: "rgba(255,255,255,0.03)",
+  borderBottom: "1px solid rgba(255,255,255,0.06)",
+  padding: "12px 16px",
+};
+
+// ── sub-components ─────────────────────────────────────────────────────
+function QuickActionLink({
+  icon,
+  label,
+  link,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  link: string;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      to={link}
+      onClick={onClick}
+      className="flex items-center gap-3 px-4 py-2.5 text-sm transition-all group"
+      style={{ color: "#94a3b8" }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "rgba(246,136,38,0.08)";
+        e.currentTarget.style.color = "#f68826";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "transparent";
+        e.currentTarget.style.color = "#94a3b8";
+      }}
+    >
+      <span
+        className="flex-shrink-0 transition-colors"
+        style={{ color: "inherit" }}
+      >
+        {icon}
+      </span>
+      <span className="font-medium">{label}</span>
+    </Link>
+  );
+}
+
+function UserMenuLink({
+  icon,
+  label,
+  link,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  link: string;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      to={link}
+      onClick={onClick}
+      className="flex items-center gap-3 px-4 py-2.5 text-sm transition-all"
+      style={{ color: "#94a3b8" }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "rgba(246,136,38,0.08)";
+        e.currentTarget.style.color = "#f68826";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "transparent";
+        e.currentTarget.style.color = "#94a3b8";
+      }}
+    >
+      <span style={{ color: "inherit" }}>{icon}</span>
+      <span className="font-medium">{label}</span>
+    </Link>
+  );
+}
+
+// ── main component ─────────────────────────────────────────────────────
 export default function Header({
   setSidebarOpen,
 }: {
@@ -56,14 +160,11 @@ export default function Header({
 
   const navigate = useNavigate();
   const time = useClockWithDate();
-  const logout = useAuthStore((state) => state.logout);
-
-  // Get logged-in user from store
+  const logout = useAuthStore((s) => s.logout);
   const { user } = useAuthStore();
   const { branches, activeBranch, fetchBranches, switchBranch } =
     useQuickStore();
 
-  // Mock notifications - in real app, fetch from API
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: "1",
@@ -77,7 +178,7 @@ export default function Header({
     {
       id: "2",
       title: "Low Stock Alert",
-      message: 'Product "10-lights Sputnik Chandelier" is running low',
+      message: '"10-lights Sputnik Chandelier" is running low',
       time: "10m ago",
       type: "warning",
       read: false,
@@ -103,17 +204,14 @@ export default function Header({
     },
   ]);
 
-  // Get unread count
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Handle logout
   const handleLogout = () => {
     logout();
     toast.success("Logged out successfully");
     navigate("/");
   };
 
-  // Handle branch selection
   const handleBranchSelect = (branchId: number | null) => {
     if (branchId === null) {
       switchBranch(null);
@@ -129,475 +227,720 @@ export default function Header({
     setBranchOpen(false);
   };
 
-  // Mark notification as read
-  const markAsRead = (notificationId: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)),
+  const markAsRead = (id: string) =>
+    setNotifications((p) =>
+      p.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
-  };
-
-  // Mark all as read
   const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    toast.success("All notifications marked as read");
+    setNotifications((p) => p.map((n) => ({ ...n, read: true })));
+    toast.success("All marked as read");
   };
-
-  // Clear all notifications
-  const clearAllNotifications = () => {
+  const clearAll = () => {
     setNotifications([]);
-    toast.success("All notifications cleared");
+    toast.success("Notifications cleared");
   };
 
-  // Get notification icon based on type
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case "success":
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case "warning":
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
-      case "error":
-        return <XCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return <Info className="w-4 h-4 text-blue-500" />;
-    }
-  };
-
-  // Fetch branches on mount
   useEffect(() => {
-    if (branches.length === 0) {
-      fetchBranches();
-    }
+    if (branches.length === 0) fetchBranches();
   }, []);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest(".branch-dropdown")) setBranchOpen(false);
-      if (!target.closest(".notif-dropdown")) setNotifOpen(false);
-      if (!target.closest(".user-dropdown")) setUserOpen(false);
-      if (!target.closest(".quick-actions-dropdown"))
-        setQuickActionsOpen(false);
+    const handler = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      if (!t.closest(".dd-branch")) setBranchOpen(false);
+      if (!t.closest(".dd-notif")) setNotifOpen(false);
+      if (!t.closest(".dd-user")) setUserOpen(false);
+      if (!t.closest(".dd-quick")) setQuickActionsOpen(false);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // ── render ───────────────────────────────────────────────────────────
   return (
-    <header className="h-16 bg-bw-900 border-b border-bw-700 flex items-center justify-between px-4 shadow-sm relative">
-      {/* Left Section */}
-      <div className="flex items-center gap-3">
-        <button
-          className="lg:hidden p-2 rounded-md hover:bg-bw-800 text-bw-200 transition-colors"
-          onClick={() => setSidebarOpen(true)}
-        >
-          <Menu size={20} />
-        </button>
+    <>
+      <style>{`
+        @keyframes dropIn {
+          from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+          to   { opacity: 1; transform: translateY(0)   scale(1);    }
+        }
+        .drop-anim { animation: dropIn 0.18s cubic-bezier(.22,1,.36,1) forwards; }
+        .notif-unread { position: relative; }
+        .notif-unread::before {
+          content: "";
+          position: absolute; left: 0; top: 0; bottom: 0;
+          width: 3px;
+          background: #f68826;
+          border-radius: 0 2px 2px 0;
+        }
+      `}</style>
 
-        {/* Date & Time Display */}
-        <div className="hidden md:flex items-center gap-2 text-sm text-bw-200 bg-bw-800 px-3 py-1.5 rounded-lg">
-          <span>{time}</span>
-        </div>
-
-        {/* Quick Actions Button */}
-        <div className="relative quick-actions-dropdown">
+      <header
+        className="flex items-center justify-between px-4 flex-shrink-0 relative"
+        style={{
+          height: "64px",
+          background: "linear-gradient(90deg, #0f1923 0%, #1a2535 100%)",
+          borderBottom: "1px solid rgba(246,136,38,0.1)",
+        }}
+      >
+        {/* ── LEFT ───────────────────────────────────────────────────── */}
+        <div className="flex items-center gap-2">
+          {/* Hamburger */}
           <button
-            className="p-2 rounded-md hover:bg-bw-800 text-bw-200 transition-colors"
-            onClick={() => setQuickActionsOpen(!quickActionsOpen)}
-            title="Quick Actions"
+            className="lg:hidden w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
+            style={{ color: "#94a3b8" }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = "rgba(255,255,255,0.06)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "transparent")
+            }
+            onClick={() => setSidebarOpen(true)}
           >
-            <Grid size={20} />
+            <Menu size={19} />
           </button>
 
-          {quickActionsOpen && (
-            <div className="absolute left-0 mt-2 w-64 bg-bw-900 shadow-xl rounded-lg overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 border border-bw-700">
-              <div className="px-4 py-3 font-semibold text-bw-100 border-b border-bw-700 bg-bw-800">
-                Quick Actions
-              </div>
-              <div className="py-2 bg-bw-900">
-                <QuickActionLink
-                  icon={<ShoppingCart />}
-                  label="New Sale (POS)"
-                  link="/pos"
-                />
-                <QuickActionLink
-                  icon={<Package />}
-                  label="Add Product"
-                  link="/inventory/products/add"
-                />
-                <QuickActionLink
-                  icon={<Users />}
-                  label="Add Customer"
-                  link="/customers/customer-list"
-                />
-
-                {/* <QuickActionLink
-                  icon={<FileText />}
-                  label="Create Invoice"
-                  link="/invoices/new"
-                /> */}
-
-                <QuickActionLink
-                  icon={<Truck />}
-                  label="New Purchase"
-                  link="/procurement/purchase-orders"
-                />
-                <QuickActionLink
-                  icon={<Globe2 />}
-                  label="Website Configuration"
-                  link="/web-setting"
-                />
-                {/* <QuickActionLink
-                  icon={<BarChart3 />}
-                  label="View Reports"
-                  link="/reports"
-                /> */}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Right Section */}
-      <div className="flex items-center gap-2">
-        {/* Branch Selector */}
-        <div className="relative branch-dropdown">
-          <button
-            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-bw-800 text-bw-100 border border-bw-700 min-w-[160px] transition-colors bg-bw-900"
-            onClick={() => setBranchOpen(!branchOpen)}
-          >
-            <div className="text-left flex-1">
-              <div className="text-sm font-medium truncate">
-                {activeBranch ? activeBranch.name : "All Branches"}
-              </div>
-            </div>
-            <ChevronDown
-              size={15}
-              className={`text-bw-400 transition-transform flex-shrink-0 ${
-                branchOpen ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-
-          {branchOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-bw-900 shadow-xl rounded-lg overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 border border-bw-700">
-              <div className="px-4 py-3 font-semibold text-bw-100 border-b border-bw-700 bg-bw-800">
-                Select Branch
-              </div>
-
-              {/* All Branches Option */}
-              <button
-                className={`w-full text-left px-4 py-3 hover:bg-bw-800 flex items-center justify-between border-b border-bw-700 transition-colors bg-bw-900 ${
-                  !activeBranch ? "text-orange-500" : "text-bw-200"
-                }`}
-                onClick={() => handleBranchSelect(null)}
-              >
-                <div className="flex items-center gap-3">
-                  <Building2 className="w-5 h-5 text-bw-400" />
-                  <div>
-                    <div className="font-medium">All Branches</div>
-                    <div className="text-xs text-bw-400 mt-0.5">
-                      View consolidated data
-                    </div>
-                  </div>
-                </div>
-                {!activeBranch && (
-                  <CheckCircle className="w-5 h-5 text-orange-500" />
-                )}
-              </button>
-
-              {/* Individual Branches */}
-              <div className="max-h-80 overflow-y-auto bg-bw-900">
-                {branches.map((branch) => (
-                  <button
-                    key={branch.id}
-                    className={`w-full text-left px-4 py-3 hover:bg-bw-800 flex justify-between items-center border-b border-bw-700 last:border-0 transition-colors bg-bw-900 ${
-                      activeBranch?.id === branch.id
-                        ? "text-orange-500"
-                        : "text-bw-200"
-                    }`}
-                    onClick={() => handleBranchSelect(branch.id)}
-                  >
-                    <div>
-                      <div className="font-medium">{branch.name}</div>
-                      <div className="text-xs text-bw-400 mt-0.5">
-                        Code: {branch.code}
-                      </div>
-                      {branch.address && (
-                        <div className="text-xs text-bw-500 mt-0.5 flex items-start gap-1">
-                          <MapPin className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                          <span className="line-clamp-1">{branch.address}</span>
-                        </div>
-                      )}
-                    </div>
-                    {activeBranch?.id === branch.id && (
-                      <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0" />
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              {/* Branch Management Link */}
-              <div className="px-4 py-2 text-sm border-t border-bw-700 bg-bw-800">
-                <Link
-                  to="/branches"
-                  className="text-orange-500 hover:text-orange-400 hover:underline flex items-center gap-1 transition-colors"
-                  onClick={() => setBranchOpen(false)}
-                >
-                  <Building2 className="w-4 h-4" />
-                  Manage Branches →
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* POS Shortcut */}
-        <Link
-          to="/pos"
-          className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white transition-colors"
-        >
-          <ShoppingCart size={18} />
-          <span className="text-sm font-medium">POS</span>
-        </Link>
-
-        {/* Notifications */}
-        <div className="relative notif-dropdown">
-          <button
-            className="relative p-2 rounded-lg hover:bg-bw-800 text-bw-200 transition-colors bg-bw-900"
-            onClick={() => setNotifOpen(!notifOpen)}
-            title="Notifications"
-          >
-            <Bell size={20} />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 h-4 w-4 bg-red-500 text-white text-xs flex items-center justify-center rounded-full">
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            )}
-          </button>
-
-          {notifOpen && (
-            <div className="absolute right-0 mt-2 w-96 bg-bw-900 shadow-xl rounded-lg overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 border border-bw-700">
-              <div className="px-4 py-3 font-semibold text-bw-100 border-b border-bw-700 bg-bw-800 flex justify-between items-center">
-                <span>Notifications</span>
-                <div className="flex items-center gap-2">
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={markAllAsRead}
-                      className="text-xs text-orange-500 hover:text-orange-400 hover:underline"
-                    >
-                      Mark all read
-                    </button>
-                  )}
-                  {notifications.length > 0 && (
-                    <button
-                      onClick={clearAllNotifications}
-                      className="text-xs text-red-400 hover:text-red-300 hover:underline"
-                    >
-                      Clear all
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {notifications.length > 0 ? (
-                <ul className="max-h-96 overflow-y-auto divide-y divide-bw-700 bg-bw-900">
-                  {notifications.map((notif) => (
-                    <li
-                      key={notif.id}
-                      className={`px-4 py-3 hover:bg-bw-800 cursor-pointer transition-colors bg-bw-900 ${
-                        !notif.read ? "bg-orange-500/10" : ""
-                      }`}
-                      onClick={() => {
-                        markAsRead(notif.id);
-                        if (notif.link) navigate("#");
-                        setNotifOpen(false);
-                      }}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 mt-1">
-                          {getNotificationIcon(notif.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-bw-100">
-                            {notif.title}
-                          </p>
-                          <p className="text-xs text-bw-200 mt-0.5">
-                            {notif.message}
-                          </p>
-                          <p className="text-xs text-bw-500 mt-1">
-                            {notif.time}
-                          </p>
-                        </div>
-                        {!notif.read && (
-                          <div className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0"></div>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="px-4 py-8 text-center text-bw-400 bg-bw-900">
-                  <BellOff className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>No notifications</p>
-                </div>
-              )}
-
-              <div className="px-4 py-2 text-sm border-t border-bw-700 bg-bw-800">
-                <Link
-                  to="/notifications"
-                  className="text-orange-500 hover:text-orange-400 hover:underline"
-                  onClick={() => setNotifOpen(false)}
-                >
-                  View all notifications →
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* User Menu */}
-        <div className="relative user-dropdown">
+          {/* Clock */}
           <div
-            className="flex items-center gap-2 cursor-pointer hover:bg-bw-800 px-3 py-2 rounded-lg transition-colors bg-bw-900"
-            onClick={() => setUserOpen((prev) => !prev)}
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-mono"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.07)",
+              color: "#fff",
+            }}
           >
-            {/* Profile image or fallback icon */}
-            {user?.image ? (
-              <img
-                src={user.image}
-                alt={user.username}
-                className="w-8 h-8 rounded-full object-cover border-2 border-bw-700"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center">
-                <User size={18} className="text-orange-500" />
-              </div>
-            )}
-            <span className="text-sm font-medium hidden md:inline text-bw-100">
-              {user?.username || "Guest"}
-            </span>
-            <ChevronDown
-              size={15}
-              className={`hidden md:block text-bw-400 transition-transform ${
-                userOpen ? "rotate-180" : ""
-              }`}
-            />
+            {time}
           </div>
 
-          {userOpen && (
-            <div className="absolute right-0 mt-2 w-64 bg-bw-900 shadow-xl rounded-lg overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 border border-bw-700">
-              {/* User Info */}
-              <div className="px-4 py-3 border-b border-bw-700 bg-bw-800">
-                <div className="flex items-center gap-3">
-                  {user?.image ? (
-                    <img
-                      src={user.image}
-                      alt={user.username}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
-                      <User size={20} className="text-orange-500" />
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm font-semibold text-bw-100">
-                      {user?.username || "Guest User"}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {user?.role?.name || "No Role"} •{" "}
-                      {activeBranch?.name || "All Branches"}
-                    </p>
-                  </div>
+          {/* Quick actions */}
+          <div className="relative dd-quick">
+            <button
+              title="Quick Actions"
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+              style={{
+                color: quickActionsOpen ? "#f68826" : "#94a3b8",
+                background: quickActionsOpen
+                  ? "rgba(246,136,38,0.1)"
+                  : "transparent",
+                border: quickActionsOpen
+                  ? "1px solid rgba(246,136,38,0.25)"
+                  : "1px solid transparent",
+              }}
+              onClick={() => setQuickActionsOpen((p) => !p)}
+              onMouseEnter={(e) => {
+                if (!quickActionsOpen)
+                  e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+              }}
+              onMouseLeave={(e) => {
+                if (!quickActionsOpen)
+                  e.currentTarget.style.background = "transparent";
+              }}
+            >
+              <Grid size={17} />
+            </button>
+
+            {quickActionsOpen && (
+              <div
+                className="drop-anim absolute left-0 mt-2 w-56 z-50"
+                style={dropdownStyle}
+              >
+                <div
+                  style={dropdownHeaderStyle}
+                  className="flex items-center gap-2"
+                >
+                  <Zap size={13} style={{ color: "#f68826" }} />
+                  <span
+                    className="text-xs font-semibold"
+                    style={{ color: "#cbd5e1" }}
+                  >
+                    Quick Actions
+                  </span>
+                </div>
+                <div className="py-1.5">
+                  <QuickActionLink
+                    icon={<ShoppingCart size={15} />}
+                    label="New Sale (POS)"
+                    link="/pos"
+                    onClick={() => setQuickActionsOpen(false)}
+                  />
+                  <QuickActionLink
+                    icon={<Package size={15} />}
+                    label="Add Product"
+                    link="/inventory/products/add"
+                    onClick={() => setQuickActionsOpen(false)}
+                  />
+                  <QuickActionLink
+                    icon={<Users size={15} />}
+                    label="Add Customer"
+                    link="/customers/customer-list"
+                    onClick={() => setQuickActionsOpen(false)}
+                  />
+                  <QuickActionLink
+                    icon={<Truck size={15} />}
+                    label="New Purchase"
+                    link="/procurement/purchase-orders"
+                    onClick={() => setQuickActionsOpen(false)}
+                  />
+                  <QuickActionLink
+                    icon={<Globe2 size={15} />}
+                    label="Website Config"
+                    link="/web-setting"
+                    onClick={() => setQuickActionsOpen(false)}
+                  />
                 </div>
               </div>
-
-              {/* Menu Links */}
-              <div className="py-2 bg-bw-900">
-                <UserMenuLink
-                  icon={<User />}
-                  label="My Profile"
-                  link="/profile"
-                  onClick={() => setUserOpen(false)}
-                />
-                <UserMenuLink
-                  icon={<Settings />}
-                  label="Settings"
-                  link="/settings"
-                  onClick={() => setUserOpen(false)}
-                />
-                <UserMenuLink
-                  icon={<HelpCircle />}
-                  label="Help & Support"
-                  link="/support"
-                  onClick={() => setUserOpen(false)}
-                />
-                <UserMenuLink
-                  icon={<SquareArrowOutUpLeft />}
-                  label="Setup Wizard"
-                  link="/setup-wizard"
-                  onClick={() => setUserOpen(false)}
-                />
-              </div>
-
-              {/* Logout */}
-              <button
-                className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 border-t border-bw-700 transition-colors bg-bw-800"
-                onClick={handleLogout}
-              >
-                <LogOut size={18} />
-                <span>Logout</span>
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
-    </header>
-  );
-}
 
-// Quick Action Link Component
-function QuickActionLink({
-  icon,
-  label,
-  link,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  link: string;
-}) {
-  return (
-    <Link
-      to={link}
-      className="flex items-center gap-3 px-4 py-2 text-sm text-bw-200 hover:bg-orange-500/20 hover:text-orange-500 transition-colors bg-bw-900"
-    >
-      <span className="text-bw-400">{icon}</span>
-      <span>{label}</span>
-    </Link>
-  );
-}
+        {/* ── RIGHT ──────────────────────────────────────────────────── */}
+        <div className="flex items-center gap-2">
+          {/* Branch selector */}
+          <div className="relative dd-branch">
+            <button
+              className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-all"
+              style={{
+                background: branchOpen
+                  ? "rgba(246,136,38,0.1)"
+                  : "rgba(255,255,255,0.04)",
+                border: branchOpen
+                  ? "1px solid rgba(246,136,38,0.3)"
+                  : "1px solid rgba(255,255,255,0.08)",
+                color: "#cbd5e1",
+                minWidth: "148px",
+              }}
+              onClick={() => setBranchOpen((p) => !p)}
+            >
+              <Building2
+                size={14}
+                style={{ color: "#f68826", flexShrink: 0 }}
+              />
+              <span className="flex-1 text-left truncate text-xs font-medium">
+                {activeBranch ? activeBranch.name : "All Branches"}
+              </span>
+              <ChevronDown
+                size={13}
+                style={{
+                  color: "#94a3b8",
+                  flexShrink: 0,
+                  transform: branchOpen ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s",
+                }}
+              />
+            </button>
 
-// User Menu Link Component
-function UserMenuLink({
-  icon,
-  label,
-  link,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  link: string;
-  onClick?: () => void;
-}) {
-  return (
-    <Link
-      to={link}
-      className="flex items-center gap-3 px-4 py-2 text-sm text-bw-200 hover:bg-orange-500/20 hover:text-orange-500 transition-colors bg-bw-900"
-      onClick={onClick}
-    >
-      <span className="text-bw-400">{icon}</span>
-      <span>{label}</span>
-    </Link>
+            {branchOpen && (
+              <div
+                className="drop-anim absolute right-0 mt-2 w-80 z-50"
+                style={dropdownStyle}
+              >
+                <div style={dropdownHeaderStyle}>
+                  <p
+                    className="text-xs font-semibold"
+                    style={{ color: "#cbd5e1" }}
+                  >
+                    Select Branch
+                  </p>
+                </div>
+
+                {/* All branches */}
+                <button
+                  className="w-full flex items-center justify-between px-4 py-3 text-left transition-all"
+                  style={{
+                    color: !activeBranch ? "#f68826" : "#94a3b8",
+                    background: !activeBranch
+                      ? "rgba(246,136,38,0.06)"
+                      : "transparent",
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (activeBranch)
+                      e.currentTarget.style.background =
+                        "rgba(255,255,255,0.03)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeBranch)
+                      e.currentTarget.style.background = "transparent";
+                  }}
+                  onClick={() => handleBranchSelect(null)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center"
+                      style={{ background: "rgba(246,136,38,0.1)" }}
+                    >
+                      <Building2 size={15} style={{ color: "#f68826" }} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-medium">All Branches</p>
+                      <p className="text-xs" style={{ color: "#8899aa" }}>
+                        Consolidated view
+                      </p>
+                    </div>
+                  </div>
+                  {!activeBranch && (
+                    <CheckCircle size={16} style={{ color: "#f68826" }} />
+                  )}
+                </button>
+
+                {/* Individual branches */}
+                <div style={{ maxHeight: "280px", overflowY: "auto" }}>
+                  {branches.map((branch) => {
+                    const isActive = activeBranch?.id === branch.id;
+                    return (
+                      <button
+                        key={branch.id}
+                        className="w-full flex items-center justify-between px-4 py-3 text-left transition-all"
+                        style={{
+                          color: isActive ? "#f68826" : "#94a3b8",
+                          background: isActive
+                            ? "rgba(246,136,38,0.06)"
+                            : "transparent",
+                          borderBottom: "1px solid rgba(255,255,255,0.04)",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isActive)
+                            e.currentTarget.style.background =
+                              "rgba(255,255,255,0.03)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isActive)
+                            e.currentTarget.style.background = "transparent";
+                        }}
+                        onClick={() => handleBranchSelect(branch.id)}
+                      >
+                        <div>
+                          <p className="text-sm font-medium">{branch.name}</p>
+                          <p
+                            className="text-xs mt-0.5"
+                            style={{ color: "#8899aa" }}
+                          >
+                            Code: {branch.code}
+                          </p>
+                          {branch.address && (
+                            <div className="flex items-start gap-1 mt-0.5">
+                              <MapPin
+                                size={10}
+                                style={{
+                                  color: "#7a8fa6",
+                                  marginTop: "2px",
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <p
+                                className="text-xs truncate max-w-[180px]"
+                                style={{ color: "#7a8fa6" }}
+                              >
+                                {branch.address}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        {isActive && (
+                          <CheckCircle
+                            size={15}
+                            style={{ color: "#f68826", flexShrink: 0 }}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div
+                  className="px-4 py-2.5"
+                  style={{
+                    borderTop: "1px solid rgba(255,255,255,0.05)",
+                    background: "rgba(255,255,255,0.02)",
+                  }}
+                >
+                  <Link
+                    to="/branches"
+                    className="text-xs font-medium flex items-center gap-1.5 transition-colors"
+                    style={{ color: "#f68826" }}
+                    onClick={() => setBranchOpen(false)}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.color = "#fb923c")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color = "#f68826")
+                    }
+                  >
+                    <Building2 size={12} />
+                    Manage Branches →
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* POS shortcut */}
+          <Link
+            to="/pos"
+            className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all"
+            style={{ background: "#f68826", color: "#0f1923" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#fb923c")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#f68826")}
+          >
+            <ShoppingCart size={15} />
+            <span>POS</span>
+          </Link>
+
+          {/* Notifications */}
+          <div className="relative dd-notif">
+            <button
+              title="Notifications"
+              className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+              style={{
+                color: notifOpen ? "#f68826" : "#94a3b8",
+                background: notifOpen
+                  ? "rgba(246,136,38,0.1)"
+                  : "rgba(255,255,255,0.04)",
+                border: notifOpen
+                  ? "1px solid rgba(246,136,38,0.25)"
+                  : "1px solid rgba(255,255,255,0.07)",
+              }}
+              onClick={() => setNotifOpen((p) => !p)}
+            >
+              <Bell size={17} />
+              {unreadCount > 0 && (
+                <span
+                  className="absolute flex items-center justify-center text-white font-bold"
+                  style={{
+                    top: "-4px",
+                    right: "-4px",
+                    width: "17px",
+                    height: "17px",
+                    fontSize: "9px",
+                    background: "#ef4444",
+                    borderRadius: "50%",
+                    border: "2px solid #0f1923",
+                  }}
+                >
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <div
+                className="drop-anim absolute right-0 mt-2 w-96 z-50"
+                style={dropdownStyle}
+              >
+                <div
+                  style={dropdownHeaderStyle}
+                  className="flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <Bell size={13} style={{ color: "#f68826" }} />
+                    <span
+                      className="text-xs font-semibold"
+                      style={{ color: "#cbd5e1" }}
+                    >
+                      Notifications
+                    </span>
+                    {unreadCount > 0 && (
+                      <span
+                        className="text-xs font-bold px-1.5 py-0.5 rounded-full"
+                        style={{
+                          background: "rgba(239,68,68,0.15)",
+                          color: "#ef4444",
+                        }}
+                      >
+                        {unreadCount} new
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllAsRead}
+                        className="text-xs transition-colors"
+                        style={{ color: "#f68826" }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.color = "#fb923c")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.color = "#f68826")
+                        }
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={clearAll}
+                        className="text-xs transition-colors"
+                        style={{ color: "#94a3b8" }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.color = "#ef4444")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.color = "#94a3b8")
+                        }
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {notifications.length > 0 ? (
+                  <ul style={{ maxHeight: "340px", overflowY: "auto" }}>
+                    {notifications.map((notif) => {
+                      const colors =
+                        NOTIF_COLORS[notif.type] ?? NOTIF_COLORS.info;
+                      return (
+                        <li
+                          key={notif.id}
+                          className={`px-4 py-3 cursor-pointer transition-all ${!notif.read ? "notif-unread" : ""}`}
+                          style={{
+                            background: !notif.read ? colors.bg : "transparent",
+                            borderBottom: "1px solid rgba(255,255,255,0.04)",
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.background =
+                              "rgba(255,255,255,0.03)")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.background = !notif.read
+                              ? colors.bg
+                              : "transparent")
+                          }
+                          onClick={() => {
+                            markAsRead(notif.id);
+                            if (notif.link) navigate("#");
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+                              style={{
+                                background: colors.bg,
+                                border: `1px solid ${colors.icon}22`,
+                              }}
+                            >
+                              <NotifIcon type={notif.type} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p
+                                className="text-xs font-semibold"
+                                style={{ color: "#e2e8f0" }}
+                              >
+                                {notif.title}
+                              </p>
+                              <p
+                                className="text-xs mt-0.5 leading-relaxed"
+                                style={{ color: "#94a3b8" }}
+                              >
+                                {notif.message}
+                              </p>
+                              <p
+                                className="text-xs mt-1"
+                                style={{ color: "#7a8fa6" }}
+                              >
+                                {notif.time}
+                              </p>
+                            </div>
+                            {!notif.read && (
+                              <span
+                                className="w-2 h-2 rounded-full flex-shrink-0 mt-1"
+                                style={{ background: "#f68826" }}
+                              />
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <div className="py-10 text-center">
+                    <BellOff
+                      size={28}
+                      style={{ color: "#4a5f75", margin: "0 auto 8px" }}
+                    />
+                    <p className="text-xs" style={{ color: "#7a8fa6" }}>
+                      You're all caught up
+                    </p>
+                  </div>
+                )}
+
+                <div
+                  className="px-4 py-2.5"
+                  style={{
+                    borderTop: "1px solid rgba(255,255,255,0.05)",
+                    background: "rgba(255,255,255,0.02)",
+                  }}
+                >
+                  <Link
+                    to="/notifications"
+                    className="text-xs font-medium transition-colors"
+                    style={{ color: "#f68826" }}
+                    onClick={() => setNotifOpen(false)}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.color = "#fb923c")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color = "#f68826")
+                    }
+                  >
+                    View all notifications →
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* User menu */}
+          <div className="relative dd-user">
+            <button
+              className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-xl transition-all"
+              style={{
+                background: userOpen
+                  ? "rgba(246,136,38,0.1)"
+                  : "rgba(255,255,255,0.04)",
+                border: userOpen
+                  ? "1px solid rgba(246,136,38,0.25)"
+                  : "1px solid rgba(255,255,255,0.07)",
+              }}
+              onClick={() => setUserOpen((p) => !p)}
+            >
+              {user?.image ? (
+                <img
+                  src={user.image}
+                  alt={user.username}
+                  className="w-7 h-7 rounded-lg object-cover"
+                  style={{ border: "1px solid rgba(246,136,38,0.3)" }}
+                />
+              ) : (
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold"
+                  style={{
+                    background: "rgba(246,136,38,0.2)",
+                    color: "#f68826",
+                  }}
+                >
+                  {(user?.username?.[0] ?? "U").toUpperCase()}
+                </div>
+              )}
+              <span
+                className="hidden md:inline text-xs font-medium"
+                style={{ color: "#cbd5e1" }}
+              >
+                {user?.username || "Guest"}
+              </span>
+              <ChevronDown
+                size={12}
+                style={{
+                  color: "#8899aa",
+                  transform: userOpen ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s",
+                }}
+              />
+            </button>
+
+            {userOpen && (
+              <div
+                className="drop-anim absolute right-0 mt-2 w-64 z-50"
+                style={dropdownStyle}
+              >
+                {/* User info */}
+                <div
+                  className="px-4 py-3.5"
+                  style={{
+                    background: "rgba(255,255,255,0.02)",
+                    borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    {user?.image ? (
+                      <img
+                        src={user.image}
+                        alt={user.username}
+                        className="w-10 h-10 rounded-xl object-cover"
+                        style={{ border: "1px solid rgba(246,136,38,0.3)" }}
+                      />
+                    ) : (
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold"
+                        style={{
+                          background: "rgba(246,136,38,0.15)",
+                          color: "#f68826",
+                          border: "1px solid rgba(246,136,38,0.2)",
+                        }}
+                      >
+                        {(user?.username?.[0] ?? "U").toUpperCase()}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p
+                        className="text-sm font-semibold truncate"
+                        style={{ color: "#e2e8f0" }}
+                      >
+                        {user?.username || "Guest User"}
+                      </p>
+                      <p
+                        className="text-xs truncate"
+                        style={{ color: "#8899aa" }}
+                      >
+                        {user?.role?.name || "No Role"} ·{" "}
+                        {activeBranch?.name || "All Branches"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="py-1.5">
+                  <UserMenuLink
+                    icon={<User size={15} />}
+                    label="My Profile"
+                    link="/profile"
+                    onClick={() => setUserOpen(false)}
+                  />
+                  <UserMenuLink
+                    icon={<Settings size={15} />}
+                    label="Settings"
+                    link="/settings"
+                    onClick={() => setUserOpen(false)}
+                  />
+                  <UserMenuLink
+                    icon={<HelpCircle size={15} />}
+                    label="Help & Support"
+                    link="/support"
+                    onClick={() => setUserOpen(false)}
+                  />
+                  <UserMenuLink
+                    icon={<SquareArrowOutUpLeft size={15} />}
+                    label="Setup Wizard"
+                    link="/setup-wizard"
+                    onClick={() => setUserOpen(false)}
+                  />
+                </div>
+
+                <button
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all"
+                  style={{
+                    color: "#ef4444",
+                    borderTop: "1px solid rgba(255,255,255,0.06)",
+                    background: "transparent",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.background = "rgba(239,68,68,0.08)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.background = "transparent")
+                  }
+                  onClick={handleLogout}
+                >
+                  <LogOut size={15} />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+    </>
   );
 }

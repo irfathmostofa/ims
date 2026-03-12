@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -191,8 +191,9 @@ export default function ProductAddPage() {
   const [seoLoading, setSeoLoading] = useState(false);
   const [productSlug, setProductSlug] = useState("");
 
-  const hasManuallyEditedTitle = useRef(false);
-  const hasManuallyEditedDesc = useRef(false);
+  // useState so changes trigger re-renders (useRef would not)
+  const [titleCustomized, setTitleCustomized] = useState(false);
+  const [descCustomized, setDescCustomized] = useState(false);
 
   const router = useNavigate();
 
@@ -202,12 +203,14 @@ export default function ProductAddPage() {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
 
+  // Keep slug in sync with name
   useEffect(() => {
     setProductSlug(name ? generateSlug(name) : "");
   }, [name]);
 
+  // Auto-sync title — unless user customized it
   useEffect(() => {
-    if (name && !hasManuallyEditedTitle.current) {
+    if (!titleCustomized) {
       setSeoMeta((prev) => ({
         ...prev,
         meta_title: name,
@@ -215,30 +218,23 @@ export default function ProductAddPage() {
         twitter_title: name,
       }));
     }
-  }, [name]);
+  }, [name, titleCustomized]);
 
+  // Auto-sync description — unless user customized it
   useEffect(() => {
-    if (description && !hasManuallyEditedDesc.current) {
-      const truncatedDesc =
+    if (!descCustomized) {
+      const truncated =
         description.length > 160
           ? description.substring(0, 157) + "..."
           : description;
       setSeoMeta((prev) => ({
         ...prev,
-        meta_description: truncatedDesc,
-        og_description: truncatedDesc,
-        twitter_description: truncatedDesc,
+        meta_description: truncated,
+        og_description: truncated,
+        twitter_description: truncated,
       }));
     }
-  }, [description]);
-
-  useEffect(() => {
-    if (!showSeoModal) {
-      if (seoMeta.meta_title !== name) hasManuallyEditedTitle.current = true;
-      if (seoMeta.meta_description !== description)
-        hasManuallyEditedDesc.current = true;
-    }
-  }, [showSeoModal, seoMeta.meta_title, seoMeta.meta_description, name, description]);
+  }, [description, descCustomized]);
 
   const fetchData = async () => {
     try {
@@ -334,9 +330,9 @@ export default function ProductAddPage() {
   const handleSaveSeo = async () => {
     setSeoLoading(true);
     try {
-      if (seoMeta.meta_title !== name) hasManuallyEditedTitle.current = true;
+      if (seoMeta.meta_title !== name) setTitleCustomized(true);
       if (seoMeta.meta_description !== description)
-        hasManuallyEditedDesc.current = true;
+        setDescCustomized(true);
       setShowSeoModal(false);
       toast.success("SEO data saved");
     } catch (error: any) {
@@ -360,8 +356,8 @@ export default function ProductAddPage() {
       twitter_title: name || "",
       twitter_description: truncated,
     }));
-    hasManuallyEditedTitle.current = false;
-    hasManuallyEditedDesc.current = false;
+    setTitleCustomized(false);
+    setDescCustomized(false);
     toast.success("Reset to product defaults");
   };
 
@@ -850,33 +846,124 @@ export default function ProductAddPage() {
                 </TabsContent>
 
                 {/* ── SEO ── */}
-                <TabsContent value="seo" className="p-5 space-y-4">
-                  {/* Search preview */}
+                <TabsContent value="seo" className="p-5 space-y-5">
+
+                  {/* Live search preview */}
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3 flex items-center gap-1.5">
-                      <Eye className="w-3 h-3" />
-                      Search Result Preview
+                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2 flex items-center gap-1.5">
+                      <Eye className="w-3 h-3" /> Live Search Preview
                     </p>
                     <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50 space-y-1">
                       <p className="text-xs text-emerald-600 font-mono break-all">
-                        {typeof window !== "undefined" ? window.location.origin : "https://yoursite.com"}/product/{productSlug || "product-slug"}
+                        {typeof window !== "undefined" ? window.location.origin : "https://yoursite.com"}/product/
+                        <span className="text-emerald-700">{productSlug || "product-slug"}</span>
                       </p>
-                      <p className="text-base text-blue-700 font-semibold hover:underline cursor-pointer">
+                      <p className="text-base text-blue-700 font-semibold hover:underline cursor-pointer leading-snug">
                         {seoMeta.meta_title || name || "Product Title"}
                       </p>
-                      <p className="text-sm text-gray-500 leading-relaxed">
+                      <p className="text-sm text-gray-500 leading-relaxed line-clamp-2">
                         {seoMeta.meta_description || description || "Your product description will appear here in search results…"}
                       </p>
                     </div>
                   </div>
 
-                  {/* Score indicator */}
-                  <div className="flex flex-wrap gap-2">
+                  {/* Inline SEO fields */}
+                  <div className="space-y-4">
+
+                    {/* Meta title */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-semibold text-gray-700">
+                          Meta Title
+                        </label>
+                        {titleCustomized ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSeoMeta((prev) => ({ ...prev, meta_title: name, og_title: name, twitter_title: name }));
+                              setTitleCustomized(false);
+                            }}
+                            className="text-[11px] text-amber-600 hover:text-amber-800 flex items-center gap-1 transition-colors"
+                          >
+                            <RotateCcw className="w-3 h-3" /> Sync with name
+                          </button>
+                        ) : (
+                          <span className="text-[11px] text-emerald-600 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> Synced with name
+                          </span>
+                        )}
+                      </div>
+                      <Input
+                        value={seoMeta.meta_title}
+                        onChange={(e) => {
+                          setSeoMeta((prev) => ({ ...prev, meta_title: e.target.value }));
+                          setTitleCustomized(true);
+                        }}
+                        placeholder="Enter meta title (max 60 chars)"
+                        maxLength={60}
+                        className="h-10 rounded-xl border-gray-200"
+                      />
+                      <p className="text-xs text-gray-400 text-right">{seoMeta.meta_title?.length || 0}/60</p>
+                    </div>
+
+                    {/* Meta description */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-semibold text-gray-700">
+                          Meta Description
+                        </label>
+                        {descCustomized ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const truncated = description.length > 160 ? description.substring(0, 157) + "..." : description;
+                              setSeoMeta((prev) => ({ ...prev, meta_description: truncated, og_description: truncated, twitter_description: truncated }));
+                              setDescCustomized(false);
+                            }}
+                            className="text-[11px] text-amber-600 hover:text-amber-800 flex items-center gap-1 transition-colors"
+                          >
+                            <RotateCcw className="w-3 h-3" /> Sync with description
+                          </button>
+                        ) : (
+                          <span className="text-[11px] text-emerald-600 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> Synced with description
+                          </span>
+                        )}
+                      </div>
+                      <textarea
+                        value={seoMeta.meta_description}
+                        onChange={(e) => {
+                          setSeoMeta((prev) => ({ ...prev, meta_description: e.target.value }));
+                          setDescCustomized(true);
+                        }}
+                        placeholder="Enter meta description (max 160 chars)"
+                        maxLength={160}
+                        rows={3}
+                        className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 resize-none"
+                      />
+                      <p className={`text-xs text-right ${(seoMeta.meta_description?.length || 0) > 150 ? "text-amber-500" : "text-gray-400"}`}>
+                        {seoMeta.meta_description?.length || 0}/160
+                      </p>
+                    </div>
+
+                    {/* Keywords */}
+                    <Field label="Meta Keywords" hint="Comma-separated — e.g. cotton shirt, casual wear">
+                      <Input
+                        value={seoMeta.meta_keywords}
+                        onChange={(e) => setSeoMeta((prev) => ({ ...prev, meta_keywords: e.target.value }))}
+                        placeholder="keyword1, keyword2, keyword3"
+                        className="h-10 rounded-xl border-gray-200"
+                      />
+                    </Field>
+                  </div>
+
+                  {/* Score chips */}
+                  <div className="flex flex-wrap gap-2 pt-1">
                     {[
-                      { label: "Title", ok: !!seoMeta.meta_title },
+                      { label: "Title",       ok: !!seoMeta.meta_title },
                       { label: "Description", ok: !!seoMeta.meta_description },
-                      { label: "Keywords", ok: !!seoMeta.meta_keywords },
-                      { label: "OG Tags", ok: !!seoMeta.og_title },
+                      { label: "Keywords",    ok: !!seoMeta.meta_keywords },
+                      { label: "OG Tags",     ok: !!seoMeta.og_title },
                     ].map(({ label, ok }) => (
                       <span
                         key={label}
@@ -888,12 +975,13 @@ export default function ProductAddPage() {
                     ))}
                   </div>
 
+                  {/* Advanced button */}
                   <button
                     onClick={() => setShowSeoModal(true)}
-                    className="w-full py-3 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                    className="w-full py-2.5 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-600 text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
                   >
-                    <Search className="w-4 h-4" />
-                    Edit Full SEO Settings
+                    <Globe className="w-4 h-4" />
+                    Advanced SEO (OG, Twitter, Schema, Indexing)
                   </button>
                 </TabsContent>
               </Tabs>
@@ -1044,7 +1132,7 @@ export default function ProductAddPage() {
                       value={seoMeta.meta_title}
                       onChange={(e) => {
                         setSeoMeta((prev) => ({ ...prev, meta_title: e.target.value }));
-                        hasManuallyEditedTitle.current = true;
+                        setTitleCustomized(true);
                       }}
                       placeholder="Enter meta title"
                       maxLength={60}
@@ -1056,7 +1144,7 @@ export default function ProductAddPage() {
                       value={seoMeta.meta_description}
                       onChange={(e) => {
                         setSeoMeta((prev) => ({ ...prev, meta_description: e.target.value }));
-                        hasManuallyEditedDesc.current = true;
+                        setDescCustomized(true);
                       }}
                       placeholder="Enter meta description"
                       maxLength={160}

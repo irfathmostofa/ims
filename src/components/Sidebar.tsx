@@ -316,8 +316,8 @@ export default function Sidebar({
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
-              className="flex-1 bg-transparent text-xs outline-none placeholder-gray-600"
-              style={{ color: "#e2e8f0" }}
+              className="flex-1 bg-transparent text-xs outline-none placeholder-gray-200"
+              style={{ color: "#fff" }}
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery("")}>
@@ -423,7 +423,7 @@ export default function Sidebar({
                           isOpen || hasActive
                             ? "rgba(246,136,38,0.12)"
                             : "transparent",
-                        color: isOpen || hasActive ? "#f68826" : "#94a3b8",
+                        color: isOpen || hasActive ? "#f68826" : "#fff",
                       }}
                       onMouseEnter={(e) => {
                         if (!isOpen && !hasActive)
@@ -482,7 +482,7 @@ export default function Sidebar({
                         background: isActive
                           ? "rgba(246,136,38,0.15)"
                           : "transparent",
-                        color: isActive ? "#f68826" : "#94a3b8",
+                        color: isActive ? "#f68826" : "#fff",
                       })}
                       onMouseEnter={(e) => {
                         const isActive = location.pathname === item.path;
@@ -569,26 +569,26 @@ export default function Sidebar({
                               onClick={() => setSidebarOpen(false)}
                               className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all"
                               style={{
-                                color: isChildActive ? "#f68826" : "#64748b",
+                                color: isChildActive ? "#f68826" : "#fff",
                                 background: isChildActive
                                   ? "rgba(246,136,38,0.08)"
                                   : "transparent",
                                 fontWeight: isChildActive ? 600 : 400,
                               }}
-                              onMouseEnter={(e) => {
-                                if (!isChildActive) {
-                                  e.currentTarget.style.color = "#cbd5e1";
-                                  e.currentTarget.style.background =
-                                    "rgba(255,255,255,0.04)";
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!isChildActive) {
-                                  e.currentTarget.style.color = "#64748b";
-                                  e.currentTarget.style.background =
-                                    "transparent";
-                                }
-                              }}
+                              // onMouseEnter={(e) => {
+                              //   if (!isChildActive) {
+                              //     e.currentTarget.style.color = "#cbd5e1";
+                              //     e.currentTarget.style.background =
+                              //       "rgba(255,255,255,0.07)";
+                              //   }
+                              // }}
+                              // onMouseLeave={(e) => {
+                              //   if (!isChildActive) {
+                              //     e.currentTarget.style.color = "#64748b";
+                              //     e.currentTarget.style.background =
+                              //       "transparent";
+                              //   }
+                              // }}
                             >
                               <span
                                 className="w-1 h-1 rounded-full flex-shrink-0 transition-all"
@@ -661,10 +661,10 @@ export default function Sidebar({
 
           <p
             className="text-center text-[10px]"
-            style={{ color: "#334155", fontFamily: "'Montserrat', sans-serif" }}
+            style={{ color: "#fff", fontFamily: "'Montserrat', sans-serif" }}
           >
             © {new Date().getFullYear()} UniStock
-            <span className="ml-1 font-semibold" style={{ color: "#4a5568" }}>
+            <span className="ml-1 font-semibold" style={{ color: "#fff" }}>
               Pro
             </span>
           </p>

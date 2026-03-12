@@ -43,25 +43,55 @@ type Product = {
   primary_variant_id: number | null;
 };
 
+type Pagination = {
+  currentPage: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+};
+
 export default function AllProductsPage() {
   const router = useNavigate();
   const [loader, setLoading] = useState(false);
   const [update, setUpdate] = useState(0);
   const [products, setProducts] = useState<Product[]>([]);
+  const [pagination, setPagination] = useState<Pagination>({
+    currentPage: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
 
-  const fetchData = async () => {
+  // Current page tracked here — changing it triggers a re-fetch
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const fetchData = async (page: number) => {
     try {
       setLoading(true);
       const data = await apiClient(
         `${import.meta.env.VITE_SERVER}/product/get-all-products`,
         {
           method: "POST",
-          data: { page: 1, limit: 10 },
+          data: { page, limit: 10 },
           tokenType: "jwt",
         },
       );
 
       setProducts(data.data.data || []);
+      setPagination(
+        data.data.pagination || {
+          currentPage: page,
+          limit: 10,
+          total: 0,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
+      );
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Failed to fetch products");
@@ -70,10 +100,15 @@ export default function AllProductsPage() {
     }
   };
 
+  // Re-fetch whenever page changes or a delete triggers `update`
   useEffect(() => {
-    fetchData();
-  }, [update]);
-  // console.log(products);
+    fetchData(currentPage);
+  }, [currentPage, update]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   const deleteProduct = async (p: Product) => {
     if (!confirm(`Delete product "${p.name}"?`)) return;
 
@@ -88,7 +123,14 @@ export default function AllProductsPage() {
         },
       );
       toast.success(result.message || "Product deleted!");
-      setUpdate((prev) => prev + 1);
+
+      // If we deleted the last item on this page, go back one page
+      const isLastItemOnPage = products.length === 1 && currentPage > 1;
+      if (isLastItemOnPage) {
+        setCurrentPage((prev) => prev - 1);
+      } else {
+        setUpdate((prev) => prev + 1);
+      }
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Failed to delete product");
@@ -96,6 +138,7 @@ export default function AllProductsPage() {
       setLoading(false);
     }
   };
+
   const transformedProducts = products.map((product) => ({
     ...product,
     primaryImage:
@@ -103,6 +146,7 @@ export default function AllProductsPage() {
       product.images?.[0]?.url ||
       null,
   }));
+
   return (
     <div className="p-6">
       <Breadcrumbs
@@ -115,7 +159,6 @@ export default function AllProductsPage() {
       <div className="flex flex-col md:flex-row justify-between items-center gap-3 mb-4">
         <h1 className="text-2xl font-bold text-bw-900">All Products</h1>
         <div className="flex gap-4 items-center">
-          {" "}
           <Link
             to="/inventory/products/bulk"
             className="flex items-center gap-2 btn-bw-primary"
@@ -151,11 +194,16 @@ export default function AllProductsPage() {
               A: "Active",
               I: "Inactive",
             };
-            return statusMap[value];
+            return statusMap[value] ?? value;
           },
         }}
-        rowsPerPage={10}
+        rowsPerPage={pagination.limit}
         loading={loader}
+        // ── Server-side pagination props ──
+        pagination
+        page={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        onPageChange={handlePageChange}
         printHead={[
           { label: "Code", value: "code" },
           { label: "Product Name", value: "name" },
@@ -180,8 +228,8 @@ export default function AllProductsPage() {
           },
           {
             label: <Trash size={16} className="inline" />,
-            onClick: (row) => deleteProduct(row),
             title: "Delete",
+            onClick: (row) => deleteProduct(row),
           },
         ]}
       />

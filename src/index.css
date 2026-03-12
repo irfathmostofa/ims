@@ -1,67 +1,85 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+
 * {
   font-family: "Tiro Bangla", serif;
 }
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
 .btn-peach {
   @apply bg-[#1d2226] text-white hover:bg-[#374151] font-semibold px-6 py-2 rounded-lg;
 }
-/* Background Colors */
+
+/* ── Background Colors ────────────────────────────────────────────────── */
 .bg-bw-30 {
   background-color: #f9fafb;
-} /* Light main background */
+} /* Light page background     */
 .bg-bw-50 {
   background-color: #eeeeee;
-} /* Light main background */
+} /* Light main background     */
 .bg-bw-100 {
   background-color: #f3f4f6;
 } /* Cards, panels, highlights */
 .bg-bw-200 {
   background-color: #e5e7eb;
-} /* Borders / dividers */
+} /* Borders / dividers        */
 .bg-bw-700 {
   background-color: #024343;
-} /* Hover / active elements */
+} /* Hover / active elements   */
+.bg-bw-800 {
+  background-color: #1a2535;
+} /* Slightly lighter dark      */
 .bg-bw-900 {
-  background-color: #1d2226;
-} /* Sidebar / Header / primary buttons */
+  background-color: #0f1923;
+} /* Sidebar / Header bg       */
 
-/* Text Colors */
+/* ── Text Colors ──────────────────────────────────────────────────────── */
 .text-bw-50 {
   color: #f9fafb;
-}
+} /* Brightest — page bg contrast   */
 .text-bw-100 {
   color: #f3f4f6;
-}
+} /* Primary text on dark bg        */
 .text-bw-200 {
   color: #e5e7eb;
-}
+} /* Secondary text on dark bg      */
+.text-bw-400 {
+  color: #94a3b8;
+} /* Muted text — still readable    */
 .text-bw-500 {
-  color: #6b7280;
-} /* Secondary text */
+  color: #8899aa;
+} /* Subtle labels on dark bg       */
+.text-bw-600 {
+  color: #7a8fa6;
+} /* Timestamps, hints on dark bg   */
 .text-bw-700 {
   color: #374151;
-} /* Hover / muted text */
+} /* Muted text on light bg         */
 .text-bw-800 {
   color: #1f2937;
-} /* Primary text */
+} /* Primary text on light bg       */
 .text-bw-900 {
   color: #1d2226;
-} /* Sidebar / Header text */
+} /* Darkest — headings on light bg */
 
-/* Borders */
+/* ── Border Colors ────────────────────────────────────────────────────── */
 .border-bw-200 {
   border-color: #e5e7eb;
 }
 .border-bw-300 {
   border-color: #d1d5db;
 }
+.border-bw-700 {
+  border-color: rgba(255, 255, 255, 0.08);
+} /* dark theme dividers */
+
+/* ── Primary Button / Badge ───────────────────────────────────────────── */
 .bw-primary {
   background-color: #1d2226;
   color: white;
   transition: background-color 0.2s ease-in-out;
 }
-/* Buttons */
+
 .btn-bw-primary {
   background-color: #1d2226;
   color: white;
@@ -72,184 +90,62 @@
 .btn-bw-primary:hover {
   background-color: #374151;
 }
+
+/* ── Active States ────────────────────────────────────────────────────── */
 .active {
   background-color: #f68826;
   color: white;
 }
 .active-hover {
-  background-color: #f687267c;
+  background-color: rgba(246, 136, 38, 0.48);
   color: white;
 }
-/* Accent / Highlights */
+
+/* ── Accent ───────────────────────────────────────────────────────────── */
 .accent-bw {
   color: #f3f4f6;
-} /* for badges, small highlights */
-/* Hide all print-only stuff on screen */
-@media screen {
-  .print_section,
-  .print-only {
-    display: none;
-  }
 }
 
-/* Show only print_section when printing */
-@media print {
-  body {
-    background: #fff !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* Prevent all other UI from appearing */
-  body * {
-    visibility: hidden !important;
-  }
-
-  /* Print Section */
-  .print_section,
-  .print_section * {
-    visibility: visible !important;
-  }
-
-  .print_section {
-    position: absolute !important;
-    top: 0;
-    left: 0;
-    width: 100%;
-    padding: 10mm;
-    background: #fff !important;
-    box-sizing: border-box;
-  }
-
-  /* Ensure barcode area always prints */
-  #barcodeArea {
-    display: block !important;
-    position: relative;
-    width: 100%;
-  }
-
-  /* A4 setup */
-  @page {
-    size: A4 portrait;
-    margin: 10mm;
-  }
-
-  /* Label card design */
-  .label-card {
-    width: 180px; /* Fixed label width */
-    height: 100px; /* Fixed label height */
-    padding: 6px 4px;
-    box-sizing: border-box;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    page-break-inside: avoid;
-    background: #fff;
-  }
-
-  /* Grid layout for consistent A4 alignment */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    justify-content: center;
-    gap: 10px;
-  }
-
-  /* Avoid cutting groups */
-  .break-inside-avoid {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  /* Typography */
-  h1,
-  h2 {
-    color: #000;
-    margin: 0;
-    padding: 0;
-  }
-
-  p {
-    color: #000;
-  }
-
-  .truncate {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  /* Center page header */
-  .text-center {
-    text-align: center;
-  }
-}
-
-/* Custom Scrollbar */
+/* ── Custom Scrollbar ─────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 6px; /* scrollbar width */
+  width: 6px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #1d2226; /* track color */
+  background: #1d2226;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #4b5563; /* thumb color */
-  border-radius: 9999px; /* rounded scrollbar */
+  background: #4b5563;
+  border-radius: 9999px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #6b7280; /* hover effect */
+  background: #6b7280;
 }
-
-/* Firefox */
 * {
   scrollbar-width: thin;
   scrollbar-color: #4b5563 #1d2226;
 }
-@media print {
-  body * {
-    visibility: hidden;
-  }
-  #invoice-content,
-  #invoice-content * {
-    visibility: visible;
-  }
-  #invoice-content {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
-  button {
-    display: none !important;
-  }
-}
+
+/* Hide nav scrollbar */
 nav::-webkit-scrollbar {
-  width: 0px;
+  width: 0;
   background: transparent;
 }
-
 nav {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
+/* ── Login Page ───────────────────────────────────────────────────────── */
 .loginbg {
   background-image: url("../src/assets/loginpage.jpg");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
 }
-
-/* Optional: Add a subtle pattern overlay */
 .loginbg::after {
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background-image:
     radial-gradient(
       circle at 25% 25%,
@@ -264,13 +160,12 @@ nav {
   background-size: 50px 50px;
   z-index: 1;
 }
-
 .loginbg > * {
   position: relative;
   z-index: 2;
 }
 
-/* Add to your global.css or tailwind.css */
+/* ── Animations ───────────────────────────────────────────────────────── */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -279,7 +174,6 @@ nav {
     opacity: 1;
   }
 }
-
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -290,7 +184,6 @@ nav {
     transform: translateY(0);
   }
 }
-
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -301,7 +194,6 @@ nav {
     transform: translateY(0);
   }
 }
-
 @keyframes slideLeft {
   from {
     opacity: 0;
@@ -312,7 +204,6 @@ nav {
     transform: translateX(0);
   }
 }
-
 @keyframes slideRight {
   from {
     opacity: 0;
@@ -327,19 +218,113 @@ nav {
 .animate-fadeIn {
   animation: fadeIn 0.6s ease-out forwards;
 }
-
 .animate-slideDown {
   animation: slideDown 0.6s ease-out forwards;
 }
-
 .animate-slideUp {
   animation: slideUp 0.6s ease-out forwards;
 }
-
 .animate-slideLeft {
   animation: slideLeft 0.6s ease-out forwards;
 }
-
 .animate-slideRight {
   animation: slideRight 0.6s ease-out forwards;
+}
+
+/* ── Print Styles ─────────────────────────────────────────────────────── */
+@media screen {
+  .print_section,
+  .print-only {
+    display: none;
+  }
+}
+
+@media print {
+  body {
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body * {
+    visibility: hidden !important;
+  }
+
+  .print_section,
+  .print_section * {
+    visibility: visible !important;
+  }
+  .print_section {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 10mm;
+    background: #fff !important;
+    box-sizing: border-box;
+  }
+
+  #barcodeArea {
+    display: block !important;
+    position: relative;
+    width: 100%;
+  }
+  #invoice-content,
+  #invoice-content * {
+    visibility: visible;
+  }
+  #invoice-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  .label-card {
+    width: 180px;
+    height: 100px;
+    padding: 6px 4px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    page-break-inside: avoid;
+    background: #fff;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  h1,
+  h2 {
+    color: #000;
+    margin: 0;
+    padding: 0;
+  }
+  p {
+    color: #000;
+  }
+  button {
+    display: none !important;
+  }
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .text-center {
+    text-align: center;
+  }
 }
