@@ -240,15 +240,6 @@ export default function SendMessagePage() {
       payload.party_id = partyId;
     }
 
-    console.log(
-      "Sending to phones:",
-      sendMode === "bulk" ? allPhones : singlePhone,
-    );
-    console.log(
-      "Total recipients:",
-      sendMode === "bulk" ? allPhones.length : 1,
-    );
-
     try {
       setSending(true);
       const response = await apiClient(
