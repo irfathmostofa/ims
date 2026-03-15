@@ -107,6 +107,7 @@ export default function ProductCardSettings({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="default">Default</SelectItem>
+                      <SelectItem value="simple">Simple</SelectItem>
                       <SelectItem value="minimal">Minimal</SelectItem>
                       <SelectItem value="detailed">Detailed</SelectItem>
                       <SelectItem value="hover-effect">Hover Effect</SelectItem>
