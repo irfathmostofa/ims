@@ -112,7 +112,7 @@ export default function SectionsSettings({
   useEffect(() => {
     fetchCategories();
   }, []);
-
+  console.log(categories, "new");
   useEffect(() => {
     if (data) {
       setFormData(data);

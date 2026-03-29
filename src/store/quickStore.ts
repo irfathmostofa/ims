@@ -237,18 +237,14 @@ export const useQuickStore = create<StoreState>()(
       },
 
       // Fetch Categories
-      fetchCategories: async (params = {}) => {
+      fetchCategories: async () => {
         try {
           set({ loading: true, error: null });
 
           const result = await apiClient<ApiResponse<Category[]>>(
             `${import.meta.env.VITE_SERVER}/product/get-product-cat`,
             {
-              method: "POST", // Changed to POST to support params
-              tokenType: "jwt",
-              data: {
-                parent_id: params.parent_id || null,
-              },
+              method: "GET",
             },
           );
 
