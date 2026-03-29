@@ -70,6 +70,7 @@ const navItems: NavItem[] = [
       { name: "Order Return", path: "/order/return" },
       { name: "Coupon Management", path: "/order/coupon" },
       { name: "Logistics", path: "/order/logistics" },
+      { name: "Enquiries", path: "/order/enquiries" },
     ],
   },
   {

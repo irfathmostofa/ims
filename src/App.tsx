@@ -69,6 +69,7 @@ import SendMessagePage from "./pages/Marketing/SendMessagePage";
 import SendMobileMessagePage from "./pages/Marketing/SendMobileMessagePage";
 import WebsiteSetupPage from "./pages/Website/websiteSetupPage";
 import SeoPage from "./pages/SEO/SeoPage";
+import EnquiriesPage from "./pages/Orders/EnquiriesPage";
 
 export default function App() {
   return (
@@ -249,6 +250,7 @@ export default function App() {
                 <Route path="/order/return" element={<OrderReturn />} />
                 <Route path="/order/coupon" element={<CouponMgmt />} />
                 <Route path="/order/logistics" element={<Logistics />} />
+                <Route path="/order/enquiries" element={<EnquiriesPage />} />
 
                 {/* Customers */}
                 <Route
