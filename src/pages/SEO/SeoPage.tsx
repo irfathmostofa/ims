@@ -362,7 +362,7 @@ export default function SeoPage() {
     }
     return true;
   };
-
+  console.log(form);
   const handleSave = async () => {
     if (!validateForm()) {
       toast.error("Please fill all required fields");
