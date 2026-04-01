@@ -202,7 +202,7 @@ export default function SeoPage() {
   const [keywordData, setKeywordData] = useState<SeoKeyword[]>([]);
   const [sitemapData, setSitemapData] = useState<SeoSitemap[]>([]);
   const [updateTrigger, setUpdateTrigger] = useState(0);
-
+  console.log(form);
   useEffect(() => {
     fetchProducts();
     fetchCategories();
@@ -362,7 +362,11 @@ export default function SeoPage() {
     }
     return true;
   };
-  console.log(form);
+  const cleanFormData = (data: any): any => {
+    const cleaned = { ...data };
+    delete cleaned.entity_display;
+    return cleaned;
+  };
   const handleSave = async () => {
     if (!validateForm()) {
       toast.error("Please fill all required fields");
@@ -380,7 +384,7 @@ export default function SeoPage() {
 
           await apiClient<ApiResponse>(endpoint, {
             method: "POST",
-            data: metaForm,
+            data: cleanFormData(metaForm),
             tokenType: "jwt",
           });
           break;
@@ -394,7 +398,7 @@ export default function SeoPage() {
 
           await apiClient<ApiResponse>(endpoint, {
             method: "POST",
-            data: redirectForm,
+            data: cleanFormData(redirectForm),
             tokenType: "jwt",
           });
           break;
@@ -408,7 +412,7 @@ export default function SeoPage() {
 
           await apiClient<ApiResponse>(endpoint, {
             method: "POST",
-            data: keywordForm,
+            data: cleanFormData(keywordForm),
             tokenType: "jwt",
           });
           break;
@@ -422,7 +426,7 @@ export default function SeoPage() {
 
           await apiClient<ApiResponse>(endpoint, {
             method: "POST",
-            data: sitemapForm,
+            data: cleanFormData(sitemapForm),
             tokenType: "jwt",
           });
           break;
@@ -729,6 +733,24 @@ export default function SeoPage() {
             />
             <p className="text-xs text-slate-500">
               {metaForm.meta_description?.length || 0}/160 characters
+            </p>
+          </div>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-slate-600">
+              Meta Keywords
+            </label>
+            <input
+              type="text"
+              placeholder="Comma-separated keywords"
+              className="w-full px-4 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              value={metaForm.meta_keywords || ""}
+              onChange={(e) =>
+                setForm({ ...metaForm, meta_keywords: e.target.value })
+              }
+            />
+            <p className="text-xs text-slate-500">
+              {metaForm.meta_keywords?.length || 0} characters, separate with
+              commas
             </p>
           </div>
 
@@ -1332,7 +1354,7 @@ export default function SeoPage() {
                           />
                         </div>
                         <span className="font-semibold text-slate-700 w-8">
-                          {(item.priority || 0.5).toFixed(1)}
+                          {item.priority}
                         </span>
                       </div>
                     </td>
@@ -1391,7 +1413,7 @@ export default function SeoPage() {
 
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all">
+                <Button className="flex items-center gap-2 btn-bw-primary text-white px-5 py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all">
                   <Plus size={18} />
                   Add New
                 </Button>
