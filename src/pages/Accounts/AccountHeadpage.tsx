@@ -190,8 +190,8 @@ export default function AccountHeadpage() {
                   {loading
                     ? "Saving..."
                     : form.id
-                    ? "Update Account"
-                    : "Add Account"}
+                      ? "Update Account"
+                      : "Add Account"}
                 </Button>
               </div>
             </div>
@@ -204,7 +204,15 @@ export default function AccountHeadpage() {
         label="Accounts List"
         selectable
         loading={loading}
-        rowsPerPage={20}
+        rowsPerPage={100}
+        printHead={[
+          { label: "Code",value: "code" },
+          { label: "Head",value: "name" },
+          { label: "Type",value: "type" },
+          { label: "Parent Head",value: "parent_id" },
+          { label: "Status",value: "status" },
+        ]}
+        // pagination
         showColumns={[
           {
             key: "code",

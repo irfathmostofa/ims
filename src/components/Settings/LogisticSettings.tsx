@@ -100,6 +100,29 @@ export default function LogisticSettings({
         dhaka: 1.0,
         outside_dhaka: 1.5,
       },
+      pickup_locations: [
+        {
+          id: "main-warehouse",
+          name: "Main Warehouse",
+          name_bn: "মূল গুদাম",
+          address: "123 Business Street, Dhaka",
+          address_bn: "123 ব্যবসা রাস্তা, ঢাকা",
+          phone: "+880123456789",
+          email: "pickup@example.com",
+          contact_person: "John Doe",
+          city: "Dhaka",
+          state: "Dhaka Division",
+          postal_code: "1206",
+          latitude: "23.8103",
+          longitude: "90.4125",
+          opening_time: "09:00",
+          closing_time: "18:00",
+          working_days: "Monday - Friday",
+          notes: "Main pickup point for all orders",
+          status: true,
+          pickup_type: "standard",
+        },
+      ],
       tracking: {
         enable_tracking: true,
         tracking_page_url: "/track-order",
@@ -187,6 +210,67 @@ export default function LogisticSettings({
     onChange(updated);
   };
 
+  // Pickup Location Handlers
+  const addPickupLocation = () => {
+    const newLocation = {
+      id: `location-${Date.now()}`,
+      name: "New Pickup Location",
+      name_bn: "নতুন পিকআপ লোকেশন",
+      address: "",
+      address_bn: "",
+      phone: "",
+      email: "",
+      contact_person: "",
+      city: "",
+      state: "",
+      postal_code: "",
+      latitude: "",
+      longitude: "",
+      opening_time: "09:00",
+      closing_time: "18:00",
+      working_days: "Monday - Friday",
+      notes: "",
+      status: true,
+      pickup_type: "standard",
+    };
+    handleChange("pickup_locations", [
+      ...(formData.pickup_locations || []),
+      newLocation,
+    ]);
+  };
+
+  const updatePickupLocation = (index: number, field: string, value: any) => {
+    const updated = { ...formData };
+    if (!updated.pickup_locations) {
+      updated.pickup_locations = [];
+    }
+    updated.pickup_locations[index] = {
+      ...updated.pickup_locations[index],
+      [field]: value,
+    };
+    setFormData(updated);
+    onChange(updated);
+  };
+
+  const removePickupLocation = (index: number) => {
+    const updated = { ...formData };
+    updated.pickup_locations = updated.pickup_locations.filter(
+      (_: any, i: number) => i !== index,
+    );
+    setFormData(updated);
+    onChange(updated);
+  };
+
+  const toggleLocationStatus = (index: number) => {
+    const updated = { ...formData };
+    updated.pickup_locations[index] = {
+      ...updated.pickup_locations[index],
+      status: !updated.pickup_locations[index].status,
+    };
+    setFormData(updated);
+    onChange(updated);
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -218,6 +302,7 @@ export default function LogisticSettings({
               <TabsTrigger value="steadfast">Steadfast</TabsTrigger>
               <TabsTrigger value="shipping">Shipping Methods</TabsTrigger>
               <TabsTrigger value="cod">COD Charges</TabsTrigger>
+              <TabsTrigger value="pickup">Pick Up</TabsTrigger>
               <TabsTrigger value="tracking">Tracking</TabsTrigger>
             </TabsList>
 
@@ -1217,6 +1302,346 @@ export default function LogisticSettings({
                       Percentage charged on COD orders outside Dhaka
                     </p>
                   </div>
+                </div>
+              </Card>
+            </TabsContent>
+
+            {/* Pickup Locations Tab */}
+            <TabsContent value="pickup" className="space-y-4">
+              <Card className="p-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-medium">Pickup Locations</h3>
+                  <Button
+                    onClick={addPickupLocation}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Add Location
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  {(formData.pickup_locations || []).map(
+                    (location: any, index: number) => (
+                      <Card
+                        key={location.id || index}
+                        className="p-4 border-l-4 border-l-green-500"
+                      >
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="font-medium">
+                            {location.name || `Location ${index + 1}`}
+                          </h4>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleLocationStatus(index)}
+                            >
+                              {location.status ? (
+                                <Eye className="w-4 h-4" />
+                              ) : (
+                                <EyeOff className="w-4 h-4" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => removePickupLocation(index)}
+                            >
+                              <Trash className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Location Name</Label>
+                            <Input
+                              value={location.name || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "name",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="e.g., Main Warehouse"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Location Name (Bengali)</Label>
+                            <Input
+                              value={location.name_bn || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "name_bn",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="যেমন, মেইন গুদাম"
+                            />
+                          </div>
+
+                          <div className="space-y-2 col-span-2">
+                            <Label>Address</Label>
+                            <Input
+                              value={location.address || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "address",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="123 Business Street, Dhaka"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Address (Bengali)</Label>
+                            <Input
+                              value={location.address_bn || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "address_bn",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="বাংলায় ঠিকানা"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Phone Number</Label>
+                            <Input
+                              value={location.phone || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "phone",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="+880123456789"
+                              type="tel"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Email</Label>
+                            <Input
+                              value={location.email || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "email",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="pickup@example.com"
+                              type="email"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Contact Person</Label>
+                            <Input
+                              value={location.contact_person || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "contact_person",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="John Doe"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>City</Label>
+                            <Input
+                              value={location.city || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "city",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Dhaka"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>State/Division</Label>
+                            <Input
+                              value={location.state || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "state",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Dhaka Division"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Postal Code</Label>
+                            <Input
+                              value={location.postal_code || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "postal_code",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="1206"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Latitude</Label>
+                            <Input
+                              value={location.latitude || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "latitude",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="23.8103"
+                              type="number"
+                              step="0.0001"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Longitude</Label>
+                            <Input
+                              value={location.longitude || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "longitude",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="90.4125"
+                              type="number"
+                              step="0.0001"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Opening Time</Label>
+                            <Input
+                              value={location.opening_time || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "opening_time",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="09:00 AM"
+                              type="time"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Closing Time</Label>
+                            <Input
+                              value={location.closing_time || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "closing_time",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="06:00 PM"
+                              type="time"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Working Days</Label>
+                            <Input
+                              value={location.working_days || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "working_days",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Monday - Friday"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Notes</Label>
+                            <Input
+                              value={location.notes || ""}
+                              onChange={(e) =>
+                                updatePickupLocation(
+                                  index,
+                                  "notes",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Additional instructions or notes"
+                            />
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={location.status || true}
+                              onCheckedChange={(checked) =>
+                                updatePickupLocation(index, "status", checked)
+                              }
+                            />
+                            <Label>Active</Label>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Pickup Type</Label>
+                            <Select
+                              value={location.pickup_type || "standard"}
+                              onValueChange={(value) =>
+                                updatePickupLocation(
+                                  index,
+                                  "pickup_type",
+                                  value,
+                                )
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="standard">
+                                  Standard
+                                </SelectItem>
+                                <SelectItem value="express">Express</SelectItem>
+                                <SelectItem value="overnight">
+                                  Overnight
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </Card>
+                    ),
+                  )}
                 </div>
               </Card>
             </TabsContent>

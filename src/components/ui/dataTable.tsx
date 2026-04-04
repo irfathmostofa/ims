@@ -367,8 +367,11 @@ export function DataTable<T extends Record<string, any>>({
                         }))
                     ).map((col: any, colIndex: number) => {
                       const value = row[col.value];
-                      const date = new Date(value);
-                      const isValidDate = !isNaN(date.getTime());
+                      const isDateString =
+                        typeof value === "string" &&
+                        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value);
+                      const date = isDateString ? new Date(value) : null;
+                      const isValidDate = date && !isNaN(date.getTime());
                       return (
                         <td key={colIndex} className="border p-2">
                           {isValidDate ? formatDate(date) : value}
