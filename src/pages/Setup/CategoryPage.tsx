@@ -241,7 +241,7 @@ export default function CategoryPage() {
         label="Category List"
         showColumns={["code", "name", "Parent", "image"]}
         selectable
-        rowsPerPage={10}
+        rowsPerPage={1000}
         loading={loading}
         actions={[
           {
