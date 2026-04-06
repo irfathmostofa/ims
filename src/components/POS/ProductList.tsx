@@ -79,11 +79,9 @@ export default function ProductList({
   setCategory,
   addToCart,
   update,
-  setUpdate,
 }: {
   search: string;
   update: number;
-  setUpdate: (u: number) => void;
   setSearch: (s: string) => void;
   category: string;
   setCategory: (cat: string) => void;

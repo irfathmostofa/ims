@@ -228,7 +228,6 @@ export default function POSPage() {
         <ProductList
           search={search}
           update={update}
-          setUpdate={setUpdate}
           setSearch={setSearch}
           category={category}
           setCategory={setCategory}

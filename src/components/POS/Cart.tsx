@@ -255,8 +255,8 @@ export default function Cart({
 
   // ─── Display total ───────────────────────────────────────────────────────────
 
-  const displayTotal =
-    paymentType === "DUE" ? 0 : paymentType === "PARTIAL" ? totalPAID : total;
+  // const displayTotal =
+  //   paymentType === "DUE" ? 0 : paymentType === "PARTIAL" ? totalPAID : total;
 
   return (
     <div className="w-full md:w-96 bg-white p-4 rounded-lg shadow-md flex flex-col border border-bw-200 h-full">
@@ -464,7 +464,7 @@ export default function Cart({
               </div>
 
               <div className="space-y-2">
-                {payments.map((p, idx) => {
+                {payments.map((p) => {
                   const otherPAID = payments
                     .filter((x) => x.id !== p.id)
                     .reduce((s, x) => s + (parseFloat(x.amount) || 0), 0);
