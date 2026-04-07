@@ -9,8 +9,6 @@ import { useAuthStore } from "@/store/authStore";
 import { useState } from "react";
 import { toast } from "sonner";
 
-// ProductCategory is no longer imported — categories are now inside ProductList
-
 type CartItem = {
   id: number;
   name: string;
