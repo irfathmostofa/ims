@@ -31,7 +31,7 @@ export default function SetupWizard() {
   };
 
   return (
-    <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-6">
+    <div className="w-full  bg-white rounded-2xl shadow-xl p-6">
       <ProgressStepper steps={steps} currentStep={currentStep} />
 
       {currentStep === 0 && (

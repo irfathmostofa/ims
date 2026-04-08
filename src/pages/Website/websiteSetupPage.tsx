@@ -206,7 +206,21 @@ export default function WebsiteSetupPage() {
         new_badge: "#006747",
         discount_badge: "#F68B1E",
       },
-      // ... other defaults
+      typography: {
+        body_font: "Roboto, sans-serif",
+        heading_font: "Poppins, sans-serif",
+        base_font_size: 16,
+        heading_sizes: {
+          h1: 32,
+          h2: 28,
+          h3: 24,
+          h4: 20,
+          h5: 18,
+          h6: 16,
+        },
+        line_height: 1.5,
+        letter_spacing: 0,
+      },
     };
     return defaults[section] || {};
   };
@@ -271,15 +285,6 @@ export default function WebsiteSetupPage() {
           <TabsTrigger value="hero" className="px-4 py-2">
             Hero
           </TabsTrigger>
-          {/* <TabsTrigger value="sidemenu" className="px-4 py-2">
-            Side Menu
-          </TabsTrigger>
-          <TabsTrigger value="carousel" className="px-4 py-2">
-            Carousel
-          </TabsTrigger>
-          <TabsTrigger value="banner" className="px-4 py-2">
-            Banner
-          </TabsTrigger> */}
           <TabsTrigger value="sections" className="px-4 py-2">
             Sections
           </TabsTrigger>
@@ -348,33 +353,6 @@ export default function WebsiteSetupPage() {
               saving={saving}
             />
           </TabsContent>
-
-          {/* <TabsContent value="sidemenu">
-            <SideMenuSettings
-              data={configData.sidemenu?.value}
-              onChange={(data) => handleSectionChange("sidemenu", data)}
-              onSave={() => handleSaveSection("sidemenu")}
-              saving={saving}
-            />
-          </TabsContent>
-
-          <TabsContent value="carousel">
-            <CarouselSettings
-              data={configData.carousal?.value}
-              onChange={(data) => handleSectionChange("carousal", data)}
-              onSave={() => handleSaveSection("carousal")}
-              saving={saving}
-            />
-          </TabsContent>
-
-          <TabsContent value="banner">
-            <BannerSettings
-              data={configData.banner?.value}
-              onChange={(data) => handleSectionChange("banner", data)}
-              onSave={() => handleSaveSection("banner")}
-              saving={saving}
-            />
-          </TabsContent> */}
 
           <TabsContent value="sections">
             <SectionsSettings

@@ -70,6 +70,7 @@ import SendMobileMessagePage from "./pages/Marketing/SendMobileMessagePage";
 import WebsiteSetupPage from "./pages/Website/websiteSetupPage";
 import SeoPage from "./pages/SEO/SeoPage";
 import EnquiriesPage from "./pages/Orders/EnquiriesPage";
+import SetupLayout from "./layouts/SetupLayout";
 
 export default function App() {
   return (
@@ -82,12 +83,12 @@ export default function App() {
           {/* ========== PUBLIC ROUTES ========== */}
           <Route element={<AuthLayout />}>
             <Route path="/" element={<LoginPage />} />
+          </Route>
+          <Route element={<SetupLayout />}>
             <Route path="/setup-wizard" element={<SetupWizard />} />
           </Route>
-
           {/* ========== PROTECTED ROUTES ========== */}
           {/* First check authentication, then check roles */}
-
           {/* Admin Only Routes */}
           <Route element={<PrivateRoute />}>
             <Route element={<RoleBasedRoute allowedRoles={["Admin"]} />}>

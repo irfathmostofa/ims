@@ -65,7 +65,7 @@ export default function CompanyForm({ onNext, defaultValues }: Props) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formDataValues),
-        }
+        },
       );
 
       if (!res.ok) throw new Error("Failed to save company");
@@ -137,12 +137,17 @@ export default function CompanyForm({ onNext, defaultValues }: Props) {
       </div>
 
       {/* Company Details */}
-      <div className="grid gap-4 grid-cols-2">
-        <Input
-          placeholder="Company Name"
-          {...register("name", { required: true })}
-        />
-        <Input placeholder="Address" {...register("address")} />
+
+      <Input
+        placeholder="Company Name"
+        {...register("name", { required: true })}
+      />
+      <textarea
+        className="border rounded-md p-2 w-full"
+        placeholder="Address"
+        {...register("address")}
+      />
+      <div className="grid gap-2 grid-cols-3">
         <Input placeholder="Phone" {...register("phone")} />
         <Input placeholder="Email" type="email" {...register("email")} />
         <Input placeholder="Website" {...register("website")} />
