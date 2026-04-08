@@ -23,6 +23,7 @@ import {
 import { useCrud } from "@/hook/crudHelper";
 import { toast } from "sonner";
 import ImageUploader2 from "@/hook/ImageUploader2";
+import { formatDate } from "@/components/utils/formatter";
 
 type Category = {
   id: number;
@@ -239,10 +240,19 @@ export default function CategoryPage() {
       <DataTable
         data={flattened}
         label="Category List"
-        showColumns={["code", "name", "Parent", "image"]}
+        showColumns={[
+          { key: "code", label: "ID" },
+          { key: "name", label: "Name" },
+          { key: "slug", label: "Slug" },
+          { key: "Parent", label: "Parent Category" },
+          { key: "created_at", label: "Created At" },
+        ]}
         selectable
         rowsPerPage={1000}
         loading={loading}
+        columnFormats={{
+          created_at: (val) => formatDate(val),
+        }}
         actions={[
           {
             label: <Pen size={16} />,

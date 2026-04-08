@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { apiClient } from "@/hook/apiClient";
 import { useAuthStore } from "@/store/authStore";
+import { formatDate } from "@/components/utils/formatter";
 
 type Branch = {
   id?: number;
@@ -47,7 +48,7 @@ export default function BranchesPage() {
         {
           method: "GET",
           tokenType: "jwt",
-        }
+        },
       );
       setBranches(data.data);
     } catch (err: any) {
@@ -85,7 +86,7 @@ export default function BranchesPage() {
             method: "POST",
             data: updatePayload,
             tokenType: "jwt",
-          }
+          },
         );
       } else {
         // Create
@@ -103,7 +104,7 @@ export default function BranchesPage() {
             method: "POST",
             data: createPayload,
             tokenType: "jwt",
-          }
+          },
         );
       }
 
@@ -138,7 +139,7 @@ export default function BranchesPage() {
           method: "POST",
           data: { id: b.id },
           tokenType: "jwt",
-        }
+        },
       );
       toast.success(data.message || "Branch deleted!");
       setUpdate((prev) => prev + 1);
@@ -209,9 +210,23 @@ export default function BranchesPage() {
       <DataTable
         data={branches}
         label="Branches List"
+        showColumns={[
+          {
+            key: "code",
+            label: "ID",
+          },
+          { key: "name", label: "Branch Name" },
+          { key: "type", label: "Type" },
+          { key: "phone", label: "Phone" },
+          { key: "address", label: "Address" },
+          { key: "created_at", label: "Created Date" },
+        ]}
         selectable
         rowsPerPage={10}
         loading={loading}
+        columnFormats={{
+          created_at: (val) => formatDate(val),
+        }}
         actions={[
           { label: <Pen size={16} />, onClick: (row) => editBranch(row) },
           { label: <Trash size={16} />, onClick: (row) => deleteBranch(row) },

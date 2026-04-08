@@ -13,9 +13,9 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useCrud } from "@/hook/crudHelper";
-import { getData } from "@/hook/getData";
 import { formatStatus } from "@/components/utils/formatter";
 import ImageUploader2 from "@/hook/ImageUploader2";
+import { useQuickStore } from "@/store/quickStore";
 
 type User = {
   id: number;
@@ -31,40 +31,15 @@ type User = {
   status: "A" | "I";
 };
 
-type Role = {
-  id: number;
-  code?: string;
-  name: string;
-  description?: string;
-};
-
-type Branch = {
-  id: number;
-  code?: string;
-  company_id: number;
-  name: string;
-  type: string;
-  phone?: string;
-  address?: string;
-};
-
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [branches, setBranches] = useState<Branch[]>([]);
   const [form, setForm] = useState<Partial<User>>({});
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [update, setUpdate] = useState(0);
-
-  // Fetch roles and branches
+  const { branches, fetchRoles, roles } = useQuickStore();
   useEffect(() => {
-    getData<Role>(`${import.meta.env.VITE_SERVER}/setup/get-roles`).then(
-      setRoles,
-    );
-    getData<Branch>(`${import.meta.env.VITE_SERVER}/setup/get-branches`).then(
-      setBranches,
-    );
+    fetchRoles();
   }, []);
 
   // CRUD hook for Users

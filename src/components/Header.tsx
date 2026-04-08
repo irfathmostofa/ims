@@ -555,7 +555,7 @@ export default function Header({
                   }}
                 >
                   <Link
-                    to="/branches"
+                    to="/setup/branches"
                     className="text-xs font-medium flex items-center gap-1.5 transition-colors"
                     style={{ color: "#f68826" }}
                     onClick={() => setBranchOpen(false)}
