@@ -12,16 +12,18 @@ type Variant = {
   weight_unit?: string;
   is_replaceable?: boolean;
   status?: string;
-  images?: { url: string }[];
+  images?: { url: string; alt_text?: string; is_primary?: boolean }[];
 };
 
 type ProductPreview = {
   row: number;
   product_name: string;
-  uom_id: number | null;
+  uom_name: string;
   cost_price: number | string | null;
+  regular_price: number | string | null; // Added regular_price
   selling_price: number | string | null;
   category: string;
+  stock_quantity?: number;
   variant: Variant;
 };
 
@@ -30,6 +32,16 @@ type PreviewResponse = {
   errors: { row: number; error: string }[];
   total: number;
   valid: number;
+  message?: string;
+};
+
+type ConfirmResponse = {
+  success: boolean;
+  message: string;
+  created_count: number;
+  failed_count: number;
+  createdProducts: any[];
+  failedProducts: { product: string; error: string; row?: number }[];
 };
 
 export default function BulkProductUpload() {
@@ -39,13 +51,14 @@ export default function BulkProductUpload() {
   const [loading, setLoading] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [branchCode, setBranchCode] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuthStore();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      // Validate file type
       const validTypes = [
         ".csv",
         ".xlsx",
@@ -68,7 +81,6 @@ export default function BulkProductUpload() {
         return;
       }
 
-      // Validate file size (5MB limit)
       if (selectedFile.size > 5 * 1024 * 1024) {
         alert("File size too large. Maximum size is 5MB.");
         if (fileInputRef.current) {
@@ -82,6 +94,7 @@ export default function BulkProductUpload() {
       setPreview([]);
       setErrors([]);
       setSuccessMessage(null);
+      setErrorMessage(null);
     }
   };
 
@@ -93,6 +106,7 @@ export default function BulkProductUpload() {
 
     setLoading(true);
     setSuccessMessage(null);
+    setErrorMessage(null);
 
     const formData = new FormData();
     formData.append("file", file);
@@ -115,6 +129,8 @@ export default function BulkProductUpload() {
         alert(
           `Found ${res.errors.length} errors in the file. Please fix them before confirming.`,
         );
+      } else {
+        alert(`✅ File is valid! ${res.valid} rows ready to import.`);
       }
     } catch (err: any) {
       console.error("Preview error:", err);
@@ -138,83 +154,48 @@ export default function BulkProductUpload() {
       return;
     }
 
-    setConfirmLoading(true);
-    setSuccessMessage(null);
-
-    // Group products by product_name AND uom_id (products can have same name but different UOM)
-    const groupedProducts: Record<string, any> = {};
-
-    preview.forEach((p) => {
-      if (!p.uom_id) {
-        alert(`Row ${p.row}: UOM ID is required`);
+    if (!branchCode && !user?.branch_code) {
+      const useDefault = confirm(
+        "No branch specified. Do you want to use the default branch?",
+      );
+      if (!useDefault) {
         return;
       }
+    }
 
-      const key = `${p.product_name}-${p.uom_id}`;
+    setConfirmLoading(true);
+    setSuccessMessage(null);
+    setErrorMessage(null);
 
-      if (!groupedProducts[key]) {
-        groupedProducts[key] = {
-          name: p.product_name,
-          uom_id: p.uom_id,
-          cost_price: p.cost_price,
-          selling_price: p.selling_price,
-          category: p.category || "",
-          userId: user?.id,
-          status: "A",
-          variants: [
-            {
-              name: p.variant.name,
-              additional_price: p.variant.additional_price || 0,
-              SKU: p.variant.SKU,
-              weight: p.variant.weight,
-              weight_unit: p.variant.weight_unit,
-              images: p.variant.images || [],
-              status: "A",
-            },
-          ],
-        };
-      } else {
-        // Check if variant already exists (by name)
-        const existingVariant = groupedProducts[key].variants.find(
-          (v: Variant) => v.name === p.variant.name,
-        );
-
-        if (!existingVariant) {
-          groupedProducts[key].variants.push({
-            name: p.variant.name,
-            additional_price: p.variant.additional_price || 0,
-            SKU: p.variant.SKU,
-            weight: p.variant.weight,
-            weight_unit: p.variant.weight_unit,
-            images: p.variant.images || [],
-            status: "A",
-          });
-        }
-      }
-    });
-
-    const productsToSave = Object.values(groupedProducts);
-
-    // Add categories to products that have them
-    const productsWithCategories = productsToSave.map((product: any) => {
-      if (product.category && product.category.trim() !== "") {
-        return {
-          ...product,
-          categories: [{ name: product.category, is_primary: true }],
-        };
-      }
-      return product;
-    });
+    const productsToSave = preview.map((p) => ({
+      product_name: p.product_name,
+      variant_name: p.variant.name,
+      category: p.category || "",
+      uom_name: p.uom_name,
+      cost_price: p.cost_price,
+      regular_price: p.regular_price, // Added regular_price
+      selling_price: p.selling_price,
+      stock_quantity: p.stock_quantity || 0,
+      additional_price: p.variant.additional_price || 0,
+      SKU: p.variant.SKU || "",
+      weight: p.variant.weight,
+      weight_unit: p.variant.weight_unit,
+      images: p.variant.images || [],
+      row: p.row,
+    }));
 
     try {
-      const res = await apiClient(
+      const res = (await apiClient(
         `${import.meta.env.VITE_SERVER}/product/bulk/confirm`,
         {
           method: "POST",
           tokenType: "jwt",
-          data: { products: productsWithCategories },
+          data: {
+            products: productsToSave,
+            branch_code: branchCode || user?.branch_code,
+          },
         },
-      );
+      )) as ConfirmResponse;
 
       console.log("Confirm response:", res);
 
@@ -222,25 +203,29 @@ export default function BulkProductUpload() {
         setSuccessMessage(
           `✅ Successfully created ${res.created_count} product(s). ${
             res.failed_count > 0
-              ? `Failed to create ${res.failed_count} product(s). Check console for details.`
+              ? `⚠️ Failed to create ${res.failed_count} product(s). Check console for details.`
               : ""
           }`,
         );
 
-        // Show failed products if any
         if (res.failedProducts && res.failedProducts.length > 0) {
           console.error("Failed products:", res.failedProducts);
+          setErrorMessage(
+            `Failed products: ${res.failedProducts
+              .map((fp) => `${fp.product} (Row ${fp.row}): ${fp.error}`)
+              .join("; ")}`,
+          );
         }
 
-        // Reset form
         setPreview([]);
         setErrors([]);
         setFile(null);
+        setBranchCode("");
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
       } else {
-        alert("Failed to save products. Please try again.");
+        alert(res.message || "Failed to save products. Please try again.");
       }
     } catch (err: any) {
       console.error("Confirm error:", err);
@@ -255,9 +240,29 @@ export default function BulkProductUpload() {
     setPreview([]);
     setErrors([]);
     setSuccessMessage(null);
+    setErrorMessage(null);
+    setBranchCode("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  const downloadSampleCSV = () => {
+    const csvContent = `product_name,variant_name,category,uom,cost_price,regular_price,selling_price,stock_quantity,additional_price,SKU,weight,weight_unit,images
+Wireless Mouse,Bluetooth 5.0,Electronics,PCS,15.50,25.00,29.99,100,0,MOUSE-001,0.15,KG,https://example.com/mouse1.jpg
+Gaming Keyboard,Mechanical RGB,Electronics,PCS,45.00,75.00,89.99,50,0,KB-001,1.20,KG,
+USB Cable,Type-C 2m,Accessories,PCS,2.50,5.00,9.99,500,0,CABLE-001,0.05,KG,
+Laptop Bag,15.6 inch,Accessories,PCS,12.00,20.00,29.99,75,0,BAG-001,0.80,KG,https://example.com/bag1.jpg`;
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sample_products.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -268,17 +273,38 @@ export default function BulkProductUpload() {
 
       <div className="mb-6 p-4 bg-blue-50 rounded-lg">
         <h2 className="font-semibold mb-2">Instructions:</h2>
-        <ul className="list-disc list-inside text-sm text-gray-600">
+        <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
           <li>Upload a CSV or Excel file with product data</li>
           <li>
-            Required columns: product_name, uom_id, cost_price, selling_price,
-            variant_name
+            <strong>Required columns:</strong> product_name, variant_name, uom,
+            cost_price, regular_price, selling_price
           </li>
           <li>
-            Optional columns: category, additional_price, SKU, weight,
-            weight_unit, images
+            <strong>Optional columns:</strong> category, stock_quantity,
+            additional_price, SKU, weight, weight_unit, images
           </li>
+          <li>
+            <strong>Price definitions:</strong>
+            <ul className="list-circle ml-6 mt-1">
+              <li>cost_price: Purchase cost of the product</li>
+              <li>regular_price: MRP / Regular price of the product</li>
+              <li>selling_price: Actual selling price (after discount)</li>
+            </ul>
+          </li>
+          <li>
+            <strong>UOM values:</strong> PCS, KG, Liter, Meter (case-insensitive
+            - "KG", "kg", "Kg" all work)
+          </li>
+          <li>Categories are auto-created if they don't exist</li>
           <li>Max file size: 5MB</li>
+          <li>
+            <button
+              onClick={downloadSampleCSV}
+              className="text-blue-600 hover:text-blue-800 underline text-sm mt-2"
+            >
+              📥 Download Sample CSV
+            </button>
+          </li>
         </ul>
       </div>
 
@@ -306,7 +332,32 @@ export default function BulkProductUpload() {
           disabled={loading || !file}
           className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {loading ? "Processing..." : "Preview"}
+          {loading ? (
+            <>
+              <svg
+                className="inline animate-spin h-4 w-4 mr-2"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              Processing...
+            </>
+          ) : (
+            "Preview"
+          )}
         </button>
 
         <button
@@ -314,7 +365,32 @@ export default function BulkProductUpload() {
           disabled={confirmLoading || preview.length === 0 || errors.length > 0}
           className="px-5 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {confirmLoading ? "Saving..." : "Confirm & Save"}
+          {confirmLoading ? (
+            <>
+              <svg
+                className="inline animate-spin h-4 w-4 mr-2"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              Saving...
+            </>
+          ) : (
+            "Confirm & Save"
+          )}
         </button>
 
         <button
@@ -346,6 +422,12 @@ export default function BulkProductUpload() {
         </div>
       )}
 
+      {errorMessage && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-yellow-800 font-medium">{errorMessage}</p>
+        </div>
+      )}
+
       {preview.length > 0 && (
         <div className="mt-8">
           <div className="flex justify-between items-center mb-4">
@@ -371,13 +453,19 @@ export default function BulkProductUpload() {
                     Category
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                    UOM ID
+                    UOM
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
                     Cost Price
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
+                    Regular Price
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
                     Selling Price
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
+                    Stock Qty
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
                     Variant
@@ -387,9 +475,6 @@ export default function BulkProductUpload() {
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
                     SKU
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                    Weight
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Images
@@ -409,29 +494,28 @@ export default function BulkProductUpload() {
                       {p.category || "-"}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 border-r">
-                      {p.uom_id || "-"}
+                      {p.uom_name || "-"}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 border-r">
-                      {p.cost_price || "-"}
+                      ${parseFloat(p.cost_price as string).toFixed(2)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 border-r">
-                      {p.selling_price || "-"}
+                      ${parseFloat(p.regular_price as string).toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
+                      ${parseFloat(p.selling_price as string).toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
+                      {p.stock_quantity || 0}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 border-r">
                       {p.variant.name}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 border-r">
-                      {p.variant.additional_price || 0}
+                      ${p.variant.additional_price || 0}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 border-r">
                       {p.variant.SKU || "-"}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
-                      {p.variant.weight
-                        ? `${p.variant.weight} ${
-                            p.variant.weight_unit || ""
-                          }`.trim()
-                        : "-"}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500">
                       {p.variant.images && p.variant.images.length > 0

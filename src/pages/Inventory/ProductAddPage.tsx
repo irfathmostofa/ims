@@ -149,7 +149,9 @@ function SectionHeader({
         </div>
         <div>
           <h3 className="font-bold text-gray-900 text-sm">{title}</h3>
-          {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+          {subtitle && (
+            <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>
+          )}
         </div>
       </div>
       {action}
@@ -240,11 +242,11 @@ export default function ProductAddPage() {
     try {
       const datauom = await apiClient(
         `${import.meta.env.VITE_SERVER}/product/get-uom`,
-        { method: "GET", tokenType: "jwt" }
+        { method: "GET", tokenType: "jwt" },
       );
       const datacat = await apiClient(
         `${import.meta.env.VITE_SERVER}/product/get-product-cat`,
-        { method: "GET", tokenType: "jwt" }
+        { method: "GET", tokenType: "jwt" },
       );
       setUoms(datauom.data);
       setCategories(datacat.data);
@@ -259,7 +261,7 @@ export default function ProductAddPage() {
 
   const toggleCategory = (catId: number) => {
     setSelectedCategories((prev) =>
-      prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId]
+      prev.includes(catId) ? prev.filter((c) => c !== catId) : [...prev, catId],
     );
   };
 
@@ -296,8 +298,8 @@ export default function ProductAddPage() {
                 },
               ],
             }
-          : v
-      )
+          : v,
+      ),
     );
   };
 
@@ -306,8 +308,8 @@ export default function ProductAddPage() {
       prev.map((v) =>
         v.id === varId
           ? { ...v, images: v.images?.filter((_, idx) => idx !== imgIndex) }
-          : v
-      )
+          : v,
+      ),
     );
   };
 
@@ -322,8 +324,8 @@ export default function ProductAddPage() {
                 is_primary: idx === imgIndex,
               })),
             }
-          : v
-      )
+          : v,
+      ),
     );
   };
 
@@ -331,8 +333,7 @@ export default function ProductAddPage() {
     setSeoLoading(true);
     try {
       if (seoMeta.meta_title !== name) setTitleCustomized(true);
-      if (seoMeta.meta_description !== description)
-        setDescCustomized(true);
+      if (seoMeta.meta_description !== description) setDescCustomized(true);
       setShowSeoModal(false);
       toast.success("SEO data saved");
     } catch (error: any) {
@@ -362,11 +363,26 @@ export default function ProductAddPage() {
   };
 
   const validateForm = () => {
-    if (!name.trim()) { toast.error("Please enter a product name"); return false; }
-    if (!selectedUom) { toast.error("Please select a unit of measure"); return false; }
-    if (costPrice === "" || costPrice <= 0) { toast.error("Please enter a valid cost price"); return false; }
-    if (sellingPrice === "" || sellingPrice <= 0) { toast.error("Please enter a valid selling price"); return false; }
-    if (selectedCategories.length === 0) { toast.error("Please select at least one category"); return false; }
+    if (!name.trim()) {
+      toast.error("Please enter a product name");
+      return false;
+    }
+    if (!selectedUom) {
+      toast.error("Please select a unit of measure");
+      return false;
+    }
+    if (costPrice === "" || costPrice <= 0) {
+      toast.error("Please enter a valid cost price");
+      return false;
+    }
+    if (sellingPrice === "" || sellingPrice <= 0) {
+      toast.error("Please enter a valid selling price");
+      return false;
+    }
+    if (selectedCategories.length === 0) {
+      toast.error("Please select at least one category");
+      return false;
+    }
     return true;
   };
 
@@ -404,19 +420,17 @@ export default function ProductAddPage() {
 
       const data = await apiClient(
         `${import.meta.env.VITE_SERVER}/product/products`,
-        { method: "POST", data: product, tokenType: "jwt" }
+        { method: "POST", data: product, tokenType: "jwt" },
       );
 
-      if (data.data?.id) {
-        try {
-          await apiClient(`${import.meta.env.VITE_SERVER}/seo/meta`, {
-            method: "POST",
-            data: { ...seoMeta, entity_id: data.data.id, entity_type: "product" },
-            tokenType: "jwt",
-          });
-        } catch (seoError) {
-          console.error("Failed to save SEO data:", seoError);
-        }
+      try {
+        await apiClient(`${import.meta.env.VITE_SERVER}/seo/meta`, {
+          method: "POST",
+          data: { ...seoMeta, entity_id: data.data.id, entity_type: "product" },
+          tokenType: "jwt",
+        });
+      } catch (seoError) {
+        console.error("Failed to save SEO data:", seoError);
       }
 
       toast.success(data.message || "Product published! 🎉");
@@ -431,7 +445,10 @@ export default function ProductAddPage() {
   // Profit margin calc
   const margin =
     costPrice && sellingPrice && Number(costPrice) > 0
-      ? (((Number(sellingPrice) - Number(costPrice)) / Number(sellingPrice)) * 100).toFixed(1)
+      ? (
+          ((Number(sellingPrice) - Number(costPrice)) / Number(sellingPrice)) *
+          100
+        ).toFixed(1)
       : null;
 
   return (
@@ -446,8 +463,12 @@ export default function ProductAddPage() {
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-base font-bold text-gray-900 leading-tight">Add New Product</h1>
-            <p className="text-xs text-gray-400 hidden sm:block">Fill in the details below to create your product</p>
+            <h1 className="text-base font-bold text-gray-900 leading-tight">
+              Add New Product
+            </h1>
+            <p className="text-xs text-gray-400 hidden sm:block">
+              Fill in the details below to create your product
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -481,10 +502,8 @@ export default function ProductAddPage() {
       {/* Body */}
       <div className="max-w-full mx-auto px-4 sm:px-6 py-6">
         <div className="flex flex-col xl:flex-row gap-6">
-
           {/* ── LEFT COLUMN ───────────────────────────── */}
           <div className="flex-1 min-w-0 space-y-5">
-
             {/* Basic info */}
             <Card>
               <SectionHeader
@@ -503,7 +522,10 @@ export default function ProductAddPage() {
                   {productSlug && (
                     <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
                       <Globe className="w-3 h-3" />
-                      /product/<span className="text-gray-600 font-mono">{productSlug}</span>
+                      /product/
+                      <span className="text-gray-600 font-mono">
+                        {productSlug}
+                      </span>
                     </p>
                   )}
                 </Field>
@@ -515,7 +537,9 @@ export default function ProductAddPage() {
                     className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 resize-none transition-shadow"
                     rows={5}
                   />
-                  <p className="text-xs text-gray-400">{description.length} characters</p>
+                  <p className="text-xs text-gray-400">
+                    {description.length} characters
+                  </p>
                 </Field>
               </div>
             </Card>
@@ -558,40 +582,69 @@ export default function ProductAddPage() {
                 <TabsContent value="general" className="p-5 space-y-5">
                   {/* Pricing */}
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Pricing</p>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
+                      Pricing
+                    </p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <Field label="Cost Price" required>
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">
+                            $
+                          </span>
                           <Input
                             type="number"
                             placeholder="0.00"
                             value={costPrice}
-                            onChange={(e) => setCostPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                            onChange={(e) =>
+                              setCostPrice(
+                                e.target.value === ""
+                                  ? ""
+                                  : Number(e.target.value),
+                              )
+                            }
                             className="pl-7 h-11 rounded-xl border-gray-200"
                           />
                         </div>
                       </Field>
                       <Field label="Selling Price" required>
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">
+                            $
+                          </span>
                           <Input
                             type="number"
                             placeholder="0.00"
                             value={sellingPrice}
-                            onChange={(e) => setSellingPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                            onChange={(e) =>
+                              setSellingPrice(
+                                e.target.value === ""
+                                  ? ""
+                                  : Number(e.target.value),
+                              )
+                            }
                             className="pl-7 h-11 rounded-xl border-gray-200"
                           />
                         </div>
                       </Field>
-                      <Field label="Regular Price" hint="Strike-through / compare price">
+                      <Field
+                        label="Regular Price"
+                        hint="Strike-through / compare price"
+                      >
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">
+                            $
+                          </span>
                           <Input
                             type="number"
                             placeholder="0.00"
                             value={regularPrice}
-                            onChange={(e) => setRegularPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                            onChange={(e) =>
+                              setRegularPrice(
+                                e.target.value === ""
+                                  ? ""
+                                  : Number(e.target.value),
+                              )
+                            }
                             className="pl-7 h-11 rounded-xl border-gray-200"
                           />
                         </div>
@@ -600,8 +653,14 @@ export default function ProductAddPage() {
 
                     {/* Margin pill */}
                     {margin !== null && (
-                      <div className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${Number(margin) >= 20 ? "bg-emerald-50 text-emerald-700" : Number(margin) >= 0 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
-                        {Number(margin) >= 0 ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                      <div
+                        className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${Number(margin) >= 20 ? "bg-emerald-50 text-emerald-700" : Number(margin) >= 0 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}
+                      >
+                        {Number(margin) >= 0 ? (
+                          <CheckCircle2 className="w-3 h-3" />
+                        ) : (
+                          <AlertCircle className="w-3 h-3" />
+                        )}
                         Margin: {margin}%
                       </div>
                     )}
@@ -614,7 +673,11 @@ export default function ProductAddPage() {
                     <select
                       className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white"
                       value={selectedUom}
-                      onChange={(e) => setSelectedUom(e.target.value ? Number(e.target.value) : "")}
+                      onChange={(e) =>
+                        setSelectedUom(
+                          e.target.value ? Number(e.target.value) : "",
+                        )
+                      }
                     >
                       <option value="">— Select UOM —</option>
                       {uoms?.map((u) => (
@@ -631,7 +694,9 @@ export default function ProductAddPage() {
                   <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex gap-3">
                     <Info className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-amber-700 leading-relaxed">
-                      <span className="font-semibold">Variations</span> let you offer different sizes, colors, or styles. If you skip this, a default variant is created automatically.
+                      <span className="font-semibold">Variations</span> let you
+                      offer different sizes, colors, or styles. If you skip
+                      this, a default variant is created automatically.
                     </p>
                   </div>
 
@@ -640,8 +705,12 @@ export default function ProductAddPage() {
                       <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
                         <ImageIcon className="w-6 h-6 text-gray-400" />
                       </div>
-                      <p className="text-sm font-semibold text-gray-700 mb-1">No variations yet</p>
-                      <p className="text-xs text-gray-400 mb-4">Add variations like Size, Color, etc.</p>
+                      <p className="text-sm font-semibold text-gray-700 mb-1">
+                        No variations yet
+                      </p>
+                      <p className="text-xs text-gray-400 mb-4">
+                        Add variations like Size, Color, etc.
+                      </p>
                       <button
                         onClick={addVariation}
                         className="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors flex items-center gap-2"
@@ -661,7 +730,11 @@ export default function ProductAddPage() {
                           <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
                             <span className="text-sm font-bold text-gray-800">
                               Variation #{vIndex + 1}
-                              {v.name && <span className="ml-2 font-normal text-gray-500">— {v.name}</span>}
+                              {v.name && (
+                                <span className="ml-2 font-normal text-gray-500">
+                                  — {v.name}
+                                </span>
+                              )}
                             </span>
                             <button
                               onClick={() => removeVariation(v.id)}
@@ -681,8 +754,10 @@ export default function ProductAddPage() {
                                   onChange={(e) =>
                                     setVariations((prev) =>
                                       prev.map((x) =>
-                                        x.id === v.id ? { ...x, name: e.target.value } : x
-                                      )
+                                        x.id === v.id
+                                          ? { ...x, name: e.target.value }
+                                          : x,
+                                      ),
                                     )
                                   }
                                   className="h-10 rounded-xl border-gray-200"
@@ -696,8 +771,15 @@ export default function ProductAddPage() {
                                   onChange={(e) =>
                                     setVariations((prev) =>
                                       prev.map((x) =>
-                                        x.id === v.id ? { ...x, additional_price: Number(e.target.value) } : x
-                                      )
+                                        x.id === v.id
+                                          ? {
+                                              ...x,
+                                              additional_price: Number(
+                                                e.target.value,
+                                              ),
+                                            }
+                                          : x,
+                                      ),
                                     )
                                   }
                                   className="h-10 rounded-xl border-gray-200"
@@ -711,8 +793,13 @@ export default function ProductAddPage() {
                                 onChange={(e: any) =>
                                   setVariations((prev) =>
                                     prev.map((x) =>
-                                      x.id === v.id ? { ...x, weight: Number(e.target.value) } : x
-                                    )
+                                      x.id === v.id
+                                        ? {
+                                            ...x,
+                                            weight: Number(e.target.value),
+                                          }
+                                        : x,
+                                    ),
                                   )
                                 }
                               />
@@ -728,8 +815,10 @@ export default function ProductAddPage() {
                                 onChange={(value: any) =>
                                   setVariations((prev) =>
                                     prev.map((x) =>
-                                      x.id === v.id ? { ...x, weight_unit: String(value) } : x
-                                    )
+                                      x.id === v.id
+                                        ? { ...x, weight_unit: String(value) }
+                                        : x,
+                                    ),
                                   )
                                 }
                               />
@@ -740,8 +829,10 @@ export default function ProductAddPage() {
                                 onChange={(e: any) =>
                                   setVariations((prev) =>
                                     prev.map((x) =>
-                                      x.id === v.id ? { ...x, sku: e.target.value } : x
-                                    )
+                                      x.id === v.id
+                                        ? { ...x, sku: e.target.value }
+                                        : x,
+                                    ),
                                   )
                                 }
                               />
@@ -755,8 +846,14 @@ export default function ProductAddPage() {
                                       onChange={(e) =>
                                         setVariations((prev) =>
                                           prev.map((x) =>
-                                            x.id === v.id ? { ...x, is_replaceable: e.target.checked } : x
-                                          )
+                                            x.id === v.id
+                                              ? {
+                                                  ...x,
+                                                  is_replaceable:
+                                                    e.target.checked,
+                                                }
+                                              : x,
+                                          ),
                                         )
                                       }
                                       className="sr-only"
@@ -769,7 +866,9 @@ export default function ProductAddPage() {
                                       />
                                     </div>
                                   </div>
-                                  <span className="text-sm text-gray-600">Allow replacement</span>
+                                  <span className="text-sm text-gray-600">
+                                    Allow replacement
+                                  </span>
                                 </label>
                               </Field>
                             </div>
@@ -777,16 +876,22 @@ export default function ProductAddPage() {
                             {/* Images */}
                             <div className="pt-2 border-t border-gray-100">
                               <div className="flex items-center justify-between mb-3">
-                                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Images</p>
+                                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                  Images
+                                </p>
                                 <SimpleImageUploader
-                                  onChange={(url: string) => handleAddImageToVariation(v.id, url)}
+                                  onChange={(url: string) =>
+                                    handleAddImageToVariation(v.id, url)
+                                  }
                                 />
                               </div>
 
                               {!v.images || v.images.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-6 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 text-center">
                                   <ImageIcon className="w-5 h-5 text-gray-300 mb-1" />
-                                  <p className="text-xs text-gray-400">No images uploaded</p>
+                                  <p className="text-xs text-gray-400">
+                                    No images uploaded
+                                  </p>
                                 </div>
                               ) : (
                                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
@@ -806,14 +911,18 @@ export default function ProductAddPage() {
                                       />
                                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity p-1">
                                         <button
-                                          onClick={() => handleRemoveImage(v.id, i)}
+                                          onClick={() =>
+                                            handleRemoveImage(v.id, i)
+                                          }
                                           className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white text-[10px] rounded-lg w-full"
                                         >
                                           Remove
                                         </button>
                                         {!img.is_primary && (
                                           <button
-                                            onClick={() => handleMakePrimary(v.id, i)}
+                                            onClick={() =>
+                                              handleMakePrimary(v.id, i)
+                                            }
                                             className="px-2 py-1 bg-white text-gray-900 text-[10px] rounded-lg w-full font-semibold"
                                           >
                                             Primary
@@ -847,7 +956,6 @@ export default function ProductAddPage() {
 
                 {/* ── SEO ── */}
                 <TabsContent value="seo" className="p-5 space-y-5">
-
                   {/* Live search preview */}
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2 flex items-center gap-1.5">
@@ -855,21 +963,27 @@ export default function ProductAddPage() {
                     </p>
                     <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50 space-y-1">
                       <p className="text-xs text-emerald-600 font-mono break-all">
-                        {typeof window !== "undefined" ? window.location.origin : "https://yoursite.com"}/product/
-                        <span className="text-emerald-700">{productSlug || "product-slug"}</span>
+                        {typeof window !== "undefined"
+                          ? window.location.origin
+                          : "https://yoursite.com"}
+                        /product/
+                        <span className="text-emerald-700">
+                          {productSlug || "product-slug"}
+                        </span>
                       </p>
                       <p className="text-base text-blue-700 font-semibold hover:underline cursor-pointer leading-snug">
                         {seoMeta.meta_title || name || "Product Title"}
                       </p>
                       <p className="text-sm text-gray-500 leading-relaxed line-clamp-2">
-                        {seoMeta.meta_description || description || "Your product description will appear here in search results…"}
+                        {seoMeta.meta_description ||
+                          description ||
+                          "Your product description will appear here in search results…"}
                       </p>
                     </div>
                   </div>
 
                   {/* Inline SEO fields */}
                   <div className="space-y-4">
-
                     {/* Meta title */}
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
@@ -880,7 +994,12 @@ export default function ProductAddPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              setSeoMeta((prev) => ({ ...prev, meta_title: name, og_title: name, twitter_title: name }));
+                              setSeoMeta((prev) => ({
+                                ...prev,
+                                meta_title: name,
+                                og_title: name,
+                                twitter_title: name,
+                              }));
                               setTitleCustomized(false);
                             }}
                             className="text-[11px] text-amber-600 hover:text-amber-800 flex items-center gap-1 transition-colors"
@@ -889,21 +1008,27 @@ export default function ProductAddPage() {
                           </button>
                         ) : (
                           <span className="text-[11px] text-emerald-600 flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> Synced with name
+                            <CheckCircle2 className="w-3 h-3" /> Synced with
+                            name
                           </span>
                         )}
                       </div>
                       <Input
                         value={seoMeta.meta_title}
                         onChange={(e) => {
-                          setSeoMeta((prev) => ({ ...prev, meta_title: e.target.value }));
+                          setSeoMeta((prev) => ({
+                            ...prev,
+                            meta_title: e.target.value,
+                          }));
                           setTitleCustomized(true);
                         }}
                         placeholder="Enter meta title (max 60 chars)"
                         maxLength={60}
                         className="h-10 rounded-xl border-gray-200"
                       />
-                      <p className="text-xs text-gray-400 text-right">{seoMeta.meta_title?.length || 0}/60</p>
+                      <p className="text-xs text-gray-400 text-right">
+                        {seoMeta.meta_title?.length || 0}/60
+                      </p>
                     </div>
 
                     {/* Meta description */}
@@ -916,24 +1041,37 @@ export default function ProductAddPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              const truncated = description.length > 160 ? description.substring(0, 157) + "..." : description;
-                              setSeoMeta((prev) => ({ ...prev, meta_description: truncated, og_description: truncated, twitter_description: truncated }));
+                              const truncated =
+                                description.length > 160
+                                  ? description.substring(0, 157) + "..."
+                                  : description;
+                              setSeoMeta((prev) => ({
+                                ...prev,
+                                meta_description: truncated,
+                                og_description: truncated,
+                                twitter_description: truncated,
+                              }));
                               setDescCustomized(false);
                             }}
                             className="text-[11px] text-amber-600 hover:text-amber-800 flex items-center gap-1 transition-colors"
                           >
-                            <RotateCcw className="w-3 h-3" /> Sync with description
+                            <RotateCcw className="w-3 h-3" /> Sync with
+                            description
                           </button>
                         ) : (
                           <span className="text-[11px] text-emerald-600 flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> Synced with description
+                            <CheckCircle2 className="w-3 h-3" /> Synced with
+                            description
                           </span>
                         )}
                       </div>
                       <textarea
                         value={seoMeta.meta_description}
                         onChange={(e) => {
-                          setSeoMeta((prev) => ({ ...prev, meta_description: e.target.value }));
+                          setSeoMeta((prev) => ({
+                            ...prev,
+                            meta_description: e.target.value,
+                          }));
                           setDescCustomized(true);
                         }}
                         placeholder="Enter meta description (max 160 chars)"
@@ -941,16 +1079,26 @@ export default function ProductAddPage() {
                         rows={3}
                         className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 resize-none"
                       />
-                      <p className={`text-xs text-right ${(seoMeta.meta_description?.length || 0) > 150 ? "text-amber-500" : "text-gray-400"}`}>
+                      <p
+                        className={`text-xs text-right ${(seoMeta.meta_description?.length || 0) > 150 ? "text-amber-500" : "text-gray-400"}`}
+                      >
                         {seoMeta.meta_description?.length || 0}/160
                       </p>
                     </div>
 
                     {/* Keywords */}
-                    <Field label="Meta Keywords" hint="Comma-separated — e.g. cotton shirt, casual wear">
+                    <Field
+                      label="Meta Keywords"
+                      hint="Comma-separated — e.g. cotton shirt, casual wear"
+                    >
                       <Input
                         value={seoMeta.meta_keywords}
-                        onChange={(e) => setSeoMeta((prev) => ({ ...prev, meta_keywords: e.target.value }))}
+                        onChange={(e) =>
+                          setSeoMeta((prev) => ({
+                            ...prev,
+                            meta_keywords: e.target.value,
+                          }))
+                        }
                         placeholder="keyword1, keyword2, keyword3"
                         className="h-10 rounded-xl border-gray-200"
                       />
@@ -960,16 +1108,20 @@ export default function ProductAddPage() {
                   {/* Score chips */}
                   <div className="flex flex-wrap gap-2 pt-1">
                     {[
-                      { label: "Title",       ok: !!seoMeta.meta_title },
+                      { label: "Title", ok: !!seoMeta.meta_title },
                       { label: "Description", ok: !!seoMeta.meta_description },
-                      { label: "Keywords",    ok: !!seoMeta.meta_keywords },
-                      { label: "OG Tags",     ok: !!seoMeta.og_title },
+                      { label: "Keywords", ok: !!seoMeta.meta_keywords },
+                      { label: "OG Tags", ok: !!seoMeta.og_title },
                     ].map(({ label, ok }) => (
                       <span
                         key={label}
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${ok ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-400"}`}
                       >
-                        {ok ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                        {ok ? (
+                          <CheckCircle2 className="w-3 h-3" />
+                        ) : (
+                          <AlertCircle className="w-3 h-3" />
+                        )}
                         {label}
                       </span>
                     ))}
@@ -990,7 +1142,6 @@ export default function ProductAddPage() {
 
           {/* ── RIGHT COLUMN ──────────────────────────── */}
           <div className="xl:w-72 space-y-4 flex-shrink-0">
-
             {/* Publish card */}
             <Card>
               <SectionHeader
@@ -1002,25 +1153,35 @@ export default function ProductAddPage() {
                 <div className="text-xs text-gray-500 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span>Name</span>
-                    <span className={`font-medium ${name ? "text-emerald-600" : "text-gray-300"}`}>
+                    <span
+                      className={`font-medium ${name ? "text-emerald-600" : "text-gray-300"}`}
+                    >
                       {name ? "✓" : "—"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span>UOM</span>
-                    <span className={`font-medium ${selectedUom ? "text-emerald-600" : "text-gray-300"}`}>
+                    <span
+                      className={`font-medium ${selectedUom ? "text-emerald-600" : "text-gray-300"}`}
+                    >
                       {selectedUom ? "✓" : "—"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span>Category</span>
-                    <span className={`font-medium ${selectedCategories.length > 0 ? "text-emerald-600" : "text-gray-300"}`}>
-                      {selectedCategories.length > 0 ? `✓ (${selectedCategories.length})` : "—"}
+                    <span
+                      className={`font-medium ${selectedCategories.length > 0 ? "text-emerald-600" : "text-gray-300"}`}
+                    >
+                      {selectedCategories.length > 0
+                        ? `✓ (${selectedCategories.length})`
+                        : "—"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span>Pricing</span>
-                    <span className={`font-medium ${costPrice && sellingPrice ? "text-emerald-600" : "text-gray-300"}`}>
+                    <span
+                      className={`font-medium ${costPrice && sellingPrice ? "text-emerald-600" : "text-gray-300"}`}
+                    >
                       {costPrice && sellingPrice ? "✓" : "—"}
                     </span>
                   </div>
@@ -1060,7 +1221,11 @@ export default function ProductAddPage() {
               <SectionHeader
                 icon={<Package className="w-4 h-4" />}
                 title="Categories"
-                subtitle={selectedCategories.length > 0 ? `${selectedCategories.length} selected` : "None selected"}
+                subtitle={
+                  selectedCategories.length > 0
+                    ? `${selectedCategories.length} selected`
+                    : "None selected"
+                }
                 action={
                   <button
                     onClick={() => router("/inventory/categories")}
@@ -1097,8 +1262,12 @@ export default function ProductAddPage() {
             {/* Modal header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
               <div>
-                <h2 className="text-lg font-bold text-gray-900">SEO Settings</h2>
-                <p className="text-xs text-gray-400">Optimize how this product appears in search engines</p>
+                <h2 className="text-lg font-bold text-gray-900">
+                  SEO Settings
+                </h2>
+                <p className="text-xs text-gray-400">
+                  Optimize how this product appears in search engines
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -1119,19 +1288,26 @@ export default function ProductAddPage() {
 
             {/* Modal body */}
             <div className="overflow-y-auto flex-1 p-6 space-y-6">
-
               {/* Basic SEO */}
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Globe className="w-4 h-4 text-gray-400" />
-                  <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Basic SEO</h3>
+                  <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+                    Basic SEO
+                  </h3>
                 </div>
                 <div className="space-y-4">
-                  <Field label="Meta Title" hint={`${seoMeta.meta_title?.length || 0}/60 — ${seoMeta.meta_title !== name ? "⚠ Customized" : "Synced with name"}`}>
+                  <Field
+                    label="Meta Title"
+                    hint={`${seoMeta.meta_title?.length || 0}/60 — ${seoMeta.meta_title !== name ? "⚠ Customized" : "Synced with name"}`}
+                  >
                     <Input
                       value={seoMeta.meta_title}
                       onChange={(e) => {
-                        setSeoMeta((prev) => ({ ...prev, meta_title: e.target.value }));
+                        setSeoMeta((prev) => ({
+                          ...prev,
+                          meta_title: e.target.value,
+                        }));
                         setTitleCustomized(true);
                       }}
                       placeholder="Enter meta title"
@@ -1139,11 +1315,17 @@ export default function ProductAddPage() {
                       className="h-10 rounded-xl border-gray-200"
                     />
                   </Field>
-                  <Field label="Meta Description" hint={`${seoMeta.meta_description?.length || 0}/160 characters`}>
+                  <Field
+                    label="Meta Description"
+                    hint={`${seoMeta.meta_description?.length || 0}/160 characters`}
+                  >
                     <textarea
                       value={seoMeta.meta_description}
                       onChange={(e) => {
-                        setSeoMeta((prev) => ({ ...prev, meta_description: e.target.value }));
+                        setSeoMeta((prev) => ({
+                          ...prev,
+                          meta_description: e.target.value,
+                        }));
                         setDescCustomized(true);
                       }}
                       placeholder="Enter meta description"
@@ -1156,7 +1338,12 @@ export default function ProductAddPage() {
                     <Field label="Meta Keywords" hint="Comma-separated">
                       <Input
                         value={seoMeta.meta_keywords}
-                        onChange={(e) => setSeoMeta((prev) => ({ ...prev, meta_keywords: e.target.value }))}
+                        onChange={(e) =>
+                          setSeoMeta((prev) => ({
+                            ...prev,
+                            meta_keywords: e.target.value,
+                          }))
+                        }
                         placeholder="keyword1, keyword2"
                         className="h-10 rounded-xl border-gray-200"
                       />
@@ -1164,7 +1351,12 @@ export default function ProductAddPage() {
                     <Field label="Canonical URL">
                       <Input
                         value={seoMeta.canonical_url}
-                        onChange={(e) => setSeoMeta((prev) => ({ ...prev, canonical_url: e.target.value }))}
+                        onChange={(e) =>
+                          setSeoMeta((prev) => ({
+                            ...prev,
+                            canonical_url: e.target.value,
+                          }))
+                        }
                         placeholder="https://…"
                         className="h-10 rounded-xl border-gray-200"
                       />
@@ -1179,13 +1371,20 @@ export default function ProductAddPage() {
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Facebook className="w-4 h-4 text-gray-400" />
-                  <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Open Graph</h3>
+                  <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+                    Open Graph
+                  </h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="OG Title">
                     <Input
                       value={seoMeta.og_title}
-                      onChange={(e) => setSeoMeta((prev) => ({ ...prev, og_title: e.target.value }))}
+                      onChange={(e) =>
+                        setSeoMeta((prev) => ({
+                          ...prev,
+                          og_title: e.target.value,
+                        }))
+                      }
                       placeholder="Open Graph title"
                       className="h-10 rounded-xl border-gray-200"
                     />
@@ -1193,7 +1392,12 @@ export default function ProductAddPage() {
                   <Field label="OG Description">
                     <Input
                       value={seoMeta.og_description}
-                      onChange={(e) => setSeoMeta((prev) => ({ ...prev, og_description: e.target.value }))}
+                      onChange={(e) =>
+                        setSeoMeta((prev) => ({
+                          ...prev,
+                          og_description: e.target.value,
+                        }))
+                      }
                       placeholder="Open Graph description"
                       className="h-10 rounded-xl border-gray-200"
                     />
@@ -1201,7 +1405,12 @@ export default function ProductAddPage() {
                   <Field label="OG Image URL" hint="Recommended: 1200×630px">
                     <Input
                       value={seoMeta.og_image}
-                      onChange={(e) => setSeoMeta((prev) => ({ ...prev, og_image: e.target.value }))}
+                      onChange={(e) =>
+                        setSeoMeta((prev) => ({
+                          ...prev,
+                          og_image: e.target.value,
+                        }))
+                      }
                       placeholder="https://…/image.jpg"
                       className="h-10 rounded-xl border-gray-200"
                     />
@@ -1215,13 +1424,20 @@ export default function ProductAddPage() {
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <Twitter className="w-4 h-4 text-gray-400" />
-                  <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Twitter Card</h3>
+                  <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+                    Twitter Card
+                  </h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Twitter Title">
                     <Input
                       value={seoMeta.twitter_title}
-                      onChange={(e) => setSeoMeta((prev) => ({ ...prev, twitter_title: e.target.value }))}
+                      onChange={(e) =>
+                        setSeoMeta((prev) => ({
+                          ...prev,
+                          twitter_title: e.target.value,
+                        }))
+                      }
                       placeholder="Twitter title"
                       className="h-10 rounded-xl border-gray-200"
                     />
@@ -1229,7 +1445,12 @@ export default function ProductAddPage() {
                   <Field label="Twitter Description">
                     <Input
                       value={seoMeta.twitter_description}
-                      onChange={(e) => setSeoMeta((prev) => ({ ...prev, twitter_description: e.target.value }))}
+                      onChange={(e) =>
+                        setSeoMeta((prev) => ({
+                          ...prev,
+                          twitter_description: e.target.value,
+                        }))
+                      }
                       placeholder="Twitter description"
                       className="h-10 rounded-xl border-gray-200"
                     />
@@ -1237,7 +1458,12 @@ export default function ProductAddPage() {
                   <Field label="Twitter Image URL">
                     <Input
                       value={seoMeta.twitter_image}
-                      onChange={(e) => setSeoMeta((prev) => ({ ...prev, twitter_image: e.target.value }))}
+                      onChange={(e) =>
+                        setSeoMeta((prev) => ({
+                          ...prev,
+                          twitter_image: e.target.value,
+                        }))
+                      }
                       placeholder="https://…/image.jpg"
                       className="h-10 rounded-xl border-gray-200"
                     />
@@ -1249,11 +1475,25 @@ export default function ProductAddPage() {
 
               {/* Indexing */}
               <div>
-                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Indexing</h3>
+                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">
+                  Indexing
+                </h3>
                 <div className="flex flex-col sm:flex-row gap-4">
                   {[
-                    { id: "is_index", label: "Index this page", sublabel: "Allow search engines to crawl", value: seoMeta.is_index, key: "is_index" as const },
-                    { id: "is_follow", label: "Follow links", sublabel: "Pass PageRank to linked pages", value: seoMeta.is_follow, key: "is_follow" as const },
+                    {
+                      id: "is_index",
+                      label: "Index this page",
+                      sublabel: "Allow search engines to crawl",
+                      value: seoMeta.is_index,
+                      key: "is_index" as const,
+                    },
+                    {
+                      id: "is_follow",
+                      label: "Follow links",
+                      sublabel: "Pass PageRank to linked pages",
+                      value: seoMeta.is_follow,
+                      key: "is_follow" as const,
+                    },
                   ].map((item) => (
                     <label
                       key={item.id}
@@ -1262,11 +1502,18 @@ export default function ProductAddPage() {
                       <input
                         type="checkbox"
                         checked={item.value}
-                        onChange={(e) => setSeoMeta((prev) => ({ ...prev, [item.key]: e.target.checked }))}
+                        onChange={(e) =>
+                          setSeoMeta((prev) => ({
+                            ...prev,
+                            [item.key]: e.target.checked,
+                          }))
+                        }
                         className="mt-0.5 w-4 h-4 rounded"
                       />
                       <div>
-                        <p className="text-sm font-semibold text-gray-800">{item.label}</p>
+                        <p className="text-sm font-semibold text-gray-800">
+                          {item.label}
+                        </p>
                         <p className="text-xs text-gray-400">{item.sublabel}</p>
                       </div>
                     </label>
@@ -1276,13 +1523,25 @@ export default function ProductAddPage() {
 
               {/* Schema */}
               <div>
-                <Field label="Schema JSON (Advanced)" hint="Enter valid JSON-LD structured data">
+                <Field
+                  label="Schema JSON (Advanced)"
+                  hint="Enter valid JSON-LD structured data"
+                >
                   <textarea
-                    value={seoMeta.schema_json ? JSON.stringify(seoMeta.schema_json, null, 2) : ""}
+                    value={
+                      seoMeta.schema_json
+                        ? JSON.stringify(seoMeta.schema_json, null, 2)
+                        : ""
+                    }
                     onChange={(e) => {
                       try {
-                        const parsed = e.target.value ? JSON.parse(e.target.value) : null;
-                        setSeoMeta((prev) => ({ ...prev, schema_json: parsed }));
+                        const parsed = e.target.value
+                          ? JSON.parse(e.target.value)
+                          : null;
+                        setSeoMeta((prev) => ({
+                          ...prev,
+                          schema_json: parsed,
+                        }));
                       } catch {
                         // Invalid JSON
                       }
@@ -1319,9 +1578,15 @@ export default function ProductAddPage() {
                   className="px-5 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold rounded-xl disabled:opacity-50 transition-colors flex items-center gap-2"
                 >
                   {seoLoading ? (
-                    <><div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Saving…</>
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      Saving…
+                    </>
                   ) : (
-                    <><CheckCircle2 className="w-4 h-4" />Save SEO</>
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      Save SEO
+                    </>
                   )}
                 </button>
               </div>
