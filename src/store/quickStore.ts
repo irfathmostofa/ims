@@ -525,10 +525,7 @@ export const useQuickStore = create<StoreState>()(
       name: "quick-store",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        // Only persist these fields
-        branches: state.branches,
         activeBranch: state.activeBranch,
-        roles: state.roles, // Added roles to persistence since they don't change often
       }),
       // Handle rehydration
       onRehydrateStorage: () => (state) => {

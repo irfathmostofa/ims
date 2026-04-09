@@ -108,13 +108,10 @@ export const CouponMgmt = () => {
       const response = await apiClient(
         `${import.meta.env.VITE_SERVER}/coupon/get-all`,
         {
-          method: "POST", // Using POST
+          method: "GET", // Using POST
           tokenType: "jwt",
-          data: {}, // Empty object as body
         },
       );
-
-      console.log("Fetch coupons response:", response);
 
       if (response.success) {
         const fetchedCoupons = response.data || [];
