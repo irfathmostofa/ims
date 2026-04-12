@@ -9,6 +9,10 @@ import { toast } from "sonner";
 import SimpleImageUploader from "@/hook/imageUploader";
 import CategoryTree from "@/components/ui/CategoryTree";
 import { useNavigate } from "react-router-dom";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
+import Image from "@tiptap/extension-image";
 import {
   Info,
   Image as ImageIcon,
@@ -27,9 +31,37 @@ import {
   FileText,
   CheckCircle2,
   AlertCircle,
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Link as LinkIcon,
 } from "lucide-react";
 import CustomInput from "@/components/ui/custom/customInput";
 import CustomSelect from "@/components/ui/custom/customSelect";
+
+// Editor styles
+const editorStyles = `
+  .editor-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1rem 0;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  
+  .editor-image:hover {
+    opacity: 0.8;
+  }
+  
+  .tiptap-editor img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1rem 0;
+  }
+`;
 
 type Category = {
   id: number;
@@ -87,6 +119,93 @@ type SeoMeta = {
   is_index: boolean;
   is_follow: boolean;
 };
+
+// ─── TipTap Editor Toolbar Component ───────────────────────────────────────
+function EditorToolbar({
+  editor,
+  onAddImage,
+}: {
+  editor: any;
+  onAddImage: () => void;
+}) {
+  if (!editor) return null;
+
+  return (
+    <div className="flex items-center gap-1 p-2 border-b border-gray-200 bg-gray-50 rounded-t-xl flex-wrap">
+      <button
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        className={`p-2 rounded-lg transition-colors ${
+          editor.isActive("bold")
+            ? "bg-gray-900 text-white"
+            : "hover:bg-gray-200 text-gray-600"
+        }`}
+        title="Bold"
+      >
+        <Bold className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        className={`p-2 rounded-lg transition-colors ${
+          editor.isActive("italic")
+            ? "bg-gray-900 text-white"
+            : "hover:bg-gray-200 text-gray-600"
+        }`}
+        title="Italic"
+      >
+        <Italic className="w-4 h-4" />
+      </button>
+      <div className="w-px h-6 bg-gray-300 mx-1" />
+      <button
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        className={`p-2 rounded-lg transition-colors ${
+          editor.isActive("bulletList")
+            ? "bg-gray-900 text-white"
+            : "hover:bg-gray-200 text-gray-600"
+        }`}
+        title="Bullet List"
+      >
+        <List className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        className={`p-2 rounded-lg transition-colors ${
+          editor.isActive("orderedList")
+            ? "bg-gray-900 text-white"
+            : "hover:bg-gray-200 text-gray-600"
+        }`}
+        title="Ordered List"
+      >
+        <ListOrdered className="w-4 h-4" />
+      </button>
+      <div className="w-px h-6 bg-gray-300 mx-1" />
+      <button
+        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        className={`p-2 rounded-lg transition-colors ${
+          editor.isActive("blockquote")
+            ? "bg-gray-900 text-white"
+            : "hover:bg-gray-200 text-gray-600"
+        }`}
+        title="Quote"
+      >
+        <span className="text-sm font-bold">"</span>
+      </button>
+      <button
+        onClick={onAddImage}
+        className="p-2 rounded-lg hover:bg-gray-200 text-gray-600 transition-colors"
+        title="Insert Image"
+      >
+        <ImageIcon className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().clearNodes().run()}
+        className="p-2 rounded-lg hover:bg-gray-200 text-gray-600 transition-colors"
+        title="Clear Formatting"
+      >
+        <RotateCcw className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
 
 // ─── Small reusable field wrapper ───────────────────────────────────────────
 function Field({
@@ -193,11 +312,37 @@ export default function ProductAddPage() {
   const [seoLoading, setSeoLoading] = useState(false);
   const [productSlug, setProductSlug] = useState("");
 
-  // useState so changes trigger re-renders (useRef would not)
   const [titleCustomized, setTitleCustomized] = useState(false);
   const [descCustomized, setDescCustomized] = useState(false);
 
   const router = useNavigate();
+
+  // TipTap Editor
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Link.configure({
+        openOnClick: false,
+      }),
+      Image.configure({
+        inline: false,
+        HTMLAttributes: {
+          class: "editor-image",
+        },
+      }),
+    ],
+    content: description,
+    onUpdate: ({ editor }) => {
+      setDescription(editor.getHTML());
+    },
+  });
+
+  const addImage = () => {
+    const url = prompt("Enter image URL:");
+    if (url) {
+      editor?.chain().focus().setImage({ src: url }).run();
+    }
+  };
 
   const generateSlug = (text: string) =>
     text
@@ -225,10 +370,11 @@ export default function ProductAddPage() {
   // Auto-sync description — unless user customized it
   useEffect(() => {
     if (!descCustomized) {
+      const plainText = description.replace(/<[^>]*>/g, "").trim();
       const truncated =
-        description.length > 160
-          ? description.substring(0, 157) + "..."
-          : description;
+        plainText.length > 160
+          ? plainText.substring(0, 157) + "..."
+          : plainText;
       setSeoMeta((prev) => ({
         ...prev,
         meta_description: truncated,
@@ -332,8 +478,9 @@ export default function ProductAddPage() {
   const handleSaveSeo = async () => {
     setSeoLoading(true);
     try {
+      const plainText = description.replace(/<[^>]*>/g, "").trim();
       if (seoMeta.meta_title !== name) setTitleCustomized(true);
-      if (seoMeta.meta_description !== description) setDescCustomized(true);
+      if (seoMeta.meta_description !== plainText) setDescCustomized(true);
       setShowSeoModal(false);
       toast.success("SEO data saved");
     } catch (error: any) {
@@ -344,10 +491,9 @@ export default function ProductAddPage() {
   };
 
   const handleResetToDefaults = () => {
+    const plainText = description.replace(/<[^>]*>/g, "").trim();
     const truncated =
-      description.length > 160
-        ? description.substring(0, 157) + "..."
-        : description;
+      plainText.length > 160 ? plainText.substring(0, 157) + "..." : plainText;
     setSeoMeta((prev) => ({
       ...prev,
       meta_title: name || "",
@@ -453,6 +599,7 @@ export default function ProductAddPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <style>{editorStyles}</style>
       {/* Top bar */}
       <div className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
@@ -530,15 +677,19 @@ export default function ProductAddPage() {
                   )}
                 </Field>
                 <Field label="Description">
-                  <textarea
-                    placeholder="Write a detailed description of your product, including key features, materials, and specifications..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 resize-none transition-shadow"
-                    rows={5}
-                  />
-                  <p className="text-xs text-gray-400">
-                    {description.length} characters
+                  <div className="border border-gray-200 rounded-xl overflow-hidden">
+                    <EditorToolbar editor={editor} onAddImage={addImage} />
+                    <EditorContent
+                      editor={editor}
+                      className="prose prose-sm max-w-none tiptap-editor bg-white"
+                      style={{
+                        fontSize: "14px",
+                        lineHeight: "1.5",
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    {description.replace(/<[^>]*>/g, "").length} characters
                   </p>
                 </Field>
               </div>
@@ -976,7 +1127,7 @@ export default function ProductAddPage() {
                       </p>
                       <p className="text-sm text-gray-500 leading-relaxed line-clamp-2">
                         {seoMeta.meta_description ||
-                          description ||
+                          description.replace(/<[^>]*>/g, "") ||
                           "Your product description will appear here in search results…"}
                       </p>
                     </div>
@@ -1041,10 +1192,13 @@ export default function ProductAddPage() {
                           <button
                             type="button"
                             onClick={() => {
+                              const plainText = description
+                                .replace(/<[^>]*>/g, "")
+                                .trim();
                               const truncated =
-                                description.length > 160
-                                  ? description.substring(0, 157) + "..."
-                                  : description;
+                                plainText.length > 160
+                                  ? plainText.substring(0, 157) + "..."
+                                  : plainText;
                               setSeoMeta((prev) => ({
                                 ...prev,
                                 meta_description: truncated,
