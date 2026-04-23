@@ -97,8 +97,9 @@ export default function LogisticSettings({
       ],
       cod_charges: {
         enable_cod: true,
-        dhaka: 1.0,
-        outside_dhaka: 1.5,
+        city: "Chittagong",
+        incity_charge: 40,
+        outcity_charge: 120,
       },
       pickup_locations: [
         {
@@ -1249,6 +1250,7 @@ export default function LogisticSettings({
             <TabsContent value="cod" className="space-y-4">
               <Card className="p-4">
                 <h3 className="font-medium mb-4">Cash on Delivery Charges</h3>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
@@ -1264,18 +1266,47 @@ export default function LogisticSettings({
                       <Label>Enable Cash on Delivery</Label>
                     </div>
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="cod_dhaka">Dhaka City (%)</Label>
+                    <Label>City</Label>
+                    <Select
+                      value={formData.cod_charges?.city}
+                      onValueChange={(value) =>
+                        handleChange("cod_charges", {
+                          ...formData.cod_charges,
+                          city: value,
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[
+                          "Dhaka",
+                          "Chittagong",
+                          "Rajshahi",
+                          "Khulna",
+                          "Shylet",
+                          "Rangpur",
+                          "Barishal",
+                          "Maimansing",
+                        ].map((item) => (
+                          <SelectItem value={item}>{item}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cod_dhaka">In City Charge</Label>
                     <Input
                       id="cod_dhaka"
                       type="number"
                       step="0.1"
-                      value={formData.cod_charges?.dhaka || 1.0}
+                      value={formData.cod_charges?.incity_charge || 1.0}
                       onChange={(e) =>
                         handleChange("cod_charges", {
                           ...formData.cod_charges,
-                          dhaka: parseFloat(e.target.value),
+                          incity_charge: parseFloat(e.target.value),
                         })
                       }
                     />
@@ -1285,16 +1316,16 @@ export default function LogisticSettings({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="cod_outside">Outside Dhaka (%)</Label>
+                    <Label htmlFor="cod_outside">Out City Charge</Label>
                     <Input
                       id="cod_outside"
                       type="number"
                       step="0.1"
-                      value={formData.cod_charges?.outside_dhaka || 1.5}
+                      value={formData.cod_charges?.outcity_charge}
                       onChange={(e) =>
                         handleChange("cod_charges", {
                           ...formData.cod_charges,
-                          outside_dhaka: parseFloat(e.target.value),
+                          outcity_charge: parseFloat(e.target.value),
                         })
                       }
                     />

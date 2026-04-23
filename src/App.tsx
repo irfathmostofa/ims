@@ -71,6 +71,7 @@ import WebsiteSetupPage from "./pages/Website/websiteSetupPage";
 import SeoPage from "./pages/SEO/SeoPage";
 import EnquiriesPage from "./pages/Orders/EnquiriesPage";
 import SetupLayout from "./layouts/SetupLayout";
+import BrandPage from "./pages/Setup/BrandPage";
 
 export default function App() {
   return (
@@ -203,6 +204,7 @@ export default function App() {
                   path="/inventory/categories"
                   element={<CategoryPage />}
                 />
+                <Route path="/inventory/brand" element={<BrandPage />} />
                 <Route path="/inventory/units" element={<UnitPage />} />
                 <Route
                   path="/inventory/stock-ledger"

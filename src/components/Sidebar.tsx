@@ -36,6 +36,7 @@ const navItems: NavItem[] = [
     children: [
       { name: "All Products", path: "/inventory/products" },
       { name: "Product Category", path: "/inventory/categories" },
+      { name: "Brand", path: "/inventory/brand" },
       { name: "Unit of Measurement", path: "/inventory/units" },
       { name: "Stock Ledger", path: "/inventory/stock-ledger" },
       { name: "Adjustments", path: "/inventory/adjustments" },
