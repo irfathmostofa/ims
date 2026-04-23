@@ -16,6 +16,7 @@ import {
 import { printView } from "../utils/print";
 import { CustomPagination } from "./custom/customPagination";
 import { formatDate } from "../utils/formatter";
+import PrintTemplate from "./PrintLayout";
 
 type Action<T> = {
   label: React.ReactNode;
@@ -338,51 +339,52 @@ export function DataTable<T extends Record<string, any>>({
           </div>
 
           {/* Print data (hidden) */}
-          <div id={label} className="hidden">
-            <h1 className="text-xl font-bold mb-2">{label}</h1>
-            <table className="w-full border border-b-black">
-              <thead>
-                <tr>
-                  {(printHead && printHead.length > 0
-                    ? printHead
-                    : columnConfigs.map((col) => ({
-                        label: col.label,
-                        value: col.key,
-                      }))
-                  ).map((col) => (
-                    <th key={col.label} className="border border-b-black">
-                      {col.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredData.map((row: any, rowIndex: number) => (
-                  <tr key={rowIndex}>
+          <PrintTemplate title={label}>
+            <div id={label}>
+              <table className="w-full border border-b-black">
+                <thead>
+                  <tr>
                     {(printHead && printHead.length > 0
                       ? printHead
-                      : columnConfigs.map((col: any) => ({
+                      : columnConfigs.map((col) => ({
                           label: col.label,
                           value: col.key,
                         }))
-                    ).map((col: any, colIndex: number) => {
-                      const value = row[col.value];
-                      const isDateString =
-                        typeof value === "string" &&
-                        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value);
-                      const date = isDateString ? new Date(value) : null;
-                      const isValidDate = date && !isNaN(date.getTime());
-                      return (
-                        <td key={colIndex} className="border p-2">
-                          {isValidDate ? formatDate(date) : value}
-                        </td>
-                      );
-                    })}
+                    ).map((col) => (
+                      <th key={col.label} className="border border-b-black">
+                        {col.label}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredData.map((row: any, rowIndex: number) => (
+                    <tr key={rowIndex}>
+                      {(printHead && printHead.length > 0
+                        ? printHead
+                        : columnConfigs.map((col: any) => ({
+                            label: col.label,
+                            value: col.key,
+                          }))
+                      ).map((col: any, colIndex: number) => {
+                        const value = row[col.value];
+                        const isDateString =
+                          typeof value === "string" &&
+                          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value);
+                        const date = isDateString ? new Date(value) : null;
+                        const isValidDate = date && !isNaN(date.getTime());
+                        return (
+                          <td key={colIndex} className="border p-2">
+                            {isValidDate ? formatDate(date) : value}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </PrintTemplate>
 
           {/* ── DESKTOP TABLE (md and up) ── */}
           <div className="hidden md:block w-full overflow-x-auto border rounded-xl shadow-sm max-h-[60vh]">
