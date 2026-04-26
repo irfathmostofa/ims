@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { DataTable } from "@/components/ui/dataTable";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, Calendar, Filter, X } from "lucide-react";
+import { Search, Filter, X } from "lucide-react";
 import { apiClient } from "@/hook/apiClient";
 import { useQuickStore } from "@/store/quickStore";
 import { formatDate } from "@/components/utils/formatter";
@@ -72,12 +72,6 @@ export default function StockLedgerPage() {
     has_previous: false,
     has_next: false,
   });
-  const [summary, setSummary] = useState({
-    total_records: 0,
-    total_in: 0,
-    total_out: 0,
-    net_change: 0,
-  });
 
   const { branches, products, fetchBranches, fetchProducts } = useQuickStore();
 
@@ -112,7 +106,7 @@ export default function StockLedgerPage() {
       if (filters.search) requestData.search = filters.search;
 
       const response = await apiClient(
-        `${import.meta.env.VITE_SERVER}/inventory/stock/adjustments`,
+        `${import.meta.env.VITE_SERVER}/inventory/stock/adjustments-report`,
         {
           method: "POST",
           tokenType: "jwt",
@@ -124,7 +118,6 @@ export default function StockLedgerPage() {
         const apiResponse = response.data as ApiResponse["data"];
         setLedgerData(apiResponse.data || []);
         setPagination(apiResponse.pagination);
-        setSummary(apiResponse.summary);
       }
     } catch (err: any) {
       console.error("Fetch stock ledger error:", err);
@@ -349,7 +342,7 @@ export default function StockLedgerPage() {
           daily_total_out: (val) => (
             <span className="text-red-600 font-medium">{val || 0}</span>
           ),
-          daily_net_change: (val, row) => (
+          daily_net_change: (val) => (
             <span
               className={`font-semibold ${
                 val > 0
