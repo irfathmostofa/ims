@@ -57,6 +57,8 @@ type DataTableProps<T> = {
   page?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
+  serial?: boolean;
+  serialLabel?: string;
 };
 
 export function DataTable<T extends Record<string, any>>({
@@ -73,6 +75,8 @@ export function DataTable<T extends Record<string, any>>({
   page: externalPage,
   totalPages: externalTotalPages,
   onPageChange,
+  serial = false,
+  serialLabel = "#",
 }: DataTableProps<T>) {
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [search, setSearch] = useState("");
@@ -186,8 +190,14 @@ export function DataTable<T extends Record<string, any>>({
   };
 
   const exportExcel = () => {
-    const exportData = filteredData.map((row) => {
+    const exportData = filteredData.map((row, index) => {
       const obj: Record<string, any> = {};
+
+      // Add serial number if enabled
+      if (serial) {
+        obj[serialLabel] = index + 1;
+      }
+
       columnConfigs.forEach((col) => {
         const formatFn = columnFormats[col.key];
         let value: any = row[col.key];
@@ -208,8 +218,16 @@ export function DataTable<T extends Record<string, any>>({
   const exportPDF = () => {
     const doc = new jsPDF();
     doc.text(label, 14, 10);
-    const body = filteredData.map((row) =>
-      columnConfigs.map((col) => {
+
+    const body = filteredData.map((row, index) => {
+      const rowData: any[] = [];
+
+      // Add serial number if enabled
+      if (serial) {
+        rowData.push(index + 1);
+      }
+
+      columnConfigs.forEach((col) => {
         const formatFn = columnFormats[col.key];
         let value: any = row[col.key];
         if (formatFn) {
@@ -220,13 +238,21 @@ export function DataTable<T extends Record<string, any>>({
           Array.isArray(value) ||
           (typeof value === "string" && value.startsWith("http"))
         ) {
-          return "[Image]";
+          rowData.push("[Image]");
+        } else {
+          rowData.push(value);
         }
-        return value;
-      }),
-    );
+      });
+
+      return rowData;
+    });
+
+    const headers = serial
+      ? [serialLabel, ...columnConfigs.map((c) => c.label)]
+      : columnConfigs.map((c) => c.label);
+
     autoTable(doc, {
-      head: [columnConfigs.map((c) => c.label)],
+      head: [headers],
       body: body,
     });
     doc.save(`${label}.pdf`);
@@ -348,6 +374,9 @@ export function DataTable<T extends Record<string, any>>({
               <table className="w-full border border-b-black">
                 <thead>
                   <tr>
+                    {serial && (
+                      <th className="border border-b-black">{serialLabel}</th>
+                    )}
                     {(printHead && printHead.length > 0
                       ? printHead
                       : columnConfigs.map((col) => ({
@@ -364,6 +393,7 @@ export function DataTable<T extends Record<string, any>>({
                 <tbody>
                   {filteredData.map((row: any, rowIndex: number) => (
                     <tr key={rowIndex}>
+                      {serial && <td className="border p-2">{rowIndex + 1}</td>}
                       {(printHead && printHead.length > 0
                         ? printHead
                         : columnConfigs.map((col: any) => ({
@@ -398,6 +428,11 @@ export function DataTable<T extends Record<string, any>>({
             >
               <thead className="text-left sticky top-0 bg-bw-900 z-10">
                 <tr>
+                  {serial && (
+                    <th className="px-3 py-2.5 border-b text-white font-medium text-sm whitespace-nowrap w-10">
+                      {serialLabel}
+                    </th>
+                  )}
                   {selectable && (
                     <th className="px-3 py-2.5 border-b whitespace-nowrap w-10">
                       <input
@@ -433,6 +468,7 @@ export function DataTable<T extends Record<string, any>>({
                     <td
                       colSpan={
                         columnConfigs.length +
+                        (serial ? 1 : 0) +
                         (selectable ? 1 : 0) +
                         (actions.length > 0 ? 1 : 0)
                       }
@@ -451,6 +487,11 @@ export function DataTable<T extends Record<string, any>>({
                           selectedRows.includes(rowIndex) ? "bg-blue-50" : ""
                         }`}
                       >
+                        {serial && (
+                          <td className="px-3 py-2 border-b text-sm text-gray-600 font-medium">
+                            {(currentPage - 1) * rowsPerPage + rowIndex + 1}
+                          </td>
+                        )}
                         {selectable && (
                           <td className="px-3 py-2 border-b">
                             <input
@@ -549,6 +590,11 @@ export function DataTable<T extends Record<string, any>>({
                       }
                     >
                       <div className="flex items-center gap-2 min-w-0 flex-1">
+                        {serial && (
+                          <span className="text-xs font-bold text-gray-400 bg-gray-100 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">
+                            {(currentPage - 1) * rowsPerPage + rowIndex + 1}
+                          </span>
+                        )}
                         {selectable && (
                           <input
                             type="checkbox"
