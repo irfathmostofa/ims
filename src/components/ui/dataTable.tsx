@@ -328,7 +328,11 @@ export function DataTable<T extends Record<string, any>>({
                   <FileDown className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
                 <button
-                  onClick={() => printView(label)}
+                  onClick={() => {
+                    setTimeout(() => {
+                      printView(label);
+                    }, 2000);
+                  }}
                   title="Print"
                   className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors border border-transparent hover:border-gray-200"
                 >

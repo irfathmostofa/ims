@@ -203,16 +203,17 @@ export default function AccountHeadpage() {
         data={accounts}
         label="Accounts List"
         selectable
+        serial
         loading={loading}
         rowsPerPage={100}
         printHead={[
-          { label: "Code",value: "code" },
-          { label: "Head",value: "name" },
-          { label: "Type",value: "type" },
-          { label: "Parent Head",value: "parent_id" },
-          { label: "Status",value: "status" },
+          { label: "Code", value: "code" },
+          { label: "Head", value: "name" },
+          { label: "Type", value: "type" },
+          { label: "Parent Head", value: "parent_id" },
+          { label: "Status", value: "status" },
         ]}
-        // pagination
+        pagination
         showColumns={[
           {
             key: "code",

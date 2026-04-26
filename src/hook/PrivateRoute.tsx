@@ -11,7 +11,18 @@ export function PrivateRoute() {
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
-
+  const fetechCompany = async () => {
+    try {
+      const res = await apiClient(
+        `${import.meta.env.VITE_SERVER}/setup/get-companies`,
+        {
+          method: "GET",
+          tokenType: "jwt",
+        },
+      );
+      localStorage.setItem("company", JSON.stringify(res.data[0]));
+    } catch (error) {}
+  };
   useEffect(() => {
     const checkToken = async () => {
       if (!token) {
@@ -24,6 +35,7 @@ export function PrivateRoute() {
       if (user) {
         setAuthenticated(true);
         setLoading(false);
+        fetechCompany();
         return;
       }
 

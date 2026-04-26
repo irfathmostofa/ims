@@ -58,7 +58,6 @@ export default function LoginPage() {
 
         setToken(loginData.token);
         setUser(loginData.user);
-
         toast.success("Login Successful!");
         router("/dashboard");
       } catch (err: any) {
