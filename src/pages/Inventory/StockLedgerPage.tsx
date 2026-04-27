@@ -106,14 +106,14 @@ export default function StockLedgerPage() {
       if (filters.search) requestData.search = filters.search;
 
       const response = await apiClient(
-        `${import.meta.env.VITE_SERVER}/inventory/stock/adjustments-report`,
+        `${import.meta.env.VITE_SERVER}/inventory/stock/adjustment-report`,
         {
           method: "POST",
           tokenType: "jwt",
           data: requestData,
         },
       );
-
+      console.log(response);
       if (response.success) {
         const apiResponse = response.data as ApiResponse["data"];
         setLedgerData(apiResponse.data || []);

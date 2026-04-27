@@ -54,7 +54,6 @@ export default function AccountPage() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [update, setUpdate] = useState(0);
-  console.log(form);
   // Fetch account heads
   const fetchAccountHeads = async () => {
     try {

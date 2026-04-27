@@ -67,7 +67,7 @@ export function DataTable<T extends Record<string, any>>({
   showColumns = [],
   actions = [],
   selectable = false,
-  rowsPerPage = 5,
+  rowsPerPage = 10,
   printHead = [],
   loading = false,
   columnFormats = {},

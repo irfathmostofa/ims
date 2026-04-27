@@ -25,7 +25,7 @@ export function useCrud<T>({
   const fetchAll = async (
     setData: (data: T[]) => void,
     setLoading?: (val: boolean) => void,
-    payload?: any // override default payload if needed
+    payload?: any, // override default payload if needed
   ) => {
     try {
       setLoading?.(true);
@@ -34,7 +34,7 @@ export function useCrud<T>({
         tokenType: "jwt",
         ...(listMethod === "POST" ? { data: payload || listPayload } : {}),
       });
-      setData(res.data || []);
+      setData(res.data.data || res.data || []);
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Failed to fetch data");

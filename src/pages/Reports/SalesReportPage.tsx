@@ -37,14 +37,11 @@ const salesData: Sale[] = [
 export default function SalesReportPage() {
   return (
     <div className="p-6 space-y-4">
-
-
       {/* Data Table */}
       <div>
         <DataTable
           data={salesData}
           label="Sales List"
-      
           rowsPerPage={10}
           printHead={[
             { label: "Date", value: "date" },

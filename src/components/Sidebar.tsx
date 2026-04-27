@@ -58,7 +58,7 @@ const navItems: NavItem[] = [
     icon: ShoppingCart,
     children: [
       { name: "Sale List", path: "/sales/sale-list" },
-      { name: "Discounts & Promotions", path: "/sales/discounts" },
+      // { name: "Discounts & Promotions", path: "/sales/discounts" },
     ],
   },
   {
@@ -67,8 +67,8 @@ const navItems: NavItem[] = [
     children: [
       { name: "Order List", path: "/order" },
       { name: "Order Payment", path: "/order/payment" },
-      { name: "Order Tracking", path: "/order/tracking" },
-      { name: "Order Return", path: "/order/return" },
+      // { name: "Order Tracking", path: "/order/tracking" },
+      // { name: "Order Return", path: "/order/return" },
       { name: "Coupon Management", path: "/order/coupon" },
       { name: "Logistics", path: "/order/logistics" },
       { name: "Enquiries", path: "/order/enquiries" },
@@ -98,7 +98,7 @@ const navItems: NavItem[] = [
       { name: "Accounts", path: "/accounts/accounts" },
       { name: "Accounting Period", path: "/accounts/accounting-period" },
       { name: "Journal Entries", path: "/accounts/journals" },
-      { name: "Transactions", path: "/accounts/transactions" },
+      // { name: "Transactions", path: "/accounts/transactions" },
     ],
   },
   {
