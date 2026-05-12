@@ -48,21 +48,20 @@
 } /* Muted text — still readable    */
 .text-bw-500 {
   color: #8899aa;
-} /* Subtle labels on dark bg       */
+} 
 .text-bw-600 {
   color: #7a8fa6;
-} /* Timestamps, hints on dark bg   */
+} 
 .text-bw-700 {
   color: #374151;
-} /* Muted text on light bg         */
+} 
 .text-bw-800 {
   color: #1f2937;
-} /* Primary text on light bg       */
+} 
 .text-bw-900 {
   color: #1d2226;
-} /* Darkest — headings on light bg */
+} 
 
-/* ── Border Colors ────────────────────────────────────────────────────── */
 .border-bw-200 {
   border-color: #e5e7eb;
 }
@@ -73,7 +72,6 @@
   border-color: rgba(255, 255, 255, 0.08);
 } /* dark theme dividers */
 
-/* ── Primary Button / Badge ───────────────────────────────────────────── */
 .bw-primary {
   background-color: #1d2226;
   color: white;
