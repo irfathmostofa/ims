@@ -79,10 +79,10 @@ export default function SendMessagePage() {
       );
 
       if (response.success) {
-        setCampaigns(response.data);
-        if (response.data.length > 0) {
-          setSelectedCampaign(response.data[0]);
-        }
+        setCampaigns(response.data.data);
+        // if (response.data.length > 0) {
+        //   setSelectedCampaign(response.data.data[0]);
+        // }
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to load campaigns");
@@ -313,6 +313,9 @@ export default function SendMessagePage() {
                   value={selectedCampaign?.id || ""}
                   onChange={(e) => handleCampaignSelect(e.target.value)}
                 >
+                  <option value="" disabled>
+                    Select Campaign
+                  </option>
                   {campaigns.map((campaign) => (
                     <option key={campaign.id} value={campaign.id}>
                       {campaign.title} ({campaign.status})

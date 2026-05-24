@@ -109,12 +109,12 @@ export default function SendMobileMessagePage() {
         },
       );
       if (response.success) {
-        setCampaigns(response.data);
+        setCampaigns(response.data.data);
         if (response.data.length > 0) {
           setFormData((prev) => ({
             ...prev,
-            campaignId: response.data[0].id,
-            customMessage: response.data[0].message || "",
+            campaignId: response.data.data[0].id,
+            customMessage: response.data.data[0].message || "",
           }));
         }
       }
