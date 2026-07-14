@@ -24,6 +24,35 @@ export default function LoginPage() {
   const router = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const token = useAuthStore((state) => state.token);
+
+  const checkCompany = async () => {
+    try {
+      const data = await apiClient(
+        `${import.meta.env.VITE_SERVER}/setup/get-companies`,
+        {
+          method: "GET",
+          tokenType: "jwt",
+        },
+      );
+
+      if (data.data && data.data.length > 0) {
+        router("/");
+      } else {
+        router("/setup-wizard");
+      }
+    } catch (err: any) {
+      console.error("Login error:", err);
+      toast.error(err.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    if (!token) {
+      checkCompany();
+    }
+  }, []);
+
   useEffect(() => {
     if (token) {
       router("/dashboard");

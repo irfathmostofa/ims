@@ -67,7 +67,7 @@ export default function CompanyForm({ onNext, defaultValues }: Props) {
           body: JSON.stringify(formDataValues),
         },
       );
-
+      console.log(res);
       if (!res.ok) throw new Error("Failed to save company");
 
       const response = await res.json();
