@@ -259,7 +259,7 @@ export default function Cart({
   //   paymentType === "DUE" ? 0 : paymentType === "PARTIAL" ? totalPAID : total;
 
   return (
-    <div className="w-full md:w-96 bg-white p-4 rounded-lg shadow-md flex flex-col border border-bw-200 h-full">
+    <div className="w-full bg-white p-4 rounded-lg shadow-md flex flex-col border border-bw-200 h-full">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-bw-900 font-bold text-xl">Cart</h2>

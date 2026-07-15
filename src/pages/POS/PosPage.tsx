@@ -1,6 +1,9 @@
 "use client";
 
-import Cart, { type PaymentEntry, type PaymentType } from "@/components/POS/Cart";
+import Cart, {
+  type PaymentEntry,
+  type PaymentType,
+} from "@/components/POS/Cart";
 import CustomerInfo from "@/components/POS/CustomerInfo";
 import InvoiceModal from "@/components/POS/InvoiceModal";
 import ProductList from "@/components/POS/ProductList";
@@ -72,7 +75,10 @@ export default function POSPage() {
 
   // ─── Clear helpers ────────────────────────────────────────────────────────
   const handleClear = () => {
-    if (cart.length > 0 && confirm("Are you sure you want to clear the cart?")) {
+    if (
+      cart.length > 0 &&
+      confirm("Are you sure you want to clear the cart?")
+    ) {
       clearNoConfirm();
     }
   };
@@ -125,9 +131,18 @@ export default function POSPage() {
 
   // ─── Pay / create invoice ─────────────────────────────────────────────────
   const handlePay = async () => {
-    if (cart.length === 0) { toast.error("Cart is empty"); return; }
-    if (!user?.branch?.id) { toast.error("Branch information is missing"); return; }
-    if (!customerName.trim()) { toast.error("Customer name is required"); return; }
+    if (cart.length === 0) {
+      toast.error("Cart is empty");
+      return;
+    }
+    if (!user?.branch?.id) {
+      toast.error("Branch information is missing");
+      return;
+    }
+    if (!customerName.trim()) {
+      toast.error("Customer name is required");
+      return;
+    }
 
     const validPayments =
       paymentType === "DUE"
@@ -157,7 +172,10 @@ export default function POSPage() {
       let finalCustomerId = customerId;
       if (!finalCustomerId) {
         const newId = await addCustomer();
-        if (!newId) { setLoading(false); return; }
+        if (!newId) {
+          setLoading(false);
+          return;
+        }
         finalCustomerId = newId;
       }
 
@@ -210,7 +228,6 @@ export default function POSPage() {
   return (
     // Two columns: [product area] [cart]
     <div className="flex flex-col md:flex-row gap-4 h-full w-full">
-
       {/* Left: Customer info + Product list (with categories baked in) */}
       <div className="flex-1 flex flex-col gap-3 min-w-0">
         <CustomerInfo
@@ -267,6 +284,7 @@ export default function POSPage() {
         customerPhone={customerPhone}
         customerAddress={customerAddress}
         cart={cart}
+        user={user?.company}
         total={total}
         paymentMethod={allMethodsLabel || "CASH"}
         paymentType={paymentType}
