@@ -98,7 +98,7 @@ export default function SaleListPage() {
           method: "POST",
           tokenType: "jwt",
           data: searchParams,
-        }
+        },
       );
 
       if (response.success) {
@@ -145,7 +145,7 @@ export default function SaleListPage() {
   const handleDelete = async (sale: Invoice) => {
     if (
       !confirm(
-        `Are you sure you want to delete invoice ${sale.code}? This action cannot be undone.`
+        `Are you sure you want to delete invoice ${sale.code}? This action cannot be undone.`,
       )
     )
       return;
@@ -181,7 +181,7 @@ export default function SaleListPage() {
         {
           method: "GET",
           tokenType: "jwt",
-        }
+        },
       );
 
       if (response.success) {
@@ -262,7 +262,7 @@ export default function SaleListPage() {
       className: "hover:bg-red-50 hover:text-red-600",
     },
   ];
-
+  console.log(searchParams);
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6 space-y-6">
@@ -499,7 +499,7 @@ export default function SaleListPage() {
                           <span className="font-bold">
                             ৳
                             {parseFloat(
-                              selectedSale.total_amount as any
+                              selectedSale.total_amount as any,
                             ).toFixed(2)}
                           </span>
                         </div>
@@ -508,7 +508,7 @@ export default function SaleListPage() {
                           <span className="font-bold text-green-600">
                             ৳
                             {parseFloat(
-                              selectedSale.paid_amount as any
+                              selectedSale.paid_amount as any,
                             ).toFixed(2)}
                           </span>
                         </div>
@@ -517,7 +517,7 @@ export default function SaleListPage() {
                           <span className="font-bold text-red-600">
                             ৳
                             {parseFloat(selectedSale.due_amount as any).toFixed(
-                              2
+                              2,
                             )}
                           </span>
                         </div>
@@ -603,7 +603,7 @@ export default function SaleListPage() {
                         <span className="font-medium">
                           ৳
                           {parseFloat(selectedSale.total_amount as any).toFixed(
-                            2
+                            2,
                           )}
                         </span>
                       </div>
@@ -623,7 +623,7 @@ export default function SaleListPage() {
                           <span className="text-blue-900">
                             ৳
                             {parseFloat(
-                              selectedSale.total_amount as any
+                              selectedSale.total_amount as any,
                             ).toFixed(2)}
                           </span>
                         </div>
@@ -634,7 +634,7 @@ export default function SaleListPage() {
                           <span className="font-bold text-green-600">
                             ৳
                             {parseFloat(
-                              selectedSale.paid_amount as any
+                              selectedSale.paid_amount as any,
                             ).toFixed(2)}
                           </span>
                         </div>
@@ -645,7 +645,7 @@ export default function SaleListPage() {
                           <span className="font-bold text-lg text-red-600">
                             ৳
                             {parseFloat(selectedSale.due_amount as any).toFixed(
-                              2
+                              2,
                             )}
                           </span>
                         </div>
@@ -674,15 +674,15 @@ export default function SaleListPage() {
                                   payment.method === "CASH"
                                     ? "bg-green-100 text-green-700"
                                     : payment.method === "CARD"
-                                    ? "bg-blue-100 text-blue-700"
-                                    : "bg-purple-100 text-purple-700"
+                                      ? "bg-blue-100 text-blue-700"
+                                      : "bg-purple-100 text-purple-700"
                                 }`}
                               >
                                 {payment.method === "CASH"
                                   ? "💰"
                                   : payment.method === "CARD"
-                                  ? "💳"
-                                  : "🌐"}
+                                    ? "💳"
+                                    : "🌐"}
                               </div>
                               <div>
                                 <div className="font-bold">
