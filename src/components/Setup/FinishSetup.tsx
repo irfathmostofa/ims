@@ -1,104 +1,99 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
+import {
+  CheckCircle,
+  Building2,
+  User,
+  Package,
+  ArrowRight,
+} from "lucide-react";
 
-type Props = { data: any; onBack: () => void };
+type Props = {
+  data: {
+    company: any;
+    user: any;
+    products?: any[];
+    productsSkipped?: boolean;
+  };
+  onBack: () => void;
+  onFinish: () => void;
+};
 
-export default function FinishSetup({ data, onBack }: Props) {
-  const router = useNavigate();
+export default function FinishSetup({ data, onBack, onFinish }: Props) {
+  const { company, user, products, productsSkipped } = data;
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Review Setup</h2>
+      <div className="text-center">
+        <div className="inline-flex p-3 bg-green-50 rounded-full mb-3">
+          <CheckCircle className="w-8 h-8 text-green-600" />
+        </div>
+        <h2 className="text-xl font-semibold text-gray-900">All Set!</h2>
+        <p className="text-sm text-gray-500 mt-1">Your store is ready to go</p>
+      </div>
 
-      {/* Company Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Company</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>
-            <b>Name:</b> {data.company?.name || "N/A"}
-          </p>
-          <p>
-            <b>Address:</b> {data.company?.address || "N/A"}
-          </p>
-          <p>
-            <b>Email:</b> {data.company?.email || "N/A"}
-          </p>
-          <p>
-            <b>Currency:</b> {data.company?.currency || "N/A"}
-          </p>
-        </CardContent>
-      </Card>
+      <div className="space-y-3">
+        {/* Company */}
+        <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+          <Building2 className="w-5 h-5 text-blue-500 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900">{company?.name}</p>
+            <p className="text-xs text-gray-500">{company?.email}</p>
+            {company?.address && (
+              <p className="text-xs text-gray-400 mt-0.5">{company.address}</p>
+            )}
+          </div>
+        </div>
 
-      {/* Branches Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Branches</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {data.branches?.length ? (
-            data.branches.map((b: any, i: number) => (
-              <p key={i}>
-                {b.name || "N/A"} – {b.address || "N/A"}
+        {/* Admin User */}
+        <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+          <User className="w-5 h-5 text-purple-500 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900">
+              {user?.username}
+            </p>
+            <p className="text-xs text-gray-500">
+              {user?.email || company?.email}
+              <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                Super Admin
+              </span>
+            </p>
+          </div>
+        </div>
+
+        {/* Products */}
+        <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+          <Package className="w-5 h-5 text-green-500 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            {productsSkipped ? (
+              <p className="text-sm text-gray-500">No products added yet</p>
+            ) : products && products.length > 0 ? (
+              <p className="text-sm text-gray-900">
+                {products.length} product{products.length > 1 ? "s" : ""}{" "}
+                uploaded
               </p>
-            ))
-          ) : (
-            <p>No branches added</p>
-          )}
-        </CardContent>
-      </Card>
+            ) : (
+              <p className="text-sm text-gray-500">No products added</p>
+            )}
+            <p className="text-xs text-gray-400">
+              You can manage products later
+            </p>
+          </div>
+        </div>
+      </div>
 
-      {/* Roles Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Roles</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {data.roles?.length ? (
-            data.roles.map((r: any, i: number) => (
-              <p key={i}>{r.name || "N/A"}</p>
-            ))
-          ) : (
-            <p>No roles added</p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Users Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Users</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {data.users?.length ? (
-            data.users.map((u: any, i: number) => (
-              <p key={i}>
-                {u.username || "N/A"} ({u.phone || "N/A"}) –{" "}
-                {u.role_name || "N/A"} @ {u.branch_name || "N/A"}
-              </p>
-            ))
-          ) : (
-            <p>No users added</p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Action Buttons */}
-      <div className="flex justify-between">
-        <Button variant="secondary" onClick={onBack} className="btn-bw-primary">
-          Back
+      {/* Navigation */}
+      <div className="flex justify-between pt-4 border-t">
+        <Button variant="outline" onClick={onBack} className="px-6">
+          ← Back
         </Button>
         <Button
-          onClick={() => {
-            router("/");
-          }}
-          className="btn-bw-primary"
+          onClick={onFinish}
+          className="bg-green-600 hover:bg-green-700 text-white px-6 flex items-center gap-2"
         >
-          Finish Setup
+          Go to Dashboard
+          <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
     </div>

@@ -1,39 +1,70 @@
 "use client";
 
-import { CheckCircle, Circle } from "lucide-react";
-import { cn } from "@/lib/utils";
-
 type Props = {
   steps: string[];
   currentStep: number;
+  onStepClick?: (step: number) => void;
 };
 
-export default function ProgressStepper({ steps, currentStep }: Props) {
+export default function ProgressStepper({
+  steps,
+  currentStep,
+  onStepClick,
+}: Props) {
   return (
-    <div className="flex justify-between items-center mb-8">
+    <div className="flex items-center justify-between">
       {steps.map((step, index) => (
-        <div key={index} className="flex flex-col items-center w-full">
-          {index < currentStep ? (
-            <CheckCircle className="w-6 h-6 text-green-500" />
-          ) : index === currentStep ? (
-            <Circle className="w-6 h-6 text-blue-600" />
-          ) : (
-            <Circle className="w-6 h-6 text-gray-300" />
-          )}
-          <p
-            className={cn(
-              "text-xs mt-1",
-              index === currentStep
-                ? "text-blue-600 font-semibold"
-                : index < currentStep
-                ? "text-green-500"
-                : "text-gray-400"
-            )}
+        <div key={index} className="flex items-center flex-1 last:flex-none">
+          <button
+            onClick={() => onStepClick?.(index)}
+            disabled={index > currentStep}
+            className={`flex items-center gap-2 ${
+              index <= currentStep
+                ? "cursor-pointer"
+                : "cursor-not-allowed opacity-50"
+            }`}
           >
-            {step}
-          </p>
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
+                index < currentStep
+                  ? "bg-green-500 text-white"
+                  : index === currentStep
+                    ? "bw-primary text-white"
+                    : "bg-gray-200 text-gray-500"
+              }`}
+            >
+              {index < currentStep ? (
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              ) : (
+                index + 1
+              )}
+            </div>
+            <span
+              className={`text-xs font-medium hidden sm:inline ${
+                index <= currentStep ? "text-gray-700" : "text-gray-400"
+              }`}
+            >
+              {step}
+            </span>
+          </button>
           {index < steps.length - 1 && (
-            <div className="h-0.5 bg-gray-200 flex-1 mx-2 w-full" />
+            <div
+              className={`h-0.5 flex-1 mx-2 ${
+                index < currentStep ? "bg-green-500" : "bg-gray-200"
+              }`}
+            />
           )}
         </div>
       ))}

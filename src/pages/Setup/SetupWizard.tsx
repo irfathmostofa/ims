@@ -1,98 +1,123 @@
 "use client";
 
-import BranchForm from "@/components/Setup/BranchForm";
 import CompanyForm from "@/components/Setup/CompanyForm";
 import FinishSetup from "@/components/Setup/FinishSetup";
 import ProgressStepper from "@/components/Setup/ProgressStepper";
-import RoleForm from "@/components/Setup/RoleForm";
-import UserForm from "@/components/Setup/UserForm";
-// import { apiClient } from "@/hook/apiClient";
+import ProductSetup from "@/components/Setup/ProductSetup";
 import { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { apiClient } from "@/hook/apiClient";
 
-const steps = ["Company", "Branches", "Roles", "Users", "Finish"];
+const steps = ["Company", "Products", "Finish"];
 
 export default function SetupWizard() {
   const [currentStep, setCurrentStep] = useState(0);
-  // const router = useNavigate();
+  const navigate = useNavigate();
   const [setupData, setSetupData] = useState<any>({
-    company: {},
-    branches: [],
-    roles: [],
-    users: [],
+    company: null,
+    user: null,
+    products: [],
+    productsSkipped: false,
   });
-  // const checkCompany = async () => {
-  //   try {
-  //     const data = await apiClient(
-  //       `${import.meta.env.VITE_SERVER}/setup/get-companies`,
-  //       {
-  //         method: "GET",
-  //         tokenType: "jwt",
-  //       },
-  //     );
+  const checkCompany = async () => {
+    try {
+      const data = await apiClient(
+        `${import.meta.env.VITE_SERVER}/setup/get-companies`,
+        {
+          method: "GET",
+          tokenType: "jwt",
+        },
+      );
 
-  //     if (data.data && data.data.length > 0) {
-  //       router("/");
-  //     } else {
-  //       router("/setup-wizard");
-  //     }
-  //   } catch (err: any) {
-  //     console.error("Login error:", err);
-  //   }
-  // };
+      if (data.data && data.data.length > 0) {
+        navigate("/");
+      } else {
+        navigate("/setup-wizard");
+      }
+    } catch (err: any) {
+      console.error("Login error:", err);
+    }
+  };
   useEffect(() => {
-    // checkCompany();
+    checkCompany();
   }, []);
-  const next = () => setCurrentStep((prev) => prev + 1);
-  const back = () => setCurrentStep((prev) => prev - 1);
+  const goToStep = (step: number) => {
+    setCurrentStep(step);
+  };
 
-  const saveStepData = (step: string, data: any) => {
+  const next = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const back = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleCompanySubmit = (data: { company: any; user: any }) => {
     setSetupData((prev: any) => ({
       ...prev,
-      [step]: data,
+      company: data.company,
+      user: data.user,
     }));
     next();
   };
 
+  const handleProductSubmit = (data: any) => {
+    setSetupData((prev: any) => ({
+      ...prev,
+      products: data.products || [],
+      productsSkipped: data.skipped || false,
+    }));
+    next();
+  };
+
+  const handleFinish = () => {
+    toast.success("🎉 Setup completed successfully!");
+    navigate("/");
+  };
+
   return (
-    <div className="w-full  bg-white rounded-2xl shadow-xl p-6">
-      <ProgressStepper steps={steps} currentStep={currentStep} />
+    <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-8 mx-auto">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-gray-900 text-center">
+          Setup Your Store
+        </h1>
+        <p className="text-sm text-gray-500 text-center mt-1">
+          Get started in just a few steps
+        </p>
+      </div>
 
-      {currentStep === 0 && (
-        <CompanyForm
-          onNext={(data) => saveStepData("company", data)}
-          defaultValues={setupData.company}
-        />
-      )}
+      <ProgressStepper
+        steps={steps}
+        currentStep={currentStep}
+        onStepClick={goToStep}
+      />
 
-      {currentStep === 1 && (
-        <BranchForm
-          company_id={setupData.company.id}
-          onNext={(data) => saveStepData("branches", data)}
-          onBack={back}
-          defaultValues={setupData.branches}
-        />
-      )}
+      <div className="mt-8">
+        {currentStep === 0 && (
+          <CompanyForm
+            onSubmit={handleCompanySubmit}
+            defaultValues={setupData.company}
+          />
+        )}
 
-      {currentStep === 2 && (
-        <RoleForm
-          onNext={(data) => saveStepData("roles", data)}
-          onBack={back}
-          defaultValues={setupData.roles}
-        />
-      )}
+        {currentStep === 1 && (
+          <ProductSetup
+            onNext={handleProductSubmit}
+            onBack={back}
+            defaultValues={setupData.products}
+          />
+        )}
 
-      {currentStep === 3 && (
-        <UserForm
-          branches={setupData.branches || []} // Pass saved branches
-          roles={setupData.roles || []} // Pass saved roles
-          onNext={(data) => saveStepData("users", data)}
-          onBack={back}
-          defaultValues={setupData.users}
-        />
-      )}
-
-      {currentStep === 4 && <FinishSetup data={setupData} onBack={back} />}
+        {currentStep === 2 && (
+          <FinishSetup data={setupData} onBack={back} onFinish={handleFinish} />
+        )}
+      </div>
     </div>
   );
 }
