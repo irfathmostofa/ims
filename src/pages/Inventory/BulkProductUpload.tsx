@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { apiClient } from "@/hook/apiClient";
-import { useAuthStore } from "@/store/authStore";
+
 
 type RowIssue = {
   row_index: number;
@@ -83,8 +83,7 @@ export default function BulkProductUpload() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmFailures, setConfirmFailures] = useState<GroupResult[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useAuthStore();
-
+  console.log(errorMessage);
   const validGroups = groups.filter((g) => g.status === "valid");
   const errorGroups = groups.filter((g) => g.status === "error");
 
