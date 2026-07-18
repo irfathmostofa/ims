@@ -4,98 +4,120 @@ import React, { useState, useRef } from "react";
 import { apiClient } from "@/hook/apiClient";
 import { useAuthStore } from "@/store/authStore";
 
-type Variant = {
-  name: string;
-  additional_price: number;
-  SKU?: string;
-  weight?: number;
-  weight_unit?: string;
-  is_replaceable?: boolean;
-  status?: string;
-  images?: { url: string; alt_text?: string; is_primary?: boolean }[];
+type RowIssue = {
+  row_index: number;
+  field: string;
+  message: string;
 };
 
-type ProductPreview = {
-  row: number;
+type CategoryStatus = {
+  name: string;
+  status: "existing" | "new";
+};
+
+type BulkRow = {
+  row_group: string;
   product_name: string;
+  brand_name: string;
   uom_name: string;
-  cost_price: number | string | null;
-  regular_price: number | string | null; // Added regular_price
-  selling_price: number | string | null;
-  category: string;
-  stock_quantity?: number;
-  variant: Variant;
+  cost_price: string;
+  selling_price: string;
+  regular_price: string;
+  description?: string;
+  category_names?: string;
+  variant_name: string;
+  weight?: string;
+  weight_unit?: string;
+  is_replaceable?: string;
+  additional_price?: string;
+  image_url?: string;
+  is_primary_image?: string;
+};
+
+type GroupPreview = {
+  row_group: string;
+  product_name: string;
+  row_count: number;
+  status: "valid" | "error";
+  issues: RowIssue[];
+  brand_status: "existing" | "new" | "unknown";
+  uom_status: "existing" | "new" | "unknown";
+  category_status: CategoryStatus[];
+  rows: BulkRow[];
 };
 
 type PreviewResponse = {
-  preview: ProductPreview[];
-  errors: { row: number; error: string }[];
-  total: number;
-  valid: number;
+  data: {
+    total_groups: number;
+    valid_groups: number;
+    error_groups: number;
+    groups: GroupPreview[];
+  };
   message?: string;
 };
 
+type GroupResult = {
+  row_group: string;
+  product_name: string;
+  status: "success" | "failed";
+  product_id?: number;
+  error?: string;
+};
+
 type ConfirmResponse = {
-  success: boolean;
-  message: string;
-  created_count: number;
-  failed_count: number;
-  createdProducts: any[];
-  failedProducts: { product: string; error: string; row?: number }[];
+  data: {
+    total: number;
+    success: number;
+    failed: number;
+    results: GroupResult[];
+  };
+  message?: string;
 };
 
 export default function BulkProductUpload() {
   const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<ProductPreview[]>([]);
-  const [errors, setErrors] = useState<{ row: number; error: string }[]>([]);
+  const [groups, setGroups] = useState<GroupPreview[]>([]);
   const [loading, setLoading] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [branchCode, setBranchCode] = useState<string>("");
+  const [confirmFailures, setConfirmFailures] = useState<GroupResult[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuthStore();
 
+  const validGroups = groups.filter((g) => g.status === "valid");
+  const errorGroups = groups.filter((g) => g.status === "error");
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      const validTypes = [
-        ".csv",
-        ".xlsx",
-        "application/vnd.ms-excel",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      ];
+    if (!selectedFile) return;
 
-      if (
-        !validTypes.some(
-          (type) =>
-            selectedFile.name.toLowerCase().endsWith(type) ||
-            selectedFile.type.includes(type),
-        )
-      ) {
-        alert("Invalid file type. Please upload a CSV or Excel file.");
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-        setFile(null);
-        return;
-      }
+    const validExtensions = [".csv", ".xlsx", ".xls"];
+    const hasValidExtension = validExtensions.some((ext) =>
+      selectedFile.name.toLowerCase().endsWith(ext),
+    );
 
-      if (selectedFile.size > 5 * 1024 * 1024) {
-        alert("File size too large. Maximum size is 5MB.");
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-        setFile(null);
-        return;
-      }
-
-      setFile(selectedFile);
-      setPreview([]);
-      setErrors([]);
-      setSuccessMessage(null);
-      setErrorMessage(null);
+    if (!hasValidExtension) {
+      alert(
+        "Invalid file type. Please upload a CSV or Excel (.xlsx/.xls) file.",
+      );
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      setFile(null);
+      return;
     }
+
+    if (selectedFile.size > 5 * 1024 * 1024) {
+      alert("File size too large. Maximum size is 5MB.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      setFile(null);
+      return;
+    }
+
+    setFile(selectedFile);
+    setGroups([]);
+    setSuccessMessage(null);
+    setErrorMessage(null);
+    setConfirmFailures([]);
   };
 
   const handlePreview = async () => {
@@ -122,15 +144,18 @@ export default function BulkProductUpload() {
         },
       )) as PreviewResponse;
 
-      setPreview(res.preview || []);
-      setErrors(res.errors || []);
+      const receivedGroups = res.data?.groups || [];
+      setGroups(receivedGroups);
 
-      if (res.errors && res.errors.length > 0) {
+      const errorCount = res.data?.error_groups || 0;
+      const validCount = res.data?.valid_groups || 0;
+
+      if (errorCount > 0) {
         alert(
-          `Found ${res.errors.length} errors in the file. Please fix them before confirming.`,
+          `Found issues in ${errorCount} product(s). Fix them in your file and re-upload, or confirm to import only the ${validCount} valid product(s).`,
         );
       } else {
-        alert(`✅ File is valid! ${res.valid} rows ready to import.`);
+        alert(`✅ File is valid! ${validCount} product(s) ready to import.`);
       }
     } catch (err: any) {
       console.error("Preview error:", err);
@@ -144,44 +169,19 @@ export default function BulkProductUpload() {
   };
 
   const handleConfirm = async () => {
-    if (preview.length === 0) {
-      alert("No products to save");
+    if (validGroups.length === 0) {
+      alert("No valid products to save");
       return;
-    }
-
-    if (errors.length > 0) {
-      alert("Please fix all errors before confirming.");
-      return;
-    }
-
-    if (!branchCode && !user?.branch_code) {
-      const useDefault = confirm(
-        "No branch specified. Do you want to use the default branch?",
-      );
-      if (!useDefault) {
-        return;
-      }
     }
 
     setConfirmLoading(true);
     setSuccessMessage(null);
     setErrorMessage(null);
+    setConfirmFailures([]);
 
-    const productsToSave = preview.map((p) => ({
-      product_name: p.product_name,
-      variant_name: p.variant.name,
-      category: p.category || "",
-      uom_name: p.uom_name,
-      cost_price: p.cost_price,
-      regular_price: p.regular_price, // Added regular_price
-      selling_price: p.selling_price,
-      stock_quantity: p.stock_quantity || 0,
-      additional_price: p.variant.additional_price || 0,
-      SKU: p.variant.SKU || "",
-      weight: p.variant.weight,
-      weight_unit: p.variant.weight_unit,
-      images: p.variant.images || [],
-      row: p.row,
+    const payloadGroups = validGroups.map((g) => ({
+      row_group: g.row_group,
+      rows: g.rows,
     }));
 
     try {
@@ -190,43 +190,29 @@ export default function BulkProductUpload() {
         {
           method: "POST",
           tokenType: "jwt",
-          data: {
-            products: productsToSave,
-            branch_code: branchCode || user?.branch_code,
-          },
+          data: { groups: payloadGroups },
         },
       )) as ConfirmResponse;
 
-      console.log("Confirm response:", res);
+      const { success, failed, total, results } = res.data;
 
-      if (res.success) {
-        setSuccessMessage(
-          `✅ Successfully created ${res.created_count} product(s). ${
-            res.failed_count > 0
-              ? `⚠️ Failed to create ${res.failed_count} product(s). Check console for details.`
-              : ""
-          }`,
-        );
+      setSuccessMessage(
+        `✅ Successfully created ${success} of ${total} product(s).${
+          failed > 0 ? ` ⚠️ ${failed} failed — see details below.` : ""
+        }`,
+      );
 
-        if (res.failedProducts && res.failedProducts.length > 0) {
-          console.error("Failed products:", res.failedProducts);
-          setErrorMessage(
-            `Failed products: ${res.failedProducts
-              .map((fp) => `${fp.product} (Row ${fp.row}): ${fp.error}`)
-              .join("; ")}`,
-          );
-        }
-
-        setPreview([]);
-        setErrors([]);
-        setFile(null);
-        setBranchCode("");
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-      } else {
-        alert(res.message || "Failed to save products. Please try again.");
+      const failures = results.filter((r) => r.status === "failed");
+      if (failures.length > 0) {
+        console.error("Failed products:", failures);
+        setConfirmFailures(failures);
       }
+
+      // Clear only what succeeded is implicit — reset the whole form since
+      // the file/rows have already been submitted
+      setGroups([]);
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err: any) {
       console.error("Confirm error:", err);
       alert(err.message || "Failed to save products. Please try again.");
@@ -237,22 +223,18 @@ export default function BulkProductUpload() {
 
   const handleReset = () => {
     setFile(null);
-    setPreview([]);
-    setErrors([]);
+    setGroups([]);
     setSuccessMessage(null);
     setErrorMessage(null);
-    setBranchCode("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    setConfirmFailures([]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const downloadSampleCSV = () => {
-    const csvContent = `product_name,variant_name,category,uom,cost_price,regular_price,selling_price,stock_quantity,additional_price,SKU,weight,weight_unit,images
-Wireless Mouse,Bluetooth 5.0,Electronics,PCS,15.50,25.00,29.99,100,0,MOUSE-001,0.15,KG,https://example.com/mouse1.jpg
-Gaming Keyboard,Mechanical RGB,Electronics,PCS,45.00,75.00,89.99,50,0,KB-001,1.20,KG,
-USB Cable,Type-C 2m,Accessories,PCS,2.50,5.00,9.99,500,0,CABLE-001,0.05,KG,
-Laptop Bag,15.6 inch,Accessories,PCS,12.00,20.00,29.99,75,0,BAG-001,0.80,KG,https://example.com/bag1.jpg`;
+    const csvContent = `row_group,product_name,brand_name,uom_name,cost_price,selling_price,regular_price,description,category_names,variant_name,weight,weight_unit,is_replaceable,additional_price,image_url,is_primary_image
+1,Basmati Rice,Bashundhara Rice,Kilogram,80,120,130,Premium long grain rice,Rice,Grocery,1kg Pack,1,kg,false,0,https://example.com/rice-1kg.jpg,true
+1,Basmati Rice,Bashundhara Rice,Kilogram,80,220,240,Premium long grain rice,Rice,Grocery,5kg Pack,5,kg,false,100,https://example.com/rice-5kg.jpg,true
+2,Cooking Oil,Rupchanda,Liter,150,190,200,Refined sunflower oil,Grocery,1L Bottle,1,l,false,0,https://example.com/oil-1l.jpg,true`;
 
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -276,26 +258,33 @@ Laptop Bag,15.6 inch,Accessories,PCS,12.00,20.00,29.99,75,0,BAG-001,0.80,KG,http
         <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
           <li>Upload a CSV or Excel file with product data</li>
           <li>
-            <strong>Required columns:</strong> product_name, variant_name, uom,
-            cost_price, regular_price, selling_price
+            <strong>row_group:</strong> any repeatable value grouping rows that
+            belong to the same product (e.g. multiple variants of one product
+            share the same row_group)
           </li>
           <li>
-            <strong>Optional columns:</strong> category, stock_quantity,
-            additional_price, SKU, weight, weight_unit, images
+            <strong>Required columns:</strong> row_group, product_name,
+            brand_name, uom_name, variant_name, cost_price, selling_price,
+            regular_price
           </li>
           <li>
-            <strong>Price definitions:</strong>
-            <ul className="list-circle ml-6 mt-1">
-              <li>cost_price: Purchase cost of the product</li>
-              <li>regular_price: MRP / Regular price of the product</li>
-              <li>selling_price: Actual selling price (after discount)</li>
-            </ul>
+            <strong>Optional columns:</strong> description, category_names,
+            weight, weight_unit, is_replaceable, additional_price, image_url,
+            is_primary_image
           </li>
           <li>
-            <strong>UOM values:</strong> PCS, KG, Liter, Meter (case-insensitive
-            - "KG", "kg", "Kg" all work)
+            <strong>brand_name / uom_name / category_names:</strong> just type
+            the name — matching existing records are reused, new names are
+            created automatically
           </li>
-          <li>Categories are auto-created if they don't exist</li>
+          <li>
+            <strong>category_names:</strong> comma-separated for multiple
+            categories (e.g. "Rice,Grocery")
+          </li>
+          <li>
+            Product code, variant code, SKU, and barcode are generated
+            automatically — do not include them in the file
+          </li>
           <li>Max file size: 5MB</li>
           <li>
             <button
@@ -315,7 +304,7 @@ Laptop Bag,15.6 inch,Accessories,PCS,12.00,20.00,29.99,75,0,BAG-001,0.80,KG,http
         <input
           ref={fileInputRef}
           type="file"
-          accept=".csv,.xlsx"
+          accept=".csv,.xlsx,.xls"
           onChange={handleFileChange}
           className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
         />
@@ -332,65 +321,17 @@ Laptop Bag,15.6 inch,Accessories,PCS,12.00,20.00,29.99,75,0,BAG-001,0.80,KG,http
           disabled={loading || !file}
           className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {loading ? (
-            <>
-              <svg
-                className="inline animate-spin h-4 w-4 mr-2"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              Processing...
-            </>
-          ) : (
-            "Preview"
-          )}
+          {loading ? "Processing..." : "Preview"}
         </button>
 
         <button
           onClick={handleConfirm}
-          disabled={confirmLoading || preview.length === 0 || errors.length > 0}
+          disabled={confirmLoading || validGroups.length === 0}
           className="px-5 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {confirmLoading ? (
-            <>
-              <svg
-                className="inline animate-spin h-4 w-4 mr-2"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              Saving...
-            </>
-          ) : (
-            "Confirm & Save"
-          )}
+          {confirmLoading
+            ? "Saving..."
+            : `Confirm & Save (${validGroups.length})`}
         </button>
 
         <button
@@ -401,15 +342,26 @@ Laptop Bag,15.6 inch,Accessories,PCS,12.00,20.00,29.99,75,0,BAG-001,0.80,KG,http
         </button>
       </div>
 
-      {errors.length > 0 && (
+      {errorGroups.length > 0 && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
           <h2 className="font-semibold text-red-800 mb-2">
-            Errors ({errors.length}):
+            Products with issues ({errorGroups.length}) — these will be skipped
+            on Confirm:
           </h2>
-          <ul className="space-y-1 max-h-60 overflow-y-auto">
-            {errors.map((e, i) => (
-              <li key={i} className="text-sm text-red-700">
-                <span className="font-medium">Row {e.row}:</span> {e.error}
+          <ul className="space-y-2 max-h-60 overflow-y-auto">
+            {errorGroups.map((g) => (
+              <li key={g.row_group} className="text-sm text-red-700">
+                <span className="font-medium">
+                  {g.product_name || "(missing name)"} (row_group {g.row_group}
+                  ):
+                </span>
+                <ul className="list-disc list-inside ml-4">
+                  {g.issues.map((issue, i) => (
+                    <li key={i}>
+                      Row {issue.row_index + 1} — {issue.field}: {issue.message}
+                    </li>
+                  ))}
+                </ul>
               </li>
             ))}
           </ul>
@@ -422,20 +374,29 @@ Laptop Bag,15.6 inch,Accessories,PCS,12.00,20.00,29.99,75,0,BAG-001,0.80,KG,http
         </div>
       )}
 
-      {errorMessage && (
+      {confirmFailures.length > 0 && (
         <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 font-medium">{errorMessage}</p>
+          <p className="text-yellow-800 font-medium mb-2">
+            Some products failed during save:
+          </p>
+          <ul className="text-sm text-yellow-800 space-y-1">
+            {confirmFailures.map((f, i) => (
+              <li key={i}>
+                {f.product_name} (row_group {f.row_group}): {f.error}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
-      {preview.length > 0 && (
+      {groups.length > 0 && (
         <div className="mt-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-800">
-              Preview ({preview.length} rows)
+              Preview ({groups.length} product{groups.length !== 1 ? "s" : ""})
             </h2>
             <span className="text-sm text-gray-600">
-              Showing {preview.length} of {preview.length} valid rows
+              {validGroups.length} valid · {errorGroups.length} with issues
             </span>
           </div>
 
@@ -444,82 +405,92 @@ Laptop Bag,15.6 inch,Accessories,PCS,12.00,20.00,29.99,75,0,BAG-001,0.80,KG,http
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                    Row
+                    Status
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
                     Product Name
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                    Category
+                    Variants
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
+                    Brand
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
                     UOM
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                    Cost Price
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                    Regular Price
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                    Selling Price
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                    Stock Qty
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                    Variant
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                    +Price
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
-                    SKU
+                    Categories
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Images
+                    Issues
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {preview.map((p, i) => (
-                  <tr key={i} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
-                      {p.row}
+                {groups.map((g) => (
+                  <tr
+                    key={g.row_group}
+                    className={
+                      g.status === "error" ? "bg-red-50" : "hover:bg-gray-50"
+                    }
+                  >
+                    <td className="px-4 py-3 text-sm border-r">
+                      {g.status === "valid" ? (
+                        <span className="text-green-600 font-medium">
+                          ✓ Valid
+                        </span>
+                      ) : (
+                        <span className="text-red-600 font-medium">
+                          ✗ Error
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-gray-900 border-r">
-                      {p.product_name}
+                      {g.product_name}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 border-r">
-                      {p.category || "-"}
+                      {g.row_count}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 border-r">
-                      {p.uom_name || "-"}
+                      {g.brand_status !== "unknown" && (
+                        <span
+                          className={
+                            g.brand_status === "new"
+                              ? "text-amber-600"
+                              : "text-gray-500"
+                          }
+                        >
+                          {g.brand_status === "new" ? "new" : "existing"}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 border-r">
-                      ${parseFloat(p.cost_price as string).toFixed(2)}
+                      {g.uom_status !== "unknown" && (
+                        <span
+                          className={
+                            g.uom_status === "new"
+                              ? "text-amber-600"
+                              : "text-gray-500"
+                          }
+                        >
+                          {g.uom_status === "new" ? "new" : "existing"}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 border-r">
-                      ${parseFloat(p.regular_price as string).toFixed(2)}
+                      {g.category_status.length > 0
+                        ? g.category_status
+                            .map(
+                              (c) =>
+                                `${c.name}${c.status === "new" ? " (new)" : ""}`,
+                            )
+                            .join(", ")
+                        : "-"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
-                      ${parseFloat(p.selling_price as string).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
-                      {p.stock_quantity || 0}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
-                      {p.variant.name}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
-                      ${p.variant.additional_price || 0}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 border-r">
-                      {p.variant.SKU || "-"}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
-                      {p.variant.images && p.variant.images.length > 0
-                        ? `${p.variant.images.length} image(s)`
+                    <td className="px-4 py-3 text-sm text-red-600">
+                      {g.issues.length > 0
+                        ? g.issues.map((i) => i.message).join("; ")
                         : "-"}
                     </td>
                   </tr>
