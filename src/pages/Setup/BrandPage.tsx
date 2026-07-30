@@ -189,7 +189,7 @@ export default function BrandPage() {
           { key: "created_at", label: "Created At" },
         ]}
         selectable
-        rowsPerPage={1000}
+        rowsPerPage={10}
         loading={loading}
         columnFormats={{
           created_at: (val) => formatDate(val),

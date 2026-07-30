@@ -82,7 +82,7 @@ export default function StockLedgerPage() {
     toDate: "",
     search: "",
     page: "1",
-    limit: "20",
+    limit: "10",
   });
 
   const [showFilters, setShowFilters] = useState(true);
@@ -205,119 +205,6 @@ export default function StockLedgerPage() {
         </button>
       </div>
 
-      {/* Filters */}
-      <div
-        className={`bg-white rounded-lg border shadow-sm transition-all duration-300 ${
-          showFilters ? "block" : "hidden md:block"
-        }`}
-      >
-        <div className="p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900">Filters</h2>
-            {activeFilterCount > 0 && (
-              <button
-                onClick={clearFilters}
-                className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1"
-              >
-                <X className="w-3 h-3" /> Clear all
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Search */}
-            <div>
-              <Label htmlFor="search" className="text-sm font-medium">
-                Search
-              </Label>
-              <div className="relative mt-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="search"
-                  placeholder="Product or branch..."
-                  className="pl-9"
-                  value={filters.search}
-                  onChange={(e) => handleFilterChange("search", e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Branch Filter */}
-            <div>
-              <Label htmlFor="branch" className="text-sm font-medium">
-                Branch
-              </Label>
-              <select
-                id="branch"
-                value={filters.branch_id}
-                onChange={(e) =>
-                  handleFilterChange("branch_id", e.target.value)
-                }
-                className="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              >
-                <option value="">All Branches</option>
-                {branches.map((branch: Branch) => (
-                  <option key={branch.id} value={branch.id.toString()}>
-                    {branch.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Product Filter */}
-            <div>
-              <Label htmlFor="product" className="text-sm font-medium">
-                Product
-              </Label>
-              <select
-                id="product"
-                value={filters.product_variant_id}
-                onChange={(e) =>
-                  handleFilterChange("product_variant_id", e.target.value)
-                }
-                className="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              >
-                <option value="">All Products</option>
-                {products.map((product: Product) => (
-                  <option key={product.variant_id} value={product.variant_id}>
-                    {product.display_name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Date Range */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Date Range</Label>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Input
-                    type="date"
-                    placeholder="From"
-                    value={filters.fromDate}
-                    onChange={(e) =>
-                      handleFilterChange("fromDate", e.target.value)
-                    }
-                    className="text-sm"
-                  />
-                </div>
-                <div className="flex-1">
-                  <Input
-                    type="date"
-                    placeholder="To"
-                    value={filters.toDate}
-                    onChange={(e) =>
-                      handleFilterChange("toDate", e.target.value)
-                    }
-                    className="text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* DataTable */}
       <DataTable
         data={ledgerData}
@@ -325,6 +212,39 @@ export default function StockLedgerPage() {
         loading={loading}
         serial
         serialLabel="SL"
+        onSearchChange={(v) => handleFilterChange("search", v)}
+        filters={[
+          {
+            key: "branch_id",
+            label: "Branch",
+            type: "select",
+            options: branches.map((b: Branch) => ({
+              label: b.name,
+              value: b.id.toString(),
+            })),
+          },
+          {
+            key: "product_variant_id",
+            label: "Product",
+            type: "select",
+            options: products.map((p: Product) => ({
+              label: p.display_name,
+              value: p.variant_id,
+            })),
+          },
+          { key: "fromDate", label: "From", type: "date", group: "Date Range" },
+          { key: "toDate", label: "To", type: "date", group: "Date Range" },
+        ]}
+        onFilterChange={(next) => {
+          setFilters((prev) => ({
+            ...prev,
+            branch_id: next.branch_id ?? "",
+            product_variant_id: next.product_variant_id ?? "",
+            fromDate: next.fromDate ?? "",
+            toDate: next.toDate ?? "",
+            page: "1",
+          }));
+        }}
         showColumns={[
           { key: "date", label: "Date" },
           { key: "branch_name", label: "Branch" },
@@ -365,12 +285,21 @@ export default function StockLedgerPage() {
           { label: "OUT", value: "daily_total_out" },
           { label: "Net Change", value: "daily_net_change" },
         ]}
-        actions={[]}
-        pagination={true}
+        selectable
+        pagination
         page={pagination.current_page}
         totalPages={pagination.total_pages}
         onPageChange={handlePageChange}
         rowsPerPage={pagination.per_page}
+        onRowsPerPageChange={(newLimit) => {
+          // 👈 FIX: This must be a function
+          setFilters((prev) => ({
+            ...prev,
+            limit: newLimit.toString(),
+            page: "1", // Reset to page 1 when changing rows per page
+          }));
+        }}
+        rowsPerPageOptions={[10, 20, 50, 100]}
       />
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Pen, Trash, Plus, Search, Filter, X } from "lucide-react";
+import { Pen, Trash, Plus } from "lucide-react";
 import { DataTable } from "@/components/ui/dataTable";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,6 +54,15 @@ interface StockRequest {
   quantity: number;
 }
 
+interface PaginationMeta {
+  current_page: number;
+  per_page: number;
+  total_items: number;
+  total_pages: number;
+  has_previous: boolean;
+  has_next: boolean;
+}
+
 export default function StockRecordPage() {
   const [stockRecords, setStockRecords] = useState<StockRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -61,7 +70,16 @@ export default function StockRecordPage() {
   const [dialogType, setDialogType] = useState<"add" | "adjust">("add");
   const [selectedStock, setSelectedStock] = useState<StockRecord | null>(null);
 
-  // Filter state
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    current_page: 1,
+    per_page: 10,
+    total_items: 0,
+    total_pages: 0,
+    has_previous: false,
+    has_next: false,
+  });
+
+  // Filter state — same shape as before, just no longer driven by a custom panel
   const [filters, setFilters] = useState({
     branch_id: "",
     product_variant_id: "",
@@ -78,7 +96,6 @@ export default function StockRecordPage() {
     quantity: 0,
   });
 
-  // Fetch stock records with pagination and filters
   const fetchStock = async () => {
     setLoading(true);
     try {
@@ -92,12 +109,30 @@ export default function StockRecordPage() {
             product_variant_id: filters.product_variant_id
               ? parseInt(filters.product_variant_id)
               : null,
+            search: filters.search || undefined,
+            page: parseInt(filters.page),
+            limit: parseInt(filters.limit),
           },
-        }
+        },
       );
 
       if (response.success) {
         setStockRecords(response.data.data || []);
+        if (response.data.pagination) {
+          setPagination(response.data.pagination);
+        } else {
+          const total = response.data.data?.length || 0;
+          setPagination((prev) => ({
+            ...prev,
+            current_page: parseInt(filters.page),
+            per_page: parseInt(filters.limit),
+            total_items: total,
+            total_pages: Math.max(
+              1,
+              Math.ceil(total / parseInt(filters.limit)),
+            ),
+          }));
+        }
       }
     } catch (err: any) {
       console.error("Fetch stock transfers error:", err);
@@ -110,15 +145,18 @@ export default function StockRecordPage() {
     fetchBranches();
     fetchProducts();
   }, [fetchBranches, fetchProducts]);
-  useEffect(() => {
-    fetchStock();
-  }, [filters]);
-  // Fetch stock when filters change
-  useEffect(() => {
-    fetchStock();
-  }, [filters.branch_id, filters.product_variant_id]);
 
-  // Open Add Dialog
+  useEffect(() => {
+    fetchStock();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    filters.page,
+    filters.limit,
+    filters.branch_id,
+    filters.product_variant_id,
+    filters.search,
+  ]);
+
   const handleOpenAdd = () => {
     setDialogType("add");
     setForm({ branch_id: 0, product_variant_id: 0, quantity: 0 });
@@ -126,7 +164,6 @@ export default function StockRecordPage() {
     setDialogOpen(true);
   };
 
-  // Open Adjust Dialog
   const handleOpenAdjust = (record: StockRecord) => {
     setDialogType("adjust");
     setForm({
@@ -138,7 +175,6 @@ export default function StockRecordPage() {
     setDialogOpen(true);
   };
 
-  // Save Stock
   const handleSave = async () => {
     if (!form.branch_id || !form.product_variant_id || form.quantity === 0) {
       return alert("Please fill all fields correctly");
@@ -151,11 +187,11 @@ export default function StockRecordPage() {
           method: "POST",
           tokenType: "jwt",
           data: form,
-        }
+        },
       );
 
       if (response.success) {
-        fetchStock(); // Refresh stock data
+        fetchStock();
         setDialogOpen(false);
         alert("Stock updated successfully!");
       } else {
@@ -167,7 +203,6 @@ export default function StockRecordPage() {
     }
   };
 
-  // Delete Stock (set to zero)
   const handleDelete = async (record: StockRecord) => {
     if (!confirm(`Remove all stock for ${record.product_name}?`)) return;
 
@@ -182,11 +217,11 @@ export default function StockRecordPage() {
             product_variant_id: record.variant_id,
             quantity: -record.quantity,
           },
-        }
+        },
       );
 
       if (response.success) {
-        fetchStock(); // Refresh stock data
+        fetchStock();
         alert("Stock removed successfully!");
       } else {
         throw new Error(response.message || "Failed to remove stock");
@@ -197,27 +232,27 @@ export default function StockRecordPage() {
     }
   };
 
-  // Handle filter changes
-  const handleFilterChange = (key: string, value: string) => {
+  // NEW: fed to DataTable's onSearchChange — server-side search, so local
+  // text filtering inside DataTable is skipped automatically.
+  const handleSearchChange = (value: string) => {
+    setFilters((prev) => ({ ...prev, search: value, page: "1" }));
+  };
+
+  // NEW: fed to DataTable's onFilterChange. `next` is a Record<string, string>
+  // keyed by each filter's `key` — map it back onto your own filter state.
+  const handleTableFilterChange = (next: Record<string, string>) => {
     setFilters((prev) => ({
       ...prev,
-      [key]: value,
-      page: "1", // Reset to first page when filters change
+      branch_id: next.branch_id ?? "",
+      product_variant_id: next.product_variant_id ?? "",
+      page: "1",
     }));
   };
 
-  // Clear all filters
-  const clearFilters = () => {
-    setFilters({
-      branch_id: "",
-      product_variant_id: "",
-      search: "",
-      page: "1",
-      limit: "10",
-    });
+  const handlePageChange = (page: number) => {
+    setFilters((prev) => ({ ...prev, page: page.toString() }));
   };
 
-  // Format currency
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -225,7 +260,6 @@ export default function StockRecordPage() {
     }).format(value);
   };
 
-  // Format quantity display
   const formatQuantity = (quantity: number) => {
     return (
       <span
@@ -233,8 +267,8 @@ export default function StockRecordPage() {
           quantity > 10
             ? "bg-green-100 text-green-800"
             : quantity > 0
-            ? "bg-yellow-100 text-yellow-800"
-            : "bg-red-100 text-red-800"
+              ? "bg-yellow-100 text-yellow-800"
+              : "bg-red-100 text-red-800"
         }`}
       >
         {quantity}
@@ -249,168 +283,52 @@ export default function StockRecordPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Stock Record</h1>
           <p className="text-gray-600 mt-1">
-            Total items: {stockRecords.length}
+            Total items: {pagination.total_items}
           </p>
         </div>
 
-        <Button
-          onClick={handleOpenAdd}
-          className="btn-bw-primary text-white flex items-center gap-2"
-        >
-          <Plus size={16} /> Add Stock
-        </Button>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-lg border shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-gray-800 flex items-center gap-2">
-            <Filter size={18} /> Filters
-          </h2>
-          <Button
-            onClick={clearFilters}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <X size={14} /> Clear Filters
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Search */}
-          <div>
-            <Label htmlFor="search">Search</Label>
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-              <Input
-                id="search"
-                placeholder="Search products..."
-                className="pl-8"
-                value={filters.search}
-                onChange={(e) => handleFilterChange("search", e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    fetchStock();
-                  }
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Branch Filter */}
-          <div>
-            <Label htmlFor="branch">Branch</Label>
-            <select
-              id="branch"
-              value={filters.branch_id}
-              onChange={(e) => handleFilterChange("branch_id", e.target.value)}
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Branches</option>
-              {branches.map((branch: Branch) => (
-                <option key={branch.id} value={branch.id.toString()}>
-                  {branch.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Product Filter */}
-          <div>
-            <Label htmlFor="product">Product</Label>
-            <select
-              id="product"
-              value={filters.product_variant_id}
-              onChange={(e) =>
-                handleFilterChange("product_variant_id", e.target.value)
-              }
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Products</option>
-              {products.map((product: Product) => (
-                <option
-                  key={`${product.product_id}-${product.variant_id}`}
-                  value={product.variant_id.toString()}
-                >
-                  {product.display_name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Items per page */}
-          <div>
-            <Label htmlFor="limit">Items per page</Label>
+        <div className="flex items-center gap-3">
+          {/* Items-per-page isn't a row filter, so it stays outside the
+              DataTable `filters` prop — just a small standalone control */}
+          <div className="flex items-center gap-2">
+            <Label htmlFor="limit" className="text-sm whitespace-nowrap">
+              Per page
+            </Label>
             <select
               id="limit"
               value={filters.limit}
-              onChange={(e) => handleFilterChange("limit", e.target.value)}
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  limit: e.target.value,
+                  page: "1",
+                }))
+              }
+              className="border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="10">10 items</option>
-              <option value="20">20 items</option>
-              <option value="50">50 items</option>
-              <option value="100">100 items</option>
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
             </select>
           </div>
-        </div>
 
-        {/* Active filters */}
-        {(filters.branch_id ||
-          filters.product_variant_id ||
-          filters.search) && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="text-sm text-gray-600">Active filters:</span>
-            {filters.branch_id && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full flex items-center gap-1">
-                Branch:{" "}
-                {
-                  branches.find((b) => b.id === parseInt(filters.branch_id))
-                    ?.name
-                }
-                <X
-                  size={12}
-                  className="cursor-pointer"
-                  onClick={() => handleFilterChange("branch_id", "")}
-                />
-              </span>
-            )}
-            {filters.product_variant_id && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full flex items-center gap-1">
-                Product:{" "}
-                {
-                  products.find(
-                    (p) => p.variant_id === parseInt(filters.product_variant_id)
-                  )?.display_name
-                }
-                <X
-                  size={12}
-                  className="cursor-pointer"
-                  onClick={() => handleFilterChange("product_variant_id", "")}
-                />
-              </span>
-            )}
-            {filters.search && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full flex items-center gap-1">
-                Search: "{filters.search}"
-                <X
-                  size={12}
-                  className="cursor-pointer"
-                  onClick={() => handleFilterChange("search", "")}
-                />
-              </span>
-            )}
-          </div>
-        )}
+          <Button
+            onClick={handleOpenAdd}
+            className="btn-bw-primary text-white flex items-center gap-2"
+          >
+            <Plus size={16} /> Add Stock
+          </Button>
+        </div>
       </div>
 
-      {/* DataTable */}
-
+      {/* DataTable — filters, search, and pagination all handled by the
+          component itself now; no separate filter card needed. */}
       <DataTable
         data={stockRecords}
         label="Stock Records"
         loading={loading}
+        rowKey="stock_id"
         showColumns={[
           { key: "branch_name", label: "Branch" },
           { key: "product_name", label: "Product" },
@@ -419,7 +337,6 @@ export default function StockRecordPage() {
           { key: "selling_price", label: "Selling Price" },
           { key: "cost_price", label: "Cost Price" },
         ]}
-        rowsPerPage={parseInt(filters.limit)}
         columnFormats={{
           quantity: (val) => formatQuantity(val),
           selling_price: (val) => formatCurrency(val),
@@ -446,6 +363,36 @@ export default function StockRecordPage() {
             className: "text-red-600 hover:text-red-800",
           },
         ]}
+        // NEW: replaces the hand-built filter card
+        filters={[
+          {
+            key: "branch_id",
+            label: "Branch",
+            type: "select",
+            options: branches.map((b: Branch) => ({
+              label: b.name,
+              value: b.id,
+            })),
+          },
+          {
+            key: "product_variant_id",
+            label: "Product",
+            type: "select",
+            options: products.map((p: Product) => ({
+              label: p.display_name,
+              value: p.variant_id,
+            })),
+          },
+        ]}
+        onFilterChange={handleTableFilterChange}
+        onSearchChange={handleSearchChange}
+        filtersTitle="Filters"
+        // Server-side pagination
+        pagination
+        page={pagination.current_page}
+        totalPages={pagination.total_pages}
+        onPageChange={handlePageChange}
+        rowsPerPage={pagination.per_page}
       />
 
       {/* Dialog for Add/Adjust Stock */}
